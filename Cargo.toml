@@ -1,0 +1,18 @@
+[package]
+name = "monero-rpc"
+version = "0.1.0"
+authors = ["Artem Vorotnikov <artem@vorotnikov.me>"]
+edition = "2018"
+
+[dependencies]
+ethereum-types-serialize = "*"
+failure = "*"
+futures-preview = { version = "0.3.0-alpha.14", features = ["compat"] }
+fixed-hash = "*"
+jsonrpc-core = "*"
+#jsonrpc-core-client = "*"
+#jsonrpc-derive = "*"
+log = "*"
+reqwest = "*"
+serde = { version = "1", features = ["derive"] }
+serde_json = "*"
