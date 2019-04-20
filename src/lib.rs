@@ -75,6 +75,7 @@ pub struct BlockTemplate {
 //    fn on_get_block_hash(&self, height: u64) -> Result<H256, Error>;
 //}
 
+#[derive(Debug)]
 pub struct RpcClient {
     client: reqwest::r#async::Client,
     addr: String,
@@ -126,6 +127,7 @@ impl RpcClient {
     }
 }
 
+#[derive(Debug)]
 pub struct DaemonClient {
     inner: RpcClient,
 }
@@ -154,5 +156,43 @@ impl DaemonClient {
         await!(self
             .inner
             .request("submit_block", vec![block_blob_data.into()]))
+    }
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum GetBalanceSelector {
+    Single(u64),
+    Multiple(Vec<u64>),
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct SubaddressBalanceData {
+    pub address: String,
+    pub address_index: u64,
+    pub balance: u64,
+    pub label: String,
+    pub num_unspent_outputs: u64,
+    pub unlocked_balance: u64,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct BalanceData {
+    pub balance: u64,
+    pub multisig_import_needed: bool,
+    pub per_subaddress: Vec<SubaddressBalanceData>,
+    pub unlocked_balance: u64,
+}
+
+#[derive(Debug)]
+pub struct WalletClient {
+    inner: RpcClient,
+}
+
+impl WalletClient {
+    pub async fn get_balance(&self, selector: GetBalanceSelector) -> Fallible<BalanceData> {
+        await!(self
+            .inner
+            .request("get_balance", vec![serde_json::to_value(selector).unwrap()]))
     }
 }
