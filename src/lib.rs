@@ -125,6 +125,10 @@ impl RpcClient {
     pub fn daemon(self) -> DaemonClient {
         DaemonClient { inner: self }
     }
+
+    pub fn wallet(self) -> WalletClient {
+        WalletClient { inner: self }
+    }
 }
 
 #[derive(Debug)]
@@ -160,13 +164,6 @@ impl DaemonClient {
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
-#[serde(untagged)]
-pub enum GetBalanceSelector {
-    Single(u64),
-    Multiple(Vec<u64>),
-}
-
-#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct SubaddressBalanceData {
     pub address: String,
     pub address_index: u64,
@@ -190,9 +187,13 @@ pub struct WalletClient {
 }
 
 impl WalletClient {
-    pub async fn get_balance(&self, selector: GetBalanceSelector) -> Fallible<BalanceData> {
+    pub async fn get_balance(&self, account: u64, addresses: Vec<u64>) -> Fallible<BalanceData> {
         await!(self
             .inner
-            .request("get_balance", vec![serde_json::to_value(selector).unwrap()]))
+            .request("get_balance", vec![account.into(), addresses.into()]))
+    }
+
+    pub async fn get_address(&self, account: u64, addresses: Vec<u64>) -> Fallible<()> {
+        unimplemented!()
     }
 }
