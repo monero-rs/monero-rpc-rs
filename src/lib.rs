@@ -96,6 +96,8 @@ impl RpcClient {
     {
         use jsonrpc_core::types::*;
 
+        let addr = format!("{}/json_rpc", &self.addr);
+
         let body = serde_json::to_string(&MethodCall {
             jsonrpc: Some(Version::V2),
             method: method.to_string(),
@@ -104,11 +106,11 @@ impl RpcClient {
         })
         .unwrap();
 
-        trace!("Sending {} to {}", body, &self.addr);
+        trace!("Sending {} to {}", body, &addr);
 
         let rsp = await!(await!(self
             .client
-            .post(&self.addr)
+            .post(&addr)
             .header("Content-Type", "application/json")
             .body(body)
             .send()
