@@ -187,6 +187,20 @@ pub struct BalanceData {
     pub unlocked_balance: u64,
 }
 
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct TransferDestination {
+    pub amount: u128,
+    pub address: Address,
+}
+
+#[derive(Copy, Clone, Debug, Serialize, Deserialize)]
+pub enum TransferPriority {
+    Default,
+    Unimportant,
+    Elevated,
+    Priority,
+}
+
 #[derive(Debug)]
 pub struct WalletClient {
     inner: RpcClient,
@@ -215,5 +229,15 @@ impl WalletClient {
         }
 
         await!(self.inner.request("get_address", args))
+    }
+
+    pub async fn transfer(
+        &self,
+        destinations: Vec<TransferDestination>,
+        account_index: Option<u64>,
+        subaddr_indices: Option<Vec<u64>>,
+        priority: TransferPriority,
+    ) -> Fallible<()> {
+        unimplemented!()
     }
 }
