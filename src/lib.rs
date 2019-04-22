@@ -5,6 +5,7 @@ use futures::compat::*;
 //use jsonrpc_core::Error;
 //use jsonrpc_derive::rpc;
 use log::trace;
+use monero::Address;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
@@ -149,12 +150,15 @@ impl DaemonClient {
 
     pub async fn get_block_template(
         &self,
-        wallet_address: String,
+        wallet_address: Address,
         reserve_size: u64,
     ) -> Fallible<BlockTemplate> {
         await!(self.inner.request(
             "get_block_template",
-            vec![wallet_address.into(), reserve_size.into()]
+            vec![
+                serde_json::to_value(wallet_address).unwrap(),
+                reserve_size.into()
+            ]
         ))
     }
 
@@ -167,7 +171,7 @@ impl DaemonClient {
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct SubaddressBalanceData {
-    pub address: String,
+    pub address: Address,
     pub address_index: u64,
     pub balance: u64,
     pub label: String,
@@ -189,13 +193,27 @@ pub struct WalletClient {
 }
 
 impl WalletClient {
-    pub async fn get_balance(&self, account: u64, addresses: Vec<u64>) -> Fallible<BalanceData> {
-        await!(self
-            .inner
-            .request("get_balance", vec![account.into(), addresses.into()]))
+    pub async fn get_balance(
+        &self,
+        account: u64,
+        addresses: Option<Vec<u64>>,
+    ) -> Fallible<BalanceData> {
+        let mut args = vec![];
+        args.push(account.into());
+        if let Some(addresses) = addresses {
+            args.push(addresses.into());
+        }
+
+        await!(self.inner.request("get_balance", args))
     }
 
-    pub async fn get_address(&self, account: u64, addresses: Vec<u64>) -> Fallible<()> {
-        unimplemented!()
+    pub async fn get_address(&self, account: u64, addresses: Option<Vec<u64>>) -> Fallible<()> {
+        let mut args = vec![];
+        args.push(account.into());
+        if let Some(addresses) = addresses {
+            args.push(addresses.into());
+        }
+
+        await!(self.inner.request("get_address", args))
     }
 }

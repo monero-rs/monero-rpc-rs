@@ -13,6 +13,7 @@ jsonrpc-core = "*"
 #jsonrpc-core-client = "*"
 #jsonrpc-derive = "*"
 log = "*"
+monero = { git = "https://github.com/vorot93/monero-rs", features = ["serde"] }
 reqwest = "*"
 serde = { version = "1", features = ["derive"] }
 serde_json = "*"
