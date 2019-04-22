@@ -5,10 +5,9 @@ authors = ["Artem Vorotnikov <artem@vorotnikov.me>"]
 edition = "2018"
 
 [dependencies]
-ethereum-types-serialize = "*"
 failure = "*"
 futures-preview = { version = "0.3.0-alpha.14", features = ["compat"] }
-fixed-hash = "*"
+fixed-hash = "0.3"
 hex = { git = "https://github.com/KokaKiwi/rust-hex" }
 jsonrpc-core = "*"
 #jsonrpc-core-client = "*"

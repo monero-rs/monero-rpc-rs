@@ -43,6 +43,17 @@ macro_rules! hash_type {
 hash_type!(BlockHash, 32);
 hash_type!(BlockHashingBlob, 76);
 
+pub struct HashString<T>(pub T);
+
+impl<T> Serialize for HashString<T> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::ser::Serializer,
+    {
+        serializer.serialize_str(&hex::encode(self.0.as_bytes()))
+    }
+}
+
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub enum Status {
     OK,
