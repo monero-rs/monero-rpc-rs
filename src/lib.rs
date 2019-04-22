@@ -5,7 +5,7 @@ use futures::compat::*;
 //use jsonrpc_core::Error;
 //use jsonrpc_derive::rpc;
 use log::trace;
-use monero::Address;
+use monero::{Address, PaymentId};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
@@ -237,6 +237,11 @@ impl WalletClient {
         account_index: Option<u64>,
         subaddr_indices: Option<Vec<u64>>,
         priority: TransferPriority,
+        mixin: u64,
+        ring_size: u64,
+        unlock_time: Option<u64>,
+        payment_id: Option<String>,
+        do_not_relay: Option<bool>,
     ) -> Fallible<()> {
         unimplemented!()
     }
