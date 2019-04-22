@@ -22,8 +22,7 @@ macro_rules! hash_type {
             where
                 S: serde::ser::Serializer,
             {
-                let mut slice = [0u8; 2 + 2 * $len];
-                ethereum_types_serialize::serialize(&mut slice, &self.0, serializer)
+                serializer.serialize_str(&hex::encode(self.as_bytes()))
             }
         }
 
@@ -33,10 +32,8 @@ macro_rules! hash_type {
                 D: serde::de::Deserializer<'de>,
             {
                 let mut bytes = [0u8; $len];
-                ethereum_types_serialize::deserialize_check_len(
-                    deserializer,
-                    ethereum_types_serialize::ExpectedLen::Exact(&mut bytes),
-                )?;
+                let s = String::deserialize(deserializer)?;
+                hex::decode_to_slice(s, &mut bytes).map_err(serde::de::Error::custom)?;
                 Ok($name(bytes))
             }
         }
@@ -314,6 +311,10 @@ impl WalletClient {
 
         if let Some(payment_id) = payment_id {
             args["payment_id"] = Value::String(hex::encode(payment_id.as_bytes()));
+        }
+
+        if let Some(do_not_relay) = do_not_relay {
+            args["do_not_relay"] = do_not_relay.into();
         }
 
         await!(self.inner.request("transfer", Params::Map(args)))

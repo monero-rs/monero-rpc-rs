@@ -9,7 +9,7 @@ ethereum-types-serialize = "*"
 failure = "*"
 futures-preview = { version = "0.3.0-alpha.14", features = ["compat"] }
 fixed-hash = "*"
-hex = "*"
+hex = { git = "https://github.com/KokaKiwi/rust-hex" }
 jsonrpc-core = "*"
 #jsonrpc-core-client = "*"
 #jsonrpc-derive = "*"
