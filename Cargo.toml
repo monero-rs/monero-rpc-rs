@@ -9,6 +9,7 @@ ethereum-types-serialize = "*"
 failure = "*"
 futures-preview = { version = "0.3.0-alpha.14", features = ["compat"] }
 fixed-hash = "*"
+hex = "*"
 jsonrpc-core = "*"
 #jsonrpc-core-client = "*"
 #jsonrpc-derive = "*"

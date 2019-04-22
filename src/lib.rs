@@ -4,10 +4,12 @@ use failure::{format_err, Fallible};
 use futures::compat::*;
 //use jsonrpc_core::Error;
 //use jsonrpc_derive::rpc;
+use jsonrpc_core::types::*;
 use log::trace;
 use monero::{Address, PaymentId};
-use serde::{Deserialize, Serialize};
-use serde_json::Value;
+use serde::{Deserialize, Deserializer, Serialize, Serializer};
+use serde_json::{json, Value};
+use std::collections::HashMap;
 
 macro_rules! hash_type {
     ($name:ident, $len:expr) => {
@@ -90,19 +92,16 @@ impl RpcClient {
         }
     }
 
-    async fn request<I, T>(&self, method: &'static str, params: I) -> Fallible<T>
+    async fn request<T>(&self, method: &'static str, params: Params) -> Fallible<T>
     where
-        I: IntoIterator<Item = Value>,
         for<'de> T: Deserialize<'de>,
     {
-        use jsonrpc_core::types::*;
-
         let addr = format!("{}/json_rpc", &self.addr);
 
         let body = serde_json::to_string(&MethodCall {
             jsonrpc: Some(Version::V2),
             method: method.to_string(),
-            params: Params::Array(params.into_iter().map(Value::from).collect()),
+            params,
             id: Id::Null,
         })
         .unwrap();
@@ -141,11 +140,13 @@ pub struct DaemonClient {
 
 impl DaemonClient {
     pub async fn get_block_count(&self) -> Fallible<BlockCount> {
-        await!(self.inner.request("get_block_count", vec![]))
+        await!(self.inner.request("get_block_count", Params::Array(vec![])))
     }
 
     pub async fn on_get_block_hash(&self, height: u64) -> Fallible<BlockHash> {
-        await!(self.inner.request("on_get_block_hash", vec![height.into()]))
+        await!(self
+            .inner
+            .request("on_get_block_hash", Params::Array(vec![height.into()])))
     }
 
     pub async fn get_block_template(
@@ -155,17 +156,17 @@ impl DaemonClient {
     ) -> Fallible<BlockTemplate> {
         await!(self.inner.request(
             "get_block_template",
-            vec![
+            Params::Array(vec![
                 serde_json::to_value(wallet_address).unwrap(),
                 reserve_size.into()
-            ]
+            ])
         ))
     }
 
     pub async fn submit_block(&self, block_blob_data: String) -> Fallible<String> {
         await!(self
             .inner
-            .request("submit_block", vec![block_blob_data.into()]))
+            .request("submit_block", Params::Array(vec![block_blob_data.into()])))
     }
 }
 
@@ -187,18 +188,54 @@ pub struct BalanceData {
     pub unlocked_balance: u64,
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct TransferDestination {
-    pub amount: u128,
-    pub address: Address,
-}
-
-#[derive(Copy, Clone, Debug, Serialize, Deserialize)]
+#[derive(Copy, Clone, Debug)]
 pub enum TransferPriority {
     Default,
     Unimportant,
     Elevated,
     Priority,
+}
+
+impl Serialize for TransferPriority {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        serializer.serialize_u8(match self {
+            TransferPriority::Default => 0,
+            TransferPriority::Unimportant => 1,
+            TransferPriority::Elevated => 2,
+            TransferPriority::Priority => 3,
+        })
+    }
+}
+
+impl<'de> Deserialize<'de> for TransferPriority {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        let v = u8::deserialize(deserializer)?;
+        Ok(match v {
+            0 => TransferPriority::Default,
+            1 => TransferPriority::Unimportant,
+            2 => TransferPriority::Elevated,
+            3 => TransferPriority::Priority,
+            other => return Err(serde::de::Error::custom("Invalid variant, expected 0-3")),
+        })
+    }
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct TransferData {
+    pub amount: u128,
+    pub fee: u128,
+    pub multisig_txset: Vec<()>,
+    pub tx_blob: String,
+    pub tx_hash: String,
+    pub tx_key: String,
+    pub tx_metadata: String,
+    pub unsigned_txset: String,
 }
 
 #[derive(Debug)]
@@ -218,7 +255,7 @@ impl WalletClient {
             args.push(addresses.into());
         }
 
-        await!(self.inner.request("get_balance", args))
+        await!(self.inner.request("get_balance", Params::Array(args)))
     }
 
     pub async fn get_address(&self, account: u64, addresses: Option<Vec<u64>>) -> Fallible<()> {
@@ -228,21 +265,57 @@ impl WalletClient {
             args.push(addresses.into());
         }
 
-        await!(self.inner.request("get_address", args))
+        await!(self.inner.request("get_address", Params::Array(args)))
     }
 
     pub async fn transfer(
         &self,
-        destinations: Vec<TransferDestination>,
+        destinations: HashMap<Address, u128>,
         account_index: Option<u64>,
         subaddr_indices: Option<Vec<u64>>,
         priority: TransferPriority,
-        mixin: u64,
-        ring_size: u64,
+        mixin: Option<u64>,
+        ring_size: Option<u64>,
         unlock_time: Option<u64>,
-        payment_id: Option<String>,
+        payment_id: Option<PaymentId>,
         do_not_relay: Option<bool>,
-    ) -> Fallible<()> {
-        unimplemented!()
+    ) -> Fallible<TransferData> {
+        let mut args = serde_json::Map::default();
+        args["destinations"] = destinations
+            .into_iter()
+            .map(|(address, amount)| json!({"address": address, "amount": amount}))
+            .collect::<Vec<Value>>()
+            .into();
+        args["priority"] = serde_json::to_value(priority).unwrap();
+
+        if let Some(account_index) = account_index {
+            args["account_index"] = account_index.into();
+        }
+
+        if let Some(subaddr_indices) = subaddr_indices {
+            args["subaddr_indices"] = subaddr_indices
+                .into_iter()
+                .map(|v| v.into())
+                .collect::<Vec<Value>>()
+                .into();
+        }
+
+        if let Some(mixin) = mixin {
+            args["mixin"] = mixin.into();
+        }
+
+        if let Some(ring_size) = ring_size {
+            args["ring_size"] = ring_size.into();
+        }
+
+        if let Some(unlock_time) = unlock_time {
+            args["unlock_time"] = unlock_time.into();
+        }
+
+        if let Some(payment_id) = payment_id {
+            args["payment_id"] = Value::String(hex::encode(payment_id.as_bytes()));
+        }
+
+        await!(self.inner.request("transfer", Params::Map(args)))
     }
 }
