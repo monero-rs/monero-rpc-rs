@@ -1,20 +1,21 @@
 #![feature(async_await, await_macro, futures_api)]
 
-use core::{ops::Deref, str::FromStr};
+use core::ops::Deref;
 use failure::{format_err, Fallible};
 use futures::compat::*;
 //use jsonrpc_core::Error;
 //use jsonrpc_derive::rpc;
 use jsonrpc_core::types::*;
 use log::trace;
-use monero::{Address, PaymentId};
+use monero::{cryptonote::hash::Hash as CryptoNoteHash, Address, PaymentId};
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use serde_json::{json, Value};
 use std::collections::HashMap;
 use uuid::Uuid;
 
-pub trait HashType: FromStr<Err = rustc_hex::FromHexError> {
+pub trait HashType: Sized {
     fn bytes(&self) -> &[u8];
+    fn from_str(v: &str) -> Fallible<Self>;
 }
 
 macro_rules! hash_type {
@@ -27,6 +28,9 @@ macro_rules! hash_type {
             fn bytes(&self) -> &[u8] {
                 self.as_bytes()
             }
+            fn from_str(v: &str) -> Fallible<Self> {
+                Ok(v.parse()?)
+            }
         }
     };
 }
@@ -37,6 +41,27 @@ hash_type!(BlockHashingBlob, 76);
 impl HashType for PaymentId {
     fn bytes(&self) -> &[u8] {
         self.as_bytes()
+    }
+    fn from_str(v: &str) -> Fallible<Self> {
+        Ok(v.parse()?)
+    }
+}
+
+impl HashType for CryptoNoteHash {
+    fn bytes(&self) -> &[u8] {
+        self.as_bytes()
+    }
+    fn from_str(v: &str) -> Fallible<Self> {
+        Ok(v.parse()?)
+    }
+}
+
+impl HashType for Vec<u8> {
+    fn bytes(&self) -> &[u8] {
+        &*self
+    }
+    fn from_str(v: &str) -> Fallible<Self> {
+        Ok(hex::decode(v)?)
     }
 }
 
@@ -327,11 +352,25 @@ pub struct TransferData {
     pub amount: u128,
     pub fee: u128,
     pub multisig_txset: Vec<()>,
-    pub tx_blob: String,
-    pub tx_hash: String,
-    pub tx_key: String,
-    pub tx_metadata: String,
-    pub unsigned_txset: String,
+    pub tx_blob: HashString<Vec<u8>>,
+    pub tx_hash: HashString<CryptoNoteHash>,
+    pub tx_key: HashString<Vec<u8>>,
+    pub tx_metadata: HashString<Vec<u8>>,
+    pub unsigned_txset: HashString<Vec<u8>>,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct SubaddressAddressData {
+    pub address: Address,
+    pub address_index: u64,
+    pub label: String,
+    pub used: bool,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct AddressData {
+    pub address: Address,
+    pub addresses: Vec<SubaddressBalanceData>,
 }
 
 #[derive(Debug)]
@@ -354,14 +393,28 @@ impl WalletClient {
         await!(self.inner.request("get_balance", Params::Array(args)))
     }
 
-    pub async fn get_address(&self, account: u64, addresses: Option<Vec<u64>>) -> Fallible<()> {
+    pub async fn get_address(
+        &self,
+        account: u64,
+        addresses: Option<Vec<u64>>,
+    ) -> Fallible<AddressData> {
         let mut args = vec![];
-        args.push(account.into());
+        args.push(("account_index".into(), account.into()));
         if let Some(addresses) = addresses {
-            args.push(addresses.into());
+            args.push((
+                "address_index".into(),
+                addresses
+                    .into_iter()
+                    .map(Value::from)
+                    .collect::<Vec<_>>()
+                    .into(),
+            ));
         }
 
-        await!(self.inner.request("get_address", Params::Array(args)))
+        await!(self.inner.request(
+            "get_address".into(),
+            Params::Map(args.into_iter().collect())
+        ))
     }
 
     pub async fn transfer(
@@ -415,6 +468,10 @@ impl WalletClient {
         if let Some(do_not_relay) = do_not_relay {
             args["do_not_relay"] = do_not_relay.into();
         }
+
+        args["get_tx_key"] = true.into();
+        args["get_tx_hex"] = true.into();
+        args["get_tx_metadata"] = true.into();
 
         await!(self.inner.request("transfer", Params::Map(args)))
     }
