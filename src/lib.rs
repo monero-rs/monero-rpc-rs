@@ -360,7 +360,7 @@ pub struct TransferData {
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct SubaddressAddressData {
+pub struct SubaddressData {
     pub address: Address,
     pub address_index: u64,
     pub label: String,
@@ -370,7 +370,7 @@ pub struct SubaddressAddressData {
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct AddressData {
     pub address: Address,
-    pub addresses: Vec<SubaddressBalanceData>,
+    pub addresses: Vec<SubaddressData>,
 }
 
 #[derive(Debug)]
