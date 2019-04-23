@@ -17,4 +17,4 @@ monero = { git = "https://github.com/vorot93/monero-rs", features = ["serde"] }
 reqwest = "*"
 rustc-hex = "*"
 serde = { version = "1", features = ["derive"] }
-serde_json = "*"
+serde_json = { version = "*", features = ["arbitrary_precision"] }
