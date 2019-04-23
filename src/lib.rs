@@ -76,7 +76,6 @@ pub enum Status {
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct BlockCount {
     pub count: u128,
-    pub status: Status,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -88,8 +87,21 @@ pub struct BlockTemplate {
     pub height: u64,
     pub prev_hash: HashString<BlockHash>,
     pub reserved_offset: u64,
-    pub status: Status,
     pub untrusted: bool,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(tag = "status")]
+pub enum MoneroResult<T> {
+    OK(T),
+}
+
+impl<T> MoneroResult<T> {
+    pub fn into_inner(self) -> T {
+        match self {
+            MoneroResult::OK(v) => v,
+        }
+    }
 }
 
 //#[rpc]
@@ -172,8 +184,12 @@ impl Deref for RegtestDaemonClient {
 }
 
 impl DaemonClient {
-    pub async fn get_block_count(&self) -> Fallible<BlockCount> {
-        await!(self.inner.request("get_block_count", Params::Array(vec![])))
+    pub async fn get_block_count(&self) -> Fallible<u128> {
+        Ok(await!(self
+            .inner
+            .request::<MoneroResult<BlockCount>>("get_block_count", Params::Array(vec![])))?
+        .into_inner()
+        .count)
     }
 
     pub async fn on_get_block_hash(&self, height: u64) -> Fallible<BlockHash> {
@@ -189,13 +205,14 @@ impl DaemonClient {
         wallet_address: Address,
         reserve_size: u64,
     ) -> Fallible<BlockTemplate> {
-        await!(self.inner.request(
+        Ok(await!(self.inner.request::<MoneroResult<BlockTemplate>>(
             "get_block_template",
             Params::Array(vec![
                 serde_json::to_value(wallet_address).unwrap(),
                 reserve_size.into()
             ])
-        ))
+        ))?
+        .into_inner())
     }
 
     pub async fn submit_block(&self, block_blob_data: String) -> Fallible<String> {
@@ -213,7 +230,6 @@ impl DaemonClient {
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct GenerateBlocksResponse {
     pub height: u128,
-    pub status: Status,
 }
 
 impl RegtestDaemonClient {
@@ -222,23 +238,26 @@ impl RegtestDaemonClient {
         amount_of_blocks: u128,
         wallet_address: Address,
     ) -> Fallible<GenerateBlocksResponse> {
-        await!(self.inner.request(
-            "generateblocks",
-            Params::Map(
-                vec![
-                    (
-                        "amount_of_blocks".to_string(),
-                        serde_json::to_value(amount_of_blocks).unwrap()
-                    ),
-                    (
-                        "wallet_address".to_string(),
-                        serde_json::to_value(wallet_address).unwrap()
-                    ),
-                ]
-                .into_iter()
-                .collect()
-            )
-        ))
+        Ok(
+            await!(self.inner.request::<MoneroResult<GenerateBlocksResponse>>(
+                "generateblocks",
+                Params::Map(
+                    vec![
+                        (
+                            "amount_of_blocks".to_string(),
+                            serde_json::to_value(amount_of_blocks).unwrap()
+                        ),
+                        (
+                            "wallet_address".to_string(),
+                            serde_json::to_value(wallet_address).unwrap()
+                        ),
+                    ]
+                    .into_iter()
+                    .collect()
+                )
+            ))?
+            .into_inner(),
+        )
     }
 }
 
