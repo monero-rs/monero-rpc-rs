@@ -11,6 +11,7 @@ use monero::{Address, PaymentId};
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use serde_json::{json, Value};
 use std::collections::HashMap;
+use uuid::Uuid;
 
 pub trait HashType: FromStr<Err = rustc_hex::FromHexError> {
     fn bytes(&self) -> &[u8];
@@ -123,7 +124,7 @@ impl RpcClient {
             jsonrpc: Some(Version::V2),
             method: method.to_string(),
             params,
-            id: Id::Null,
+            id: Id::Str(Uuid::new_v4().to_string()),
         })
         .unwrap();
 

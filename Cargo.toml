@@ -18,3 +18,4 @@ reqwest = "*"
 rustc-hex = "*"
 serde = { version = "1", features = ["derive"] }
 serde_json = { version = "*", features = ["arbitrary_precision"] }
+uuid = { version = "*", features = ["v4"] }
