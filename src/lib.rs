@@ -75,7 +75,7 @@ pub enum Status {
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct BlockCount {
-    pub count: u128,
+    pub count: u64,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -184,7 +184,7 @@ impl Deref for RegtestDaemonClient {
 }
 
 impl DaemonClient {
-    pub async fn get_block_count(&self) -> Fallible<u128> {
+    pub async fn get_block_count(&self) -> Fallible<u64> {
         Ok(await!(self
             .inner
             .request::<MoneroResult<BlockCount>>("get_block_count", Params::Array(vec![])))?
@@ -229,13 +229,13 @@ impl DaemonClient {
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct GenerateBlocksResponse {
-    pub height: u128,
+    pub height: u64,
 }
 
 impl RegtestDaemonClient {
     pub async fn generate_blocks(
         &self,
-        amount_of_blocks: u128,
+        amount_of_blocks: u64,
         wallet_address: Address,
     ) -> Fallible<GenerateBlocksResponse> {
         Ok(
