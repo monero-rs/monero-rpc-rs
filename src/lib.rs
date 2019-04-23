@@ -1,6 +1,6 @@
 #![feature(async_await, await_macro, futures_api)]
 
-use core::str::FromStr;
+use core::{ops::Deref, str::FromStr};
 use failure::{format_err, Fallible};
 use futures::compat::*;
 //use jsonrpc_core::Error;
@@ -159,6 +159,17 @@ pub struct DaemonClient {
     inner: RpcClient,
 }
 
+#[derive(Debug)]
+pub struct RegtestDaemonClient(pub DaemonClient);
+
+impl Deref for RegtestDaemonClient {
+    type Target = DaemonClient;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
 impl DaemonClient {
     pub async fn get_block_count(&self) -> Fallible<BlockCount> {
         await!(self.inner.request("get_block_count", Params::Array(vec![])))
@@ -190,6 +201,43 @@ impl DaemonClient {
         await!(self
             .inner
             .request("submit_block", Params::Array(vec![block_blob_data.into()])))
+    }
+
+    /// Enable additional functions for regtest mode
+    pub fn regtest(self) -> RegtestDaemonClient {
+        RegtestDaemonClient(self)
+    }
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct GenerateBlocksResponse {
+    pub height: u128,
+    pub status: Status,
+}
+
+impl RegtestDaemonClient {
+    pub async fn generate_blocks(
+        &self,
+        amount_of_blocks: u128,
+        wallet_address: Address,
+    ) -> Fallible<GenerateBlocksResponse> {
+        await!(self.inner.request(
+            "generateblocks",
+            Params::Map(
+                vec![
+                    (
+                        "amount_of_blocks".to_string(),
+                        serde_json::to_value(amount_of_blocks).unwrap()
+                    ),
+                    (
+                        "wallet_address".to_string(),
+                        serde_json::to_value(wallet_address).unwrap()
+                    ),
+                ]
+                .into_iter()
+                .collect()
+            )
+        ))
     }
 }
 
