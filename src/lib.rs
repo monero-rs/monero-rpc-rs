@@ -1,5 +1,6 @@
 #![feature(async_await, await_macro, futures_api)]
 
+use core::str::FromStr;
 use failure::{format_err, Fallible};
 use futures::compat::*;
 //use jsonrpc_core::Error;
@@ -11,30 +12,19 @@ use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use serde_json::{json, Value};
 use std::collections::HashMap;
 
+pub trait HashType: FromStr<Err = rustc_hex::FromHexError> {
+    fn bytes(&self) -> &[u8];
+}
+
 macro_rules! hash_type {
     ($name:ident, $len:expr) => {
         fixed_hash::construct_fixed_hash! {
             pub struct $name($len);
         }
 
-        impl Serialize for $name {
-            fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-            where
-                S: serde::ser::Serializer,
-            {
-                serializer.serialize_str(&hex::encode(self.as_bytes()))
-            }
-        }
-
-        impl<'de> serde::Deserialize<'de> for $name {
-            fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-            where
-                D: serde::de::Deserializer<'de>,
-            {
-                let mut bytes = [0u8; $len];
-                let s = String::deserialize(deserializer)?;
-                hex::decode_to_slice(s, &mut bytes).map_err(serde::de::Error::custom)?;
-                Ok($name(bytes))
+        impl HashType for $name {
+            fn bytes(&self) -> &[u8] {
+                self.as_bytes()
             }
         }
     };
@@ -43,14 +33,37 @@ macro_rules! hash_type {
 hash_type!(BlockHash, 32);
 hash_type!(BlockHashingBlob, 76);
 
+impl HashType for PaymentId {
+    fn bytes(&self) -> &[u8] {
+        self.as_bytes()
+    }
+}
+
+#[derive(Clone, Debug)]
 pub struct HashString<T>(pub T);
 
-impl<T> Serialize for HashString<T> {
+impl<'a, T> Serialize for HashString<T>
+where
+    T: HashType,
+{
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: serde::ser::Serializer,
     {
-        serializer.serialize_str(&hex::encode(self.0.as_bytes()))
+        serializer.serialize_str(&hex::encode(self.0.bytes()))
+    }
+}
+
+impl<'de, T> Deserialize<'de> for HashString<T>
+where
+    T: HashType,
+{
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        let s = <&str>::deserialize(deserializer)?;
+        Ok(Self(T::from_str(s).map_err(serde::de::Error::custom)?))
     }
 }
 
@@ -67,12 +80,12 @@ pub struct BlockCount {
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct BlockTemplate {
-    pub blockhashing_blob: BlockHashingBlob,
+    pub blockhashing_blob: HashString<BlockHashingBlob>,
     pub blocktemplate_blob: String,
     pub difficulty: u64,
     pub expected_reward: u64,
     pub height: u64,
-    pub prev_hash: BlockHash,
+    pub prev_hash: HashString<BlockHash>,
     pub reserved_offset: u64,
     pub status: Status,
     pub untrusted: bool,
@@ -152,9 +165,11 @@ impl DaemonClient {
     }
 
     pub async fn on_get_block_hash(&self, height: u64) -> Fallible<BlockHash> {
-        await!(self
-            .inner
-            .request("on_get_block_hash", Params::Array(vec![height.into()])))
+        await!(self.inner.request::<HashString<BlockHash>>(
+            "on_get_block_hash",
+            Params::Array(vec![height.into()])
+        ))
+        .map(|v| v.0)
     }
 
     pub async fn get_block_template(
@@ -229,7 +244,12 @@ impl<'de> Deserialize<'de> for TransferPriority {
             1 => TransferPriority::Unimportant,
             2 => TransferPriority::Elevated,
             3 => TransferPriority::Priority,
-            other => return Err(serde::de::Error::custom("Invalid variant, expected 0-3")),
+            other => {
+                return Err(serde::de::Error::custom(format!(
+                    "Invalid variant {}, expected 0-3",
+                    other
+                )))
+            }
         })
     }
 }
@@ -321,7 +341,7 @@ impl WalletClient {
         }
 
         if let Some(payment_id) = payment_id {
-            args["payment_id"] = Value::String(hex::encode(payment_id.as_bytes()));
+            args["payment_id"] = serde_json::to_value(HashString(payment_id)).unwrap();
         }
 
         if let Some(do_not_relay) = do_not_relay {
