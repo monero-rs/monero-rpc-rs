@@ -1,4 +1,4 @@
-#![feature(async_await, await_macro, futures_api)]
+#![feature(async_await, await_macro)]
 
 use core::ops::Deref;
 use failure::{format_err, Fallible};
@@ -415,6 +415,25 @@ impl WalletClient {
             "get_address".into(),
             Params::Map(args.into_iter().collect())
         ))
+    }
+
+    pub async fn query_view_key(&self) -> Fallible<monero::PrivateKey> {
+        hash_type!(PK, 32);
+
+        #[derive(Deserialize)]
+        struct Rsp {
+            key: HashString<PK>,
+        }
+
+        await!(self.inner.request::<Rsp>(
+            "query_key".into(),
+            Params::Map(
+                vec![("key_type".into(), Value::String("view_key".into()))]
+                    .into_iter()
+                    .collect()
+            )
+        ))
+        .map(|rsp| monero::PrivateKey::from_slice(&rsp.key.0.as_bytes()).unwrap())
     }
 
     pub async fn transfer(
