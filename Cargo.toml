@@ -10,8 +10,6 @@ futures-preview = { version = "0.3.0-alpha.15", features = ["compat"] }
 fixed-hash = "0.3"
 hex = { git = "https://github.com/KokaKiwi/rust-hex" }
 jsonrpc-core = "*"
-jsonrpc-core-client = "*"
-jsonrpc-derive = "*"
 log = "*"
 monero = { git = "https://github.com/monero-rs/monero-rs", features = ["serde"] }
 reqwest = "*"
