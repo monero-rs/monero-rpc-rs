@@ -3,9 +3,9 @@
 use core::ops::Deref;
 use failure::{format_err, Fallible};
 use futures::compat::*;
-//use jsonrpc_core::Error;
-//use jsonrpc_derive::rpc;
 use jsonrpc_core::types::*;
+use jsonrpc_core::Error;
+use jsonrpc_derive::rpc;
 use log::trace;
 use monero::{cryptonote::hash::Hash as CryptoNoteHash, Address, PaymentId};
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
@@ -129,13 +129,19 @@ impl<T> MoneroResult<T> {
     }
 }
 
-//#[rpc]
-//pub trait Daemon {
-//    #[rpc(name = "get_block_count", returns = "BlockCount")]
-//    fn get_block_count(&self) -> Result<BlockCount, Error>;
-//    #[rpc(name = "on_get_block_hash", returns = "H256")]
-//    fn on_get_block_hash(&self, height: u64) -> Result<H256, Error>;
-//}
+#[rpc]
+pub trait Daemon {
+    #[rpc(name = "get_block_count", returns = "BlockCount")]
+    fn get_block_count(&self) -> Result<BlockCount, Error>;
+    #[rpc(name = "on_get_block_hash", returns = "HashString<BlockHash>")]
+    fn on_get_block_hash(&self, height: u64) -> Result<HashString<BlockHash>, Error>;
+    #[rpc(name = "get_block_template", returns = "BlockTemplate")]
+    fn get_block_template(
+        &self,
+        wallet_address: Address,
+        reserve_size: u64,
+    ) -> Result<BlockTemplate, Error>;
+}
 
 #[derive(Debug)]
 pub struct RpcClient {
