@@ -1,4 +1,4 @@
-#![feature(async_await, await_macro)]
+#![feature(async_await)]
 
 use core::ops::Deref;
 use failure::{format_err, Fallible};
@@ -159,15 +159,17 @@ impl RpcClient {
 
         trace!("Sending {} to {}", body, &addr);
 
-        let rsp = await!(await!(self
+        let rsp = self
             .client
             .post(&addr)
             .header("Content-Type", "application/json")
             .body(body)
             .send()
-            .compat())?
-        .json::<response::Output>()
-        .compat())?;
+            .compat()
+            .await?
+            .json::<response::Output>()
+            .compat()
+            .await?;
 
         let v = jsonrpc_core::Result::<Value>::from(rsp)
             .map_err(|e| format_err!("Code: {:?}, Message: {}", e.code, e.message))?;
@@ -202,19 +204,22 @@ impl Deref for RegtestDaemonClient {
 
 impl DaemonClient {
     pub async fn get_block_count(&self) -> Fallible<u64> {
-        Ok(await!(self
+        Ok(self
             .inner
-            .request::<MoneroResult<BlockCount>>("get_block_count", Params::Array(vec![])))?
-        .into_inner()
-        .count)
+            .request::<MoneroResult<BlockCount>>("get_block_count", Params::Array(vec![]))
+            .await?
+            .into_inner()
+            .count)
     }
 
     pub async fn on_get_block_hash(&self, height: u64) -> Fallible<BlockHash> {
-        await!(self.inner.request::<HashString<BlockHash>>(
-            "on_get_block_hash",
-            Params::Array(vec![height.into()])
-        ))
-        .map(|v| v.0)
+        self.inner
+            .request::<HashString<BlockHash>>(
+                "on_get_block_hash",
+                Params::Array(vec![height.into()]),
+            )
+            .await
+            .map(|v| v.0)
     }
 
     pub async fn get_block_template(
@@ -222,20 +227,23 @@ impl DaemonClient {
         wallet_address: Address,
         reserve_size: u64,
     ) -> Fallible<BlockTemplate> {
-        Ok(await!(self.inner.request::<MoneroResult<BlockTemplate>>(
-            "get_block_template",
-            Params::Array(vec![
-                serde_json::to_value(wallet_address).unwrap(),
-                reserve_size.into()
-            ])
-        ))?
-        .into_inner())
+        Ok(self
+            .inner
+            .request::<MoneroResult<BlockTemplate>>(
+                "get_block_template",
+                Params::Array(vec![
+                    serde_json::to_value(wallet_address).unwrap(),
+                    reserve_size.into(),
+                ]),
+            )
+            .await?
+            .into_inner())
     }
 
     pub async fn submit_block(&self, block_blob_data: String) -> Fallible<String> {
-        await!(self
-            .inner
-            .request("submit_block", Params::Array(vec![block_blob_data.into()])))
+        self.inner
+            .request("submit_block", Params::Array(vec![block_blob_data.into()]))
+            .await
     }
 
     /// Enable additional functions for regtest mode
@@ -255,26 +263,27 @@ impl RegtestDaemonClient {
         amount_of_blocks: u64,
         wallet_address: Address,
     ) -> Fallible<GenerateBlocksResponse> {
-        Ok(
-            await!(self.inner.request::<MoneroResult<GenerateBlocksResponse>>(
+        Ok(self
+            .inner
+            .request::<MoneroResult<GenerateBlocksResponse>>(
                 "generateblocks",
                 Params::Map(
                     vec![
                         (
                             "amount_of_blocks".to_string(),
-                            serde_json::to_value(amount_of_blocks).unwrap()
+                            serde_json::to_value(amount_of_blocks).unwrap(),
                         ),
                         (
                             "wallet_address".to_string(),
-                            serde_json::to_value(wallet_address).unwrap()
+                            serde_json::to_value(wallet_address).unwrap(),
                         ),
                     ]
                     .into_iter()
-                    .collect()
-                )
-            ))?
-            .into_inner(),
-        )
+                    .collect(),
+                ),
+            )
+            .await?
+            .into_inner())
     }
 }
 
@@ -382,7 +391,7 @@ impl WalletClient {
             args.push(addresses.into());
         }
 
-        await!(self.inner.request("get_balance", Params::Array(args)))
+        self.inner.request("get_balance", Params::Array(args)).await
     }
 
     pub async fn get_address(
@@ -403,9 +412,9 @@ impl WalletClient {
             ));
         }
 
-        await!(self
-            .inner
-            .request("get_address", Params::Map(args.into_iter().collect())))
+        self.inner
+            .request("get_address", Params::Map(args.into_iter().collect()))
+            .await
     }
 
     pub async fn query_view_key(&self) -> Fallible<monero::PrivateKey> {
@@ -416,14 +425,17 @@ impl WalletClient {
             key: HashString<PK>,
         }
 
-        let rsp = await!(self.inner.request::<Rsp>(
-            "query_key",
-            Params::Map(
-                vec![("key_type".into(), Value::String("view_key".into()))]
-                    .into_iter()
-                    .collect()
+        let rsp = self
+            .inner
+            .request::<Rsp>(
+                "query_key",
+                Params::Map(
+                    vec![("key_type".into(), Value::String("view_key".into()))]
+                        .into_iter()
+                        .collect(),
+                ),
             )
-        ))?;
+            .await?;
 
         Ok(monero::PrivateKey::from_slice(&rsp.key.0.as_bytes())?)
     }
@@ -485,6 +497,6 @@ impl WalletClient {
         args["get_tx_hex"] = true.into();
         args["get_tx_metadata"] = true.into();
 
-        await!(self.inner.request("transfer", Params::Map(args)))
+        self.inner.request("transfer", Params::Map(args)).await
     }
 }
