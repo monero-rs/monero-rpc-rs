@@ -143,8 +143,10 @@ impl RpcClient {
 
     async fn request<T>(&self, method: &'static str, params: Params) -> Fallible<T>
     where
-        for<'de> T: Deserialize<'de>,
+        T: for<'de> Deserialize<'de>,
     {
+        let method = method.to_string();
+
         let addr = format!("{}/json_rpc", &self.addr);
 
         let body = serde_json::to_string(&MethodCall {
@@ -401,10 +403,9 @@ impl WalletClient {
             ));
         }
 
-        await!(self.inner.request(
-            "get_address".into(),
-            Params::Map(args.into_iter().collect())
-        ))
+        await!(self
+            .inner
+            .request("get_address", Params::Map(args.into_iter().collect())))
     }
 
     pub async fn query_view_key(&self) -> Fallible<monero::PrivateKey> {
@@ -415,17 +416,19 @@ impl WalletClient {
             key: HashString<PK>,
         }
 
-        await!(self.inner.request::<Rsp>(
-            "query_key".into(),
+        let rsp = await!(self.inner.request::<Rsp>(
+            "query_key",
             Params::Map(
                 vec![("key_type".into(), Value::String("view_key".into()))]
                     .into_iter()
                     .collect()
             )
-        ))
-        .map(|rsp| monero::PrivateKey::from_slice(&rsp.key.0.as_bytes()).unwrap())
+        ))?;
+
+        Ok(monero::PrivateKey::from_slice(&rsp.key.0.as_bytes())?)
     }
 
+    #[allow(clippy::too_many_arguments)]
     pub async fn transfer(
         &self,
         destinations: HashMap<Address, u128>,
@@ -444,7 +447,7 @@ impl WalletClient {
             .map(|(address, amount)| json!({"address": address, "amount": amount}))
             .collect::<Vec<Value>>()
             .into();
-        args["priority"] = serde_json::to_value(priority).unwrap();
+        args["priority"] = serde_json::to_value(priority)?;
 
         if let Some(account_index) = account_index {
             args["account_index"] = account_index.into();
@@ -453,7 +456,7 @@ impl WalletClient {
         if let Some(subaddr_indices) = subaddr_indices {
             args["subaddr_indices"] = subaddr_indices
                 .into_iter()
-                .map(|v| v.into())
+                .map(From::from)
                 .collect::<Vec<Value>>()
                 .into();
         }
@@ -471,7 +474,7 @@ impl WalletClient {
         }
 
         if let Some(payment_id) = payment_id {
-            args["payment_id"] = serde_json::to_value(HashString(payment_id)).unwrap();
+            args["payment_id"] = serde_json::to_value(HashString(payment_id))?;
         }
 
         if let Some(do_not_relay) = do_not_relay {
