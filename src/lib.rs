@@ -8,7 +8,7 @@ use jsonrpc_core::types::*;
 use log::trace;
 use monero::{cryptonote::hash::Hash as CryptoNoteHash, Address, PaymentId};
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
-use serde_json::{json, Value};
+use serde_json::{json, Map, Value};
 use std::collections::HashMap;
 use std::convert::TryFrom;
 use uuid::Uuid;
@@ -441,6 +441,33 @@ impl WalletClient {
         self.inner
             .request("get_address", Params::Map(args.into_iter().collect()))
             .await
+    }
+
+    pub async fn create_address(
+        &self,
+        account_index: u64,
+        label: Option<String>,
+    ) -> Fallible<(Address, u64)> {
+        #[derive(Deserialize)]
+        struct Rsp {
+            address: Address,
+            address_index: u64,
+        }
+
+        let mut params = Map::new();
+
+        params.insert("account_index".into(), Value::Number(account_index.into()));
+
+        if let Some(s) = label {
+            params.insert("label".into(), Value::String(s));
+        }
+
+        let rsp = self
+            .inner
+            .request::<Rsp>("create_address", Params::Map(params.into()))
+            .await?;
+
+        Ok((rsp.address, rsp.address_index))
     }
 
     pub async fn query_view_key(&self) -> Fallible<monero::PrivateKey> {
