@@ -5,6 +5,7 @@ authors = ["Artem Vorotnikov <artem@vorotnikov.me>"]
 edition = "2018"
 
 [dependencies]
+chrono = { version = "*", features = ["serde"] }
 failure = "*"
 futures-preview = { version = "0.3.0-alpha.16", features = ["compat"] }
 fixed-hash = "0.3"

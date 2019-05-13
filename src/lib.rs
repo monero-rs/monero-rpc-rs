@@ -1,5 +1,6 @@
 #![feature(async_await)]
 
+use chrono::prelude::*;
 use core::ops::Deref;
 use failure::{format_err, Fallible};
 use futures::compat::*;
@@ -202,6 +203,24 @@ impl Deref for RegtestDaemonClient {
     }
 }
 
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct LastBlockHeaderResponse {
+    pub block_size: u64,
+    pub depth: u64,
+    pub difficulty: u64,
+    pub hash: HashString<BlockHash>,
+    pub height: u64,
+    pub major_version: u64,
+    pub minor_version: u64,
+    pub nonce: u32,
+    pub num_txes: u64,
+    pub orphan_status: bool,
+    pub prev_hash: HashString<BlockHash>,
+    pub reward: u128,
+    #[serde(with = "chrono::serde::ts_seconds")]
+    pub timestamp: DateTime<Utc>,
+}
+
 impl DaemonClient {
     pub async fn get_block_count(&self) -> Fallible<u64> {
         Ok(self
@@ -243,6 +262,12 @@ impl DaemonClient {
     pub async fn submit_block(&self, block_blob_data: String) -> Fallible<String> {
         self.inner
             .request("submit_block", Params::Array(vec![block_blob_data.into()]))
+            .await
+    }
+
+    pub async fn get_last_block_header(&self) -> Fallible<LastBlockHeaderResponse> {
+        self.inner
+            .request("get_last_block_header", Params::None)
             .await
     }
 
