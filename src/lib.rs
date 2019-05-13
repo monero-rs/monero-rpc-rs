@@ -10,6 +10,7 @@ use monero::{cryptonote::hash::Hash as CryptoNoteHash, Address, PaymentId};
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use serde_json::{json, Value};
 use std::collections::HashMap;
+use std::convert::TryFrom;
 use uuid::Uuid;
 
 pub trait HashType: Sized {
@@ -523,5 +524,19 @@ impl WalletClient {
         args["get_tx_metadata"] = true.into();
 
         self.inner.request("transfer", Params::Map(args)).await
+    }
+
+    pub async fn get_version(&self) -> Fallible<(u16, u16)> {
+        #[derive(Deserialize)]
+        struct Version {
+            version: u32,
+        }
+
+        let version: Version = self.inner.request("get_version", Params::None).await?;
+
+        let major = version.version >> 16;
+        let minor = version.version - (major << 16);
+
+        Ok((u16::try_from(major)?, u16::try_from(minor)?))
     }
 }
