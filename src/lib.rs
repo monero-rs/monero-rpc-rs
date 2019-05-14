@@ -7,7 +7,7 @@ use futures::compat::*;
 use jsonrpc_core::types::*;
 use log::trace;
 use monero::{cryptonote::hash::Hash as CryptoNoteHash, Address, PaymentId};
-use serde::{Deserialize, Deserializer, Serialize, Serializer};
+use serde::{de::IgnoredAny, Deserialize, Deserializer, Serialize, Serializer};
 use serde_json::{json, Map, Value};
 use std::collections::HashMap;
 use std::convert::TryFrom;
@@ -468,6 +468,29 @@ impl WalletClient {
             .await?;
 
         Ok((rsp.address, rsp.address_index))
+    }
+
+    pub async fn label_address(
+        &self,
+        account_index: u64,
+        address_index: u64,
+        label: String,
+    ) -> Fallible<()> {
+        let mut params = Map::new();
+        params.insert(
+            "index".into(),
+            json!({
+                "major": account_index,
+                "minor": address_index,
+            }),
+        );
+        params.insert("label".into(), label.into());
+
+        self.inner
+            .request::<IgnoredAny>("label_address", Params::Map(params))
+            .await?;
+
+        Ok(())
     }
 
     pub async fn query_view_key(&self) -> Fallible<monero::PrivateKey> {
