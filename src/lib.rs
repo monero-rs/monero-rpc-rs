@@ -443,6 +443,29 @@ impl WalletClient {
             .await
     }
 
+    pub async fn get_address_index(&self, address: Address) -> Fallible<(u64, u64)> {
+        #[derive(Deserialize)]
+        struct Idx {
+            major: u64,
+            minor: u64,
+        }
+
+        #[derive(Deserialize)]
+        struct Rsp {
+            index: Idx,
+        }
+
+        let mut params = Map::new();
+        params.insert("address".into(), address.to_string().into());
+
+        let rsp = self
+            .inner
+            .request::<Rsp>("get_address_index", Params::Map(params.into()))
+            .await?;
+
+        Ok((rsp.index.major, rsp.index.minor))
+    }
+
     pub async fn create_address(
         &self,
         account_index: u64,
