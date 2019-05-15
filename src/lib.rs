@@ -527,6 +527,15 @@ impl WalletClient {
         Ok(())
     }
 
+    pub async fn get_payments(&self, payment_id: PaymentId) -> Fallible<Vec<Payment>> {
+        let mut params = Map::new();
+        params.insert("payment_id".into(), payment_id.to_string().into());
+
+        self.inner
+            .request::<Vec<Payment>>("get_payments", Params::Map(params))
+            .await
+    }
+
     pub async fn get_bulk_payments(
         &self,
         payment_ids: Vec<PaymentId>,
