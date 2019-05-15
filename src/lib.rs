@@ -395,6 +395,23 @@ pub struct SubaddressData {
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct SubaddressIndex {
+    pub major: u64,
+    pub minor: u64,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct Payment {
+    pub payment_id: HashString<PaymentId>,
+    pub tx_hash: HashString<CryptoNoteHash>,
+    pub amount: u64,
+    pub block_height: u64,
+    pub unlock_time: u64,
+    pub subaddr_index: SubaddressIndex,
+    pub address: Address,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct AddressData {
     pub address: Address,
     pub addresses: Vec<SubaddressData>,
@@ -445,14 +462,8 @@ impl WalletClient {
 
     pub async fn get_address_index(&self, address: Address) -> Fallible<(u64, u64)> {
         #[derive(Deserialize)]
-        struct Idx {
-            major: u64,
-            minor: u64,
-        }
-
-        #[derive(Deserialize)]
         struct Rsp {
-            index: Idx,
+            index: SubaddressIndex,
         }
 
         let mut params = Map::new();
@@ -502,9 +513,9 @@ impl WalletClient {
         let mut params = Map::new();
         params.insert(
             "index".into(),
-            json!({
-                "major": account_index,
-                "minor": address_index,
+            json!(SubaddressIndex {
+                major: account_index,
+                minor: address_index,
             }),
         );
         params.insert("label".into(), label.into());
@@ -514,6 +525,26 @@ impl WalletClient {
             .await?;
 
         Ok(())
+    }
+
+    pub async fn get_bulk_payments(
+        &self,
+        payment_ids: Vec<PaymentId>,
+        min_block_height: u64,
+    ) -> Fallible<Vec<Payment>> {
+        let mut params = Map::new();
+        params.insert(
+            "payment_ids".into(),
+            json!(payment_ids
+                .into_iter()
+                .map(|s| s.to_string())
+                .collect::<Vec<_>>()),
+        );
+        params.insert("min_block_height".into(), min_block_height.into());
+
+        self.inner
+            .request::<Vec<Payment>>("get_bulk_payments", Params::Map(params))
+            .await
     }
 
     pub async fn query_view_key(&self) -> Fallible<monero::PrivateKey> {
