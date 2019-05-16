@@ -417,6 +417,17 @@ pub struct AddressData {
     pub addresses: Vec<SubaddressData>,
 }
 
+#[derive(Clone, Debug, Default)]
+pub struct TransferOptions {
+    pub account_index: Option<u64>,
+    pub subaddr_indices: Option<Vec<u64>>,
+    pub mixin: Option<u64>,
+    pub ring_size: Option<u64>,
+    pub unlock_time: Option<u64>,
+    pub payment_id: Option<PaymentId>,
+    pub do_not_relay: Option<bool>,
+}
+
 #[derive(Debug)]
 pub struct WalletClient {
     inner: RpcClient,
@@ -579,18 +590,11 @@ impl WalletClient {
         Ok(monero::PrivateKey::from_slice(&rsp.key.0.as_bytes())?)
     }
 
-    #[allow(clippy::too_many_arguments)]
     pub async fn transfer(
         &self,
         destinations: HashMap<Address, u128>,
-        account_index: Option<u64>,
-        subaddr_indices: Option<Vec<u64>>,
         priority: TransferPriority,
-        mixin: Option<u64>,
-        ring_size: Option<u64>,
-        unlock_time: Option<u64>,
-        payment_id: Option<PaymentId>,
-        do_not_relay: Option<bool>,
+        options: TransferOptions,
     ) -> Fallible<TransferData> {
         let mut args = serde_json::Map::default();
         args["destinations"] = destinations
@@ -600,11 +604,11 @@ impl WalletClient {
             .into();
         args["priority"] = serde_json::to_value(priority)?;
 
-        if let Some(account_index) = account_index {
+        if let Some(account_index) = options.account_index {
             args["account_index"] = account_index.into();
         }
 
-        if let Some(subaddr_indices) = subaddr_indices {
+        if let Some(subaddr_indices) = options.subaddr_indices {
             args["subaddr_indices"] = subaddr_indices
                 .into_iter()
                 .map(From::from)
@@ -612,23 +616,23 @@ impl WalletClient {
                 .into();
         }
 
-        if let Some(mixin) = mixin {
+        if let Some(mixin) = options.mixin {
             args["mixin"] = mixin.into();
         }
 
-        if let Some(ring_size) = ring_size {
+        if let Some(ring_size) = options.ring_size {
             args["ring_size"] = ring_size.into();
         }
 
-        if let Some(unlock_time) = unlock_time {
+        if let Some(unlock_time) = options.unlock_time {
             args["unlock_time"] = unlock_time.into();
         }
 
-        if let Some(payment_id) = payment_id {
+        if let Some(payment_id) = options.payment_id {
             args["payment_id"] = serde_json::to_value(HashString(payment_id))?;
         }
 
-        if let Some(do_not_relay) = do_not_relay {
+        if let Some(do_not_relay) = options.do_not_relay {
             args["do_not_relay"] = do_not_relay.into();
         }
 
