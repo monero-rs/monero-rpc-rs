@@ -438,6 +438,13 @@ pub struct TransferOptions {
     pub do_not_relay: Option<bool>,
 }
 
+#[derive(Clone, Debug)]
+pub struct SignedTransferOutput {
+    pub signed_txset: Vec<u8>,
+    pub tx_hash_list: Vec<CryptoNoteHash>,
+    pub tx_raw_list: Vec<Vec<u8>>,
+}
+
 #[derive(Debug)]
 pub struct WalletClient {
     inner: RpcClient,
@@ -651,6 +658,39 @@ impl WalletClient {
         args["get_tx_metadata"] = true.into();
 
         self.inner.request("transfer", Params::Map(args)).await
+    }
+
+    pub async fn sign_transfer(&self, unsigned_txset: Vec<u8>) -> Fallible<SignedTransferOutput> {
+        #[derive(Deserialize)]
+        struct Rsp {
+            signed_txset: HashString<Vec<u8>>,
+            tx_hash_list: Vec<HashString<CryptoNoteHash>>,
+            tx_raw_list: Vec<HashString<Vec<u8>>>,
+        }
+
+        impl From<Rsp> for SignedTransferOutput {
+            fn from(value: Rsp) -> Self {
+                Self {
+                    signed_txset: value.signed_txset.0,
+                    tx_hash_list: value.tx_hash_list.into_iter().map(|v| v.0).collect(),
+                    tx_raw_list: value.tx_raw_list.into_iter().map(|v| v.0).collect(),
+                }
+            }
+        }
+
+        let args = std::iter::empty()
+            .chain(Some((
+                "unsigned_txset",
+                serde_json::to_value(HashString(unsigned_txset)).unwrap(),
+            )))
+            .chain(Some(("export_raw", true.into())))
+            .map(|(k, v)| (k.to_string(), v))
+            .collect();
+
+        self.inner
+            .request::<Rsp>("sign_transfer", Params::Map(args))
+            .await
+            .map(From::from)
     }
 
     pub async fn get_version(&self) -> Fallible<(u16, u16)> {
