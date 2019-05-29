@@ -11,6 +11,7 @@ use serde::{de::IgnoredAny, Deserialize, Deserializer, Serialize, Serializer};
 use serde_json::{json, Map, Value};
 use std::collections::HashMap;
 use std::convert::TryFrom;
+use std::fmt::{self, Display};
 use uuid::Uuid;
 
 pub trait HashType: Sized {
@@ -68,6 +69,15 @@ impl HashType for Vec<u8> {
 #[derive(Clone, Debug)]
 pub struct HashString<T>(pub T);
 
+impl<T> Display for HashString<T>
+where
+    T: HashType,
+{
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", hex::encode(self.0.bytes()))
+    }
+}
+
 impl<'a, T> Serialize for HashString<T>
 where
     T: HashType,
@@ -76,7 +86,7 @@ where
     where
         S: serde::ser::Serializer,
     {
-        serializer.serialize_str(&hex::encode(self.0.bytes()))
+        serializer.serialize_str(&self.to_string())
     }
 }
 
