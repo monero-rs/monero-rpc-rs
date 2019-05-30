@@ -1,18 +1,23 @@
 #![feature(async_await)]
 
-use chrono::prelude::*;
-use core::ops::Deref;
-use failure::{format_err, Fallible};
-use futures::compat::*;
-use jsonrpc_core::types::*;
-use log::trace;
-use monero::{cryptonote::hash::Hash as CryptoNoteHash, Address, PaymentId};
-use serde::{de::IgnoredAny, Deserialize, Deserializer, Serialize, Serializer};
-use serde_json::{json, Map, Value};
-use std::collections::HashMap;
-use std::convert::TryFrom;
-use std::fmt::{self, Display};
-use uuid::Uuid;
+use {
+    chrono::prelude::*,
+    core::ops::Deref,
+    failure::{format_err, Fallible},
+    futures::compat::*,
+    jsonrpc_core::types::*,
+    log::trace,
+    monero::{cryptonote::hash::Hash as CryptoNoteHash, Address, PaymentId},
+    serde::{de::IgnoredAny, Deserialize, Deserializer, Serialize, Serializer},
+    serde_json::{json, Value},
+    std::{
+        collections::HashMap,
+        convert::TryFrom,
+        fmt::{self, Display},
+        iter::{empty, once},
+    },
+    uuid::Uuid,
+};
 
 pub trait HashType: Sized {
     fn bytes(&self) -> &[u8];
@@ -139,6 +144,38 @@ impl<T> MoneroResult<T> {
     }
 }
 
+enum RpcParams {
+    Array(Box<dyn Iterator<Item = Value> + Send>),
+    Map(Box<dyn Iterator<Item = (&'static str, Value)> + Send>),
+    None,
+}
+
+impl RpcParams {
+    fn array<A>(v: A) -> Self
+    where
+        A: Iterator<Item = Value> + Send + 'static,
+    {
+        RpcParams::Array(Box::new(v))
+    }
+
+    fn map<M>(v: M) -> Self
+    where
+        M: Iterator<Item = (&'static str, Value)> + Send + 'static,
+    {
+        RpcParams::Map(Box::new(v))
+    }
+}
+
+impl From<RpcParams> for Params {
+    fn from(value: RpcParams) -> Self {
+        match value {
+            RpcParams::Map(v) => Params::Map(v.map(|(k, v)| (k.to_string(), v)).collect()),
+            RpcParams::Array(v) => Params::Array(v.collect()),
+            RpcParams::None => Params::None,
+        }
+    }
+}
+
 #[derive(Debug)]
 pub struct RpcClient {
     client: reqwest::r#async::Client,
@@ -153,10 +190,12 @@ impl RpcClient {
         }
     }
 
-    async fn request<T>(&self, method: &'static str, params: Params) -> Fallible<T>
+    async fn request<T>(&self, method: &'static str, params: RpcParams) -> Fallible<T>
     where
         T: for<'de> Deserialize<'de>,
     {
+        let params = params.into();
+
         let method = method.to_string();
 
         let addr = format!("{}/json_rpc", &self.addr);
@@ -236,7 +275,7 @@ impl DaemonClient {
     pub async fn get_block_count(&self) -> Fallible<u64> {
         Ok(self
             .inner
-            .request::<MoneroResult<BlockCount>>("get_block_count", Params::Array(vec![]))
+            .request::<MoneroResult<BlockCount>>("get_block_count", RpcParams::array(empty()))
             .await?
             .into_inner()
             .count)
@@ -246,7 +285,7 @@ impl DaemonClient {
         self.inner
             .request::<HashString<BlockHash>>(
                 "on_get_block_hash",
-                Params::Array(vec![height.into()]),
+                RpcParams::array(once(height.into())),
             )
             .await
             .map(|v| v.0)
@@ -261,10 +300,11 @@ impl DaemonClient {
             .inner
             .request::<MoneroResult<BlockTemplate>>(
                 "get_block_template",
-                Params::Array(vec![
-                    serde_json::to_value(wallet_address).unwrap(),
-                    reserve_size.into(),
-                ]),
+                RpcParams::array(
+                    empty()
+                        .chain(once(serde_json::to_value(wallet_address).unwrap()))
+                        .chain(once(reserve_size.into())),
+                ),
             )
             .await?
             .into_inner())
@@ -272,13 +312,16 @@ impl DaemonClient {
 
     pub async fn submit_block(&self, block_blob_data: String) -> Fallible<String> {
         self.inner
-            .request("submit_block", Params::Array(vec![block_blob_data.into()]))
+            .request(
+                "submit_block",
+                RpcParams::array(once(block_blob_data.into())),
+            )
             .await
     }
 
     pub async fn get_last_block_header(&self) -> Fallible<LastBlockHeaderResponse> {
         self.inner
-            .request("get_last_block_header", Params::None)
+            .request("get_last_block_header", RpcParams::None)
             .await
     }
 
@@ -299,24 +342,21 @@ impl RegtestDaemonClient {
         amount_of_blocks: u64,
         wallet_address: Address,
     ) -> Fallible<GenerateBlocksResponse> {
+        let params = empty()
+            .chain(once((
+                "amount_of_blocks",
+                serde_json::to_value(amount_of_blocks).unwrap(),
+            )))
+            .chain(once((
+                "wallet_address",
+                serde_json::to_value(wallet_address).unwrap(),
+            )));
+
         Ok(self
             .inner
             .request::<MoneroResult<GenerateBlocksResponse>>(
                 "generateblocks",
-                Params::Map(
-                    vec![
-                        (
-                            "amount_of_blocks".to_string(),
-                            serde_json::to_value(amount_of_blocks).unwrap(),
-                        ),
-                        (
-                            "wallet_address".to_string(),
-                            serde_json::to_value(wallet_address).unwrap(),
-                        ),
-                    ]
-                    .into_iter()
-                    .collect(),
-                ),
+                RpcParams::map(params),
             )
             .await?
             .into_inner())
@@ -456,13 +496,13 @@ impl WalletClient {
         account: u64,
         addresses: Option<Vec<u64>>,
     ) -> Fallible<BalanceData> {
-        let mut args = vec![];
-        args.push(account.into());
-        if let Some(addresses) = addresses {
-            args.push(addresses.into());
-        }
+        let params = empty()
+            .chain(once(account.into()))
+            .chain(addresses.map(Value::from));
 
-        self.inner.request("get_balance", Params::Array(args)).await
+        self.inner
+            .request("get_balance", RpcParams::array(params))
+            .await
     }
 
     pub async fn get_address(
@@ -470,21 +510,17 @@ impl WalletClient {
         account: u64,
         addresses: Option<Vec<u64>>,
     ) -> Fallible<AddressData> {
-        let mut args = vec![];
-        args.push(("account_index".into(), account.into()));
-        if let Some(addresses) = addresses {
-            args.push((
-                "address_index".into(),
-                addresses
-                    .into_iter()
-                    .map(Value::from)
-                    .collect::<Vec<_>>()
-                    .into(),
-            ));
-        }
+        let params = empty()
+            .chain(once(("account_index", account.into())))
+            .chain(addresses.map(|v| {
+                (
+                    "address_index".into(),
+                    v.into_iter().map(Value::from).collect::<Vec<_>>().into(),
+                )
+            }));
 
         self.inner
-            .request("get_address", Params::Map(args.into_iter().collect()))
+            .request("get_address", RpcParams::map(params))
             .await
     }
 
@@ -494,12 +530,11 @@ impl WalletClient {
             index: SubaddressIndex,
         }
 
-        let mut params = Map::new();
-        params.insert("address".into(), address.to_string().into());
+        let params = once(("address", address.to_string().into()));
 
         let rsp = self
             .inner
-            .request::<Rsp>("get_address_index", Params::Map(params.into()))
+            .request::<Rsp>("get_address_index", RpcParams::map(params))
             .await?;
 
         Ok((rsp.index.major, rsp.index.minor))
@@ -516,17 +551,13 @@ impl WalletClient {
             address_index: u64,
         }
 
-        let mut params = Map::new();
-
-        params.insert("account_index".into(), Value::Number(account_index.into()));
-
-        if let Some(s) = label {
-            params.insert("label".into(), Value::String(s));
-        }
+        let params = empty()
+            .chain(once(("account_index", Value::Number(account_index.into()))))
+            .chain(label.map(|v| ("label", Value::String(v))));
 
         let rsp = self
             .inner
-            .request::<Rsp>("create_address", Params::Map(params.into()))
+            .request::<Rsp>("create_address", RpcParams::map(params))
             .await?;
 
         Ok((rsp.address, rsp.address_index))
@@ -538,29 +569,28 @@ impl WalletClient {
         address_index: u64,
         label: String,
     ) -> Fallible<()> {
-        let mut params = Map::new();
-        params.insert(
-            "index".into(),
-            json!(SubaddressIndex {
-                major: account_index,
-                minor: address_index,
-            }),
-        );
-        params.insert("label".into(), label.into());
+        let params = empty()
+            .chain(once((
+                "index".into(),
+                json!(SubaddressIndex {
+                    major: account_index,
+                    minor: address_index,
+                }),
+            )))
+            .chain(once(("label", label.into())));
 
         self.inner
-            .request::<IgnoredAny>("label_address", Params::Map(params))
+            .request::<IgnoredAny>("label_address", RpcParams::map(params))
             .await?;
 
         Ok(())
     }
 
     pub async fn get_payments(&self, payment_id: PaymentId) -> Fallible<Vec<Payment>> {
-        let mut params = Map::new();
-        params.insert("payment_id".into(), payment_id.to_string().into());
+        let params = empty().chain(once(("payment_id", payment_id.to_string().into())));
 
         self.inner
-            .request::<Vec<Payment>>("get_payments", Params::Map(params))
+            .request::<Vec<Payment>>("get_payments", RpcParams::map(params))
             .await
     }
 
@@ -569,18 +599,19 @@ impl WalletClient {
         payment_ids: Vec<PaymentId>,
         min_block_height: u64,
     ) -> Fallible<Vec<Payment>> {
-        let mut params = Map::new();
-        params.insert(
-            "payment_ids".into(),
-            json!(payment_ids
-                .into_iter()
-                .map(|s| s.to_string())
-                .collect::<Vec<_>>()),
-        );
-        params.insert("min_block_height".into(), min_block_height.into());
+        let params = empty()
+            .chain(once((
+                "payment_ids",
+                payment_ids
+                    .into_iter()
+                    .map(|s| s.to_string())
+                    .collect::<Vec<_>>()
+                    .into(),
+            )))
+            .chain(once(("min_block_height", min_block_height.into())));
 
         self.inner
-            .request::<Vec<Payment>>("get_bulk_payments", Params::Map(params))
+            .request::<Vec<Payment>>("get_bulk_payments", RpcParams::map(params))
             .await
     }
 
@@ -592,16 +623,11 @@ impl WalletClient {
             key: HashString<PK>,
         }
 
+        let params = empty().chain(once(("key_type", Value::from("view_key"))));
+
         let rsp = self
             .inner
-            .request::<Rsp>(
-                "query_key",
-                Params::Map(
-                    vec![("key_type".into(), Value::String("view_key".into()))]
-                        .into_iter()
-                        .collect(),
-                ),
-            )
+            .request::<Rsp>("query_key", RpcParams::map(params))
             .await?;
 
         Ok(monero::PrivateKey::from_slice(&rsp.key.0.as_bytes())?)
@@ -613,51 +639,37 @@ impl WalletClient {
         priority: TransferPriority,
         options: TransferOptions,
     ) -> Fallible<TransferData> {
-        let mut args = serde_json::Map::default();
-        args["destinations"] = destinations
-            .into_iter()
-            .map(|(address, amount)| json!({"address": address, "amount": amount}))
-            .collect::<Vec<Value>>()
-            .into();
-        args["priority"] = serde_json::to_value(priority)?;
+        let params = empty()
+            .chain(once((
+                "destinations",
+                destinations
+                    .into_iter()
+                    .map(|(address, amount)| json!({"address": address, "amount": amount}))
+                    .collect::<Vec<Value>>()
+                    .into(),
+            )))
+            .chain(once(("priority", serde_json::to_value(priority)?)))
+            .chain(options.account_index.map(|v| ("account_index", v.into())))
+            .chain(options.subaddr_indices.map(|v| {
+                (
+                    "subaddr_indices",
+                    v.into_iter().map(From::from).collect::<Vec<Value>>().into(),
+                )
+            }))
+            .chain(options.mixin.map(|v| ("mixin", v.into())))
+            .chain(options.ring_size.map(|v| ("ring_size", v.into())))
+            .chain(options.unlock_time.map(|v| ("unlock_time", v.into())))
+            .chain(
+                options
+                    .payment_id
+                    .map(|v| ("payment_id", serde_json::to_value(HashString(v)).unwrap())),
+            )
+            .chain(options.do_not_relay.map(|v| ("do_not_relay", v.into())))
+            .chain(once(("get_tx_key", true.into())))
+            .chain(once(("get_tx_hex", true.into())))
+            .chain(once(("get_tx_metadata", true.into())));
 
-        if let Some(account_index) = options.account_index {
-            args["account_index"] = account_index.into();
-        }
-
-        if let Some(subaddr_indices) = options.subaddr_indices {
-            args["subaddr_indices"] = subaddr_indices
-                .into_iter()
-                .map(From::from)
-                .collect::<Vec<Value>>()
-                .into();
-        }
-
-        if let Some(mixin) = options.mixin {
-            args["mixin"] = mixin.into();
-        }
-
-        if let Some(ring_size) = options.ring_size {
-            args["ring_size"] = ring_size.into();
-        }
-
-        if let Some(unlock_time) = options.unlock_time {
-            args["unlock_time"] = unlock_time.into();
-        }
-
-        if let Some(payment_id) = options.payment_id {
-            args["payment_id"] = serde_json::to_value(HashString(payment_id))?;
-        }
-
-        if let Some(do_not_relay) = options.do_not_relay {
-            args["do_not_relay"] = do_not_relay.into();
-        }
-
-        args["get_tx_key"] = true.into();
-        args["get_tx_hex"] = true.into();
-        args["get_tx_metadata"] = true.into();
-
-        self.inner.request("transfer", Params::Map(args)).await
+        self.inner.request("transfer", RpcParams::map(params)).await
     }
 
     pub async fn sign_transfer(&self, unsigned_txset: Vec<u8>) -> Fallible<SignedTransferOutput> {
@@ -678,17 +690,15 @@ impl WalletClient {
             }
         }
 
-        let args = std::iter::empty()
-            .chain(Some((
+        let params = empty()
+            .chain(once((
                 "unsigned_txset",
                 serde_json::to_value(HashString(unsigned_txset)).unwrap(),
             )))
-            .chain(Some(("export_raw", true.into())))
-            .map(|(k, v)| (k.to_string(), v))
-            .collect();
+            .chain(once(("export_raw", true.into())));
 
         self.inner
-            .request::<Rsp>("sign_transfer", Params::Map(args))
+            .request::<Rsp>("sign_transfer", RpcParams::map(params))
             .await
             .map(From::from)
     }
@@ -699,7 +709,7 @@ impl WalletClient {
             version: u32,
         }
 
-        let version: Version = self.inner.request("get_version", Params::None).await?;
+        let version: Version = self.inner.request("get_version", RpcParams::None).await?;
 
         let major = version.version >> 16;
         let minor = version.version - (major << 16);
