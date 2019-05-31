@@ -199,7 +199,7 @@ impl RpcClient {
         })
         .unwrap();
 
-        trace!("Sending {} to {}", body, &addr);
+        trace!("Sending {} to {}", body, addr);
 
         let rsp = self
             .client
@@ -209,9 +209,13 @@ impl RpcClient {
             .send()
             .compat()
             .await?
-            .json::<response::Output>()
+            .json::<Value>()
             .compat()
             .await?;
+
+        trace!("Received response {} from addr {}", rsp, addr);
+
+        let rsp = serde_json::from_value::<response::Output>(rsp)?;
 
         let v = jsonrpc_core::Result::<Value>::from(rsp)
             .map_err(|e| format_err!("Code: {:?}, Message: {}", e.code, e.message))?;
