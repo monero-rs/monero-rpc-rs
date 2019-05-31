@@ -94,8 +94,8 @@ where
     where
         D: Deserializer<'de>,
     {
-        let s = <&str>::deserialize(deserializer)?;
-        Ok(Self(T::from_str(s).map_err(serde::de::Error::custom)?))
+        let s = String::deserialize(deserializer)?;
+        Ok(Self(T::from_str(&s).map_err(serde::de::Error::custom)?))
     }
 }
 
