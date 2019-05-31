@@ -326,6 +326,29 @@ impl DaemonClient {
             .map(|rsp| rsp.block_header)
     }
 
+    pub async fn get_block_headers_range(
+        &self,
+        start_height: u64,
+        end_height: u64,
+    ) -> Fallible<(Vec<LastBlockHeaderResponse>, bool)> {
+        #[derive(Deserialize)]
+        struct Rsp {
+            headers: Vec<LastBlockHeaderResponse>,
+            untrusted: bool,
+        }
+
+        let params = empty()
+            .chain(once(("start_height", start_height.into())))
+            .chain(once(("end_height", end_height.into())));
+
+        let Rsp { headers, untrusted } = self
+            .inner
+            .request::<Rsp>("get_block_headers_range", RpcParams::map(params))
+            .await?;
+
+        Ok((headers, untrusted))
+    }
+
     /// Enable additional functions for regtest mode
     pub fn regtest(self) -> RegtestDaemonClient {
         RegtestDaemonClient(self)
@@ -634,7 +657,7 @@ impl WalletClient {
             key: HashString<PK>,
         }
 
-        let params = empty().chain(once(("key_type", Value::from("view_key"))));
+        let params = empty().chain(once(("key_type", "view_key".into())));
 
         let rsp = self
             .inner
