@@ -24,12 +24,8 @@ pub trait HashType: Sized {
     fn from_str(v: &str) -> Fallible<Self>;
 }
 
-macro_rules! hash_type {
-    ($name:ident, $len:expr) => {
-        fixed_hash::construct_fixed_hash! {
-            pub struct $name($len);
-        }
-
+macro_rules! hash_type_impl {
+    ($name:ident) => {
         impl HashType for $name {
             fn bytes(&self) -> &[u8] {
                 self.as_bytes()
@@ -41,26 +37,21 @@ macro_rules! hash_type {
     };
 }
 
+hash_type_impl!(PaymentId);
+hash_type_impl!(CryptoNoteHash);
+
+macro_rules! hash_type {
+    ($name:ident, $len:expr) => {
+        fixed_hash::construct_fixed_hash! {
+            pub struct $name($len);
+        }
+
+        hash_type_impl!($name);
+    };
+}
+
 hash_type!(BlockHash, 32);
 hash_type!(BlockHashingBlob, 76);
-
-impl HashType for PaymentId {
-    fn bytes(&self) -> &[u8] {
-        self.as_bytes()
-    }
-    fn from_str(v: &str) -> Fallible<Self> {
-        Ok(v.parse()?)
-    }
-}
-
-impl HashType for CryptoNoteHash {
-    fn bytes(&self) -> &[u8] {
-        self.as_bytes()
-    }
-    fn from_str(v: &str) -> Fallible<Self> {
-        Ok(v.parse()?)
-    }
-}
 
 impl HashType for Vec<u8> {
     fn bytes(&self) -> &[u8] {
@@ -587,7 +578,10 @@ impl WalletClient {
     }
 
     pub async fn get_payments(&self, payment_id: PaymentId) -> Fallible<Vec<Payment>> {
-        let params = empty().chain(once(("payment_id", payment_id.to_string().into())));
+        let params = empty().chain(once((
+            "payment_id",
+            HashString(payment_id).to_string().into(),
+        )));
 
         self.inner
             .request::<Vec<Payment>>("get_payments", RpcParams::map(params))
@@ -604,7 +598,7 @@ impl WalletClient {
                 "payment_ids",
                 payment_ids
                     .into_iter()
-                    .map(|s| s.to_string())
+                    .map(|s| HashString(s).to_string())
                     .collect::<Vec<_>>()
                     .into(),
             )))
