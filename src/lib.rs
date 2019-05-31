@@ -597,6 +597,12 @@ impl WalletClient {
         payment_ids: Vec<PaymentId>,
         min_block_height: u64,
     ) -> Fallible<Vec<Payment>> {
+        #[derive(Deserialize)]
+        struct Rsp {
+            #[serde(default = "Default::default")]
+            payments: Vec<Payment>,
+        }
+
         let params = empty()
             .chain(once((
                 "payment_ids",
@@ -609,8 +615,9 @@ impl WalletClient {
             .chain(once(("min_block_height", min_block_height.into())));
 
         self.inner
-            .request::<Vec<Payment>>("get_bulk_payments", RpcParams::map(params))
+            .request::<Rsp>("get_bulk_payments", RpcParams::map(params))
             .await
+            .map(|rsp| rsp.payments)
     }
 
     pub async fn query_view_key(&self) -> Fallible<monero::PrivateKey> {
