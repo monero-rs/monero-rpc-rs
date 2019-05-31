@@ -703,6 +703,23 @@ impl WalletClient {
             .map(From::from)
     }
 
+    pub async fn submit_transfer(&self, tx_data_hex: Vec<u8>) -> Fallible<Vec<CryptoNoteHash>> {
+        #[derive(Deserialize)]
+        struct Rsp {
+            tx_hash_list: Vec<HashString<CryptoNoteHash>>,
+        }
+
+        let params = empty().chain(once((
+            "tx_data_hex",
+            HashString(tx_data_hex).to_string().into(),
+        )));
+
+        self.inner
+            .request::<Rsp>("sign_transfer", RpcParams::map(params))
+            .await
+            .map(|v| v.tx_hash_list.into_iter().map(|v| v.0).collect())
+    }
+
     pub async fn get_version(&self) -> Fallible<(u16, u16)> {
         #[derive(Deserialize)]
         struct Version {
