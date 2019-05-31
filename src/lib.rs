@@ -315,9 +315,15 @@ impl DaemonClient {
     }
 
     pub async fn get_last_block_header(&self) -> Fallible<LastBlockHeaderResponse> {
+        #[derive(Deserialize)]
+        struct Rsp {
+            block_header: LastBlockHeaderResponse,
+        }
+
         self.inner
-            .request("get_last_block_header", RpcParams::None)
+            .request::<Rsp>("get_last_block_header", RpcParams::None)
             .await
+            .map(|rsp| rsp.block_header)
     }
 
     /// Enable additional functions for regtest mode
