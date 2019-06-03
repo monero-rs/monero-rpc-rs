@@ -15,127 +15,17 @@ use {
     std::{
         collections::HashMap,
         convert::TryFrom,
-        fmt::{self, Display},
         iter::{empty, once},
     },
     uuid::Uuid,
 };
 
-pub trait HashType: Sized {
-    fn bytes(&self) -> &[u8];
-    fn from_str(v: &str) -> Fallible<Self>;
-}
+#[macro_use]
+mod util;
 
-macro_rules! hash_type_impl {
-    ($name:ident) => {
-        impl HashType for $name {
-            fn bytes(&self) -> &[u8] {
-                self.as_bytes()
-            }
-            fn from_str(v: &str) -> Fallible<Self> {
-                Ok(v.parse()?)
-            }
-        }
-    };
-}
+mod models;
 
-hash_type_impl!(PaymentId);
-hash_type_impl!(CryptoNoteHash);
-
-macro_rules! hash_type {
-    ($name:ident, $len:expr) => {
-        fixed_hash::construct_fixed_hash! {
-            pub struct $name($len);
-        }
-
-        hash_type_impl!($name);
-    };
-}
-
-hash_type!(BlockHash, 32);
-hash_type!(BlockHashingBlob, 76);
-
-impl HashType for Vec<u8> {
-    fn bytes(&self) -> &[u8] {
-        &*self
-    }
-    fn from_str(v: &str) -> Fallible<Self> {
-        Ok(hex::decode(v)?)
-    }
-}
-
-#[derive(Clone, Debug)]
-pub struct HashString<T>(pub T);
-
-impl<T> Display for HashString<T>
-where
-    T: HashType,
-{
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", hex::encode(self.0.bytes()))
-    }
-}
-
-impl<'a, T> Serialize for HashString<T>
-where
-    T: HashType,
-{
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: serde::ser::Serializer,
-    {
-        serializer.serialize_str(&self.to_string())
-    }
-}
-
-impl<'de, T> Deserialize<'de> for HashString<T>
-where
-    T: HashType,
-{
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-    where
-        D: Deserializer<'de>,
-    {
-        let s = String::deserialize(deserializer)?;
-        Ok(Self(T::from_str(&s).map_err(serde::de::Error::custom)?))
-    }
-}
-
-#[derive(Clone, Debug, Serialize, Deserialize)]
-pub enum Status {
-    OK,
-}
-
-#[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct BlockCount {
-    pub count: u64,
-}
-
-#[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct BlockTemplate {
-    pub blockhashing_blob: HashString<BlockHashingBlob>,
-    pub blocktemplate_blob: String,
-    pub difficulty: u64,
-    pub expected_reward: u64,
-    pub height: u64,
-    pub prev_hash: HashString<BlockHash>,
-    pub reserved_offset: u64,
-    pub untrusted: bool,
-}
-
-#[derive(Clone, Debug, Serialize, Deserialize)]
-#[serde(tag = "status")]
-pub enum MoneroResult<T> {
-    OK(T),
-}
-
-impl<T> MoneroResult<T> {
-    pub fn into_inner(self) -> T {
-        match self {
-            MoneroResult::OK(v) => v,
-        }
-    }
-}
+pub use {self::models::*, self::util::*};
 
 enum RpcParams {
     Array(Box<dyn Iterator<Item = Value> + Send>),
@@ -250,24 +140,6 @@ impl Deref for RegtestDaemonClient {
     }
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct LastBlockHeaderResponse {
-    pub block_size: u64,
-    pub depth: u64,
-    pub difficulty: u64,
-    pub hash: HashString<BlockHash>,
-    pub height: u64,
-    pub major_version: u64,
-    pub minor_version: u64,
-    pub nonce: u32,
-    pub num_txes: u64,
-    pub orphan_status: bool,
-    pub prev_hash: HashString<BlockHash>,
-    pub reward: u128,
-    #[serde(with = "chrono::serde::ts_seconds")]
-    pub timestamp: DateTime<Utc>,
-}
-
 impl DaemonClient {
     pub async fn get_block_count(&self) -> Fallible<u64> {
         Ok(self
@@ -316,10 +188,10 @@ impl DaemonClient {
             .await
     }
 
-    pub async fn get_last_block_header(&self) -> Fallible<LastBlockHeaderResponse> {
+    pub async fn get_last_block_header(&self) -> Fallible<BlockHeaderResponse> {
         #[derive(Deserialize)]
         struct Rsp {
-            block_header: LastBlockHeaderResponse,
+            block_header: BlockHeaderResponse,
         }
 
         self.inner
@@ -332,10 +204,48 @@ impl DaemonClient {
         &self,
         start_height: u64,
         end_height: u64,
-    ) -> Fallible<(Vec<LastBlockHeaderResponse>, bool)> {
+    ) -> Fallible<(Vec<BlockHeaderResponse>, bool)> {
+        #[derive(Deserialize)]
+        struct R {
+            block_size: u64,
+            depth: u64,
+            difficulty: u64,
+            hash: HashString<BlockHash>,
+            height: u64,
+            major_version: u64,
+            minor_version: u64,
+            nonce: u32,
+            num_txes: u64,
+            orphan_status: bool,
+            prev_hash: HashString<BlockHash>,
+            reward: u64,
+            #[serde(with = "chrono::serde::ts_seconds")]
+            timestamp: DateTime<Utc>,
+        }
+
+        impl From<R> for BlockHeaderResponse {
+            fn from(value: R) -> Self {
+                Self {
+                    block_size: value.block_size,
+                    depth: value.depth,
+                    difficulty: value.difficulty,
+                    hash: value.hash.0,
+                    height: value.height,
+                    major_version: value.major_version,
+                    minor_version: value.minor_version,
+                    nonce: value.nonce,
+                    num_txes: value.num_txes,
+                    orphan_status: value.orphan_status,
+                    prev_hash: value.prev_hash.0,
+                    reward: value.reward,
+                    timestamp: value.timestamp,
+                }
+            }
+        }
+
         #[derive(Deserialize)]
         struct Rsp {
-            headers: Vec<LastBlockHeaderResponse>,
+            headers: Vec<R>,
             untrusted: bool,
         }
 
@@ -348,7 +258,7 @@ impl DaemonClient {
             .request::<Rsp>("get_block_headers_range", RpcParams::map(params))
             .await?;
 
-        Ok((headers, untrusted))
+        Ok((headers.into_iter().map(From::from).collect(), untrusted))
     }
 
     /// Enable additional functions for regtest mode
@@ -357,17 +267,17 @@ impl DaemonClient {
     }
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct GenerateBlocksResponse {
-    pub height: u64,
-}
-
 impl RegtestDaemonClient {
     pub async fn generate_blocks(
         &self,
         amount_of_blocks: u64,
         wallet_address: Address,
-    ) -> Fallible<GenerateBlocksResponse> {
+    ) -> Fallible<u64> {
+        #[derive(Deserialize)]
+        struct Rsp {
+            height: u64,
+        }
+
         let params = empty()
             .chain(once((
                 "amount_of_blocks",
@@ -380,39 +290,11 @@ impl RegtestDaemonClient {
 
         Ok(self
             .inner
-            .request::<MoneroResult<GenerateBlocksResponse>>(
-                "generateblocks",
-                RpcParams::map(params),
-            )
+            .request::<MoneroResult<Rsp>>("generateblocks", RpcParams::map(params))
             .await?
-            .into_inner())
+            .into_inner()
+            .height)
     }
-}
-
-#[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct SubaddressBalanceData {
-    pub address: Address,
-    pub address_index: u64,
-    pub balance: u64,
-    pub label: String,
-    pub num_unspent_outputs: u64,
-    pub unlocked_balance: u64,
-}
-
-#[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct BalanceData {
-    pub balance: u64,
-    pub multisig_import_needed: bool,
-    pub per_subaddress: Vec<SubaddressBalanceData>,
-    pub unlocked_balance: u64,
-}
-
-#[derive(Copy, Clone, Debug)]
-pub enum TransferPriority {
-    Default,
-    Unimportant,
-    Elevated,
-    Priority,
 }
 
 impl Serialize for TransferPriority {
@@ -448,67 +330,6 @@ impl<'de> Deserialize<'de> for TransferPriority {
             }
         })
     }
-}
-
-#[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct TransferData {
-    pub amount: u128,
-    pub fee: u128,
-    pub multisig_txset: Vec<()>,
-    pub tx_blob: HashString<Vec<u8>>,
-    pub tx_hash: HashString<CryptoNoteHash>,
-    pub tx_key: HashString<Vec<u8>>,
-    pub tx_metadata: HashString<Vec<u8>>,
-    pub unsigned_txset: HashString<Vec<u8>>,
-}
-
-#[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct SubaddressData {
-    pub address: Address,
-    pub address_index: u64,
-    pub label: String,
-    pub used: bool,
-}
-
-#[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct SubaddressIndex {
-    pub major: u64,
-    pub minor: u64,
-}
-
-#[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct Payment {
-    pub payment_id: HashString<PaymentId>,
-    pub tx_hash: HashString<CryptoNoteHash>,
-    pub amount: u64,
-    pub block_height: u64,
-    pub unlock_time: u64,
-    pub subaddr_index: SubaddressIndex,
-    pub address: Address,
-}
-
-#[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct AddressData {
-    pub address: Address,
-    pub addresses: Vec<SubaddressData>,
-}
-
-#[derive(Clone, Debug, Default)]
-pub struct TransferOptions {
-    pub account_index: Option<u64>,
-    pub subaddr_indices: Option<Vec<u64>>,
-    pub mixin: Option<u64>,
-    pub ring_size: Option<u64>,
-    pub unlock_time: Option<u64>,
-    pub payment_id: Option<PaymentId>,
-    pub do_not_relay: Option<bool>,
-}
-
-#[derive(Clone, Debug)]
-pub struct SignedTransferOutput {
-    pub signed_txset: Vec<u8>,
-    pub tx_hash_list: Vec<CryptoNoteHash>,
-    pub tx_raw_list: Vec<Vec<u8>>,
 }
 
 #[derive(Debug)]
@@ -652,11 +473,9 @@ impl WalletClient {
     }
 
     pub async fn query_view_key(&self) -> Fallible<monero::PrivateKey> {
-        hash_type!(PK, 32);
-
         #[derive(Deserialize)]
         struct Rsp {
-            key: HashString<PK>,
+            key: HashString<Vec<u8>>,
         }
 
         let params = empty().chain(once(("key_type", "view_key".into())));
@@ -666,12 +485,12 @@ impl WalletClient {
             .request::<Rsp>("query_key", RpcParams::map(params))
             .await?;
 
-        Ok(monero::PrivateKey::from_slice(&rsp.key.0.as_bytes())?)
+        Ok(monero::PrivateKey::from_slice(&rsp.key.0)?)
     }
 
     pub async fn transfer(
         &self,
-        destinations: HashMap<Address, u128>,
+        destinations: HashMap<Address, u64>,
         priority: TransferPriority,
         options: TransferOptions,
     ) -> Fallible<TransferData> {
@@ -758,11 +577,14 @@ impl WalletClient {
 
     pub async fn get_version(&self) -> Fallible<(u16, u16)> {
         #[derive(Deserialize)]
-        struct Version {
+        struct Rsp {
             version: u32,
         }
 
-        let version: Version = self.inner.request("get_version", RpcParams::None).await?;
+        let version = self
+            .inner
+            .request::<Rsp>("get_version", RpcParams::None)
+            .await?;
 
         let major = version.version >> 16;
         let minor = version.version - (major << 16);
