@@ -148,6 +148,7 @@ pub enum GetBlockHeaderSelector {
 }
 
 impl DaemonClient {
+    /// Look up how many blocks are in the longest chain known to the node.
     pub async fn get_block_count(&self) -> Fallible<u64> {
         Ok(self
             .inner
@@ -157,6 +158,7 @@ impl DaemonClient {
             .count)
     }
 
+    /// Look up a block's hash by its height.
     pub async fn on_get_block_hash(&self, height: u64) -> Fallible<BlockHash> {
         self.inner
             .request::<HashString<BlockHash>>(
@@ -167,6 +169,7 @@ impl DaemonClient {
             .map(|v| v.0)
     }
 
+    /// Get a block template on which mining a new block.
     pub async fn get_block_template(
         &self,
         wallet_address: Address,
@@ -186,6 +189,7 @@ impl DaemonClient {
             .into_inner())
     }
 
+    /// Submit a mined block to the network.
     pub async fn submit_block(&self, block_blob_data: String) -> Fallible<String> {
         self.inner
             .request(
@@ -225,6 +229,7 @@ impl DaemonClient {
             .map(|rsp| rsp.block_header)
     }
 
+    /// Similar to get_block_header_by_height above, but for a range of blocks. This method includes a starting block height and an ending block height as parameters to retrieve basic information about the range of blocks.
     pub async fn get_block_headers_range(
         &self,
         range: RangeInclusive<u64>,
@@ -293,6 +298,7 @@ impl DaemonClient {
 }
 
 impl RegtestDaemonClient {
+    /// Generate blocks and give mining rewards to specified address.
     pub async fn generate_blocks(
         &self,
         amount_of_blocks: u64,
@@ -363,6 +369,7 @@ pub struct WalletClient {
 }
 
 impl WalletClient {
+    /// Return the wallet's balance.
     pub async fn get_balance(
         &self,
         account: u64,
@@ -377,6 +384,7 @@ impl WalletClient {
             .await
     }
 
+    /// Return the wallet's addresses for an account. Optionally filter for specific set of subaddresses.
     pub async fn get_address(
         &self,
         account: u64,
@@ -396,6 +404,7 @@ impl WalletClient {
             .await
     }
 
+    /// Get account and address indexes from a specific (sub)address.
     pub async fn get_address_index(&self, address: Address) -> Fallible<(u64, u64)> {
         #[derive(Deserialize)]
         struct Rsp {
@@ -412,6 +421,7 @@ impl WalletClient {
         Ok((rsp.index.major, rsp.index.minor))
     }
 
+    /// Create a new address for an account. Optionally, label the new address.
     pub async fn create_address(
         &self,
         account_index: u64,
@@ -435,6 +445,7 @@ impl WalletClient {
         Ok((rsp.address, rsp.address_index))
     }
 
+    /// Label an address.
     pub async fn label_address(
         &self,
         account_index: u64,
@@ -458,6 +469,7 @@ impl WalletClient {
         Ok(())
     }
 
+    /// Get a list of incoming payments using a given payment id.
     pub async fn get_payments(&self, payment_id: PaymentId) -> Fallible<Vec<Payment>> {
         let params = empty().chain(once((
             "payment_id",
@@ -469,6 +481,9 @@ impl WalletClient {
             .await
     }
 
+    /// Get a list of incoming payments using a given payment id, or a list of payments ids, from a given height.
+    /// This method is the preferred method over `WalletClient::get_payments` because it has the same functionality but is more extendable.
+    /// Either is fine for looking up transactions by a single payment ID.
     pub async fn get_bulk_payments(
         &self,
         payment_ids: Vec<PaymentId>,
@@ -497,6 +512,7 @@ impl WalletClient {
             .map(|rsp| rsp.payments)
     }
 
+    /// Return the view private key.
     pub async fn query_view_key(&self) -> Fallible<monero::PrivateKey> {
         #[derive(Deserialize)]
         struct Rsp {
@@ -513,6 +529,7 @@ impl WalletClient {
         Ok(monero::PrivateKey::from_slice(&rsp.key.0)?)
     }
 
+    /// Send monero to a number of recipients.
     pub async fn transfer(
         &self,
         destinations: HashMap<Address, u64>,
@@ -552,6 +569,7 @@ impl WalletClient {
         self.inner.request("transfer", RpcParams::map(params)).await
     }
 
+    /// Sign a transaction created on a read-only wallet (in cold-signing process).
     pub async fn sign_transfer(&self, unsigned_txset: Vec<u8>) -> Fallible<SignedTransferOutput> {
         #[derive(Deserialize)]
         struct Rsp {
@@ -583,6 +601,7 @@ impl WalletClient {
             .map(From::from)
     }
 
+    /// Submit a previously signed transaction on a read-only wallet (in cold-signing process).
     pub async fn submit_transfer(&self, tx_data_hex: Vec<u8>) -> Fallible<Vec<CryptoNoteHash>> {
         #[derive(Deserialize)]
         struct Rsp {
@@ -600,6 +619,7 @@ impl WalletClient {
             .map(|v| v.tx_hash_list.into_iter().map(|v| v.0).collect())
     }
 
+    /// Get RPC version Major & Minor integer-format, where Major is the first 16 bits and Minor the last 16 bits.
     pub async fn get_version(&self) -> Fallible<(u16, u16)> {
         #[derive(Deserialize)]
         struct Rsp {
