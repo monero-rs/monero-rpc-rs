@@ -16,6 +16,7 @@ use {
         collections::HashMap,
         convert::TryFrom,
         iter::{empty, once},
+        ops::RangeInclusive,
     },
     uuid::Uuid,
 };
@@ -140,6 +141,12 @@ impl Deref for RegtestDaemonClient {
     }
 }
 
+pub enum GetBlockHeaderSelector {
+    Last,
+    Hash(BlockHash),
+    Height(u64),
+}
+
 impl DaemonClient {
     pub async fn get_block_count(&self) -> Fallible<u64> {
         Ok(self
@@ -188,22 +195,39 @@ impl DaemonClient {
             .await
     }
 
-    pub async fn get_last_block_header(&self) -> Fallible<BlockHeaderResponse> {
+    /// Retrieve block header information matching selected filter.
+    pub async fn get_block_header(
+        &self,
+        selector: GetBlockHeaderSelector,
+    ) -> Fallible<BlockHeaderResponse> {
         #[derive(Deserialize)]
         struct Rsp {
             block_header: BlockHeaderResponse,
         }
 
+        let (request, params) = match selector {
+            GetBlockHeaderSelector::Last => ("get_last_block_header", RpcParams::None),
+            GetBlockHeaderSelector::Hash(hash) => (
+                "get_block_header_by_hash",
+                RpcParams::map(
+                    Some(("hash", serde_json::to_value(HashString(hash)).unwrap())).into_iter(),
+                ),
+            ),
+            GetBlockHeaderSelector::Height(height) => (
+                "get_block_header_by_height",
+                RpcParams::map(Some(("height", height.into())).into_iter()),
+            ),
+        };
+
         self.inner
-            .request::<Rsp>("get_last_block_header", RpcParams::None)
+            .request::<Rsp>(request, params)
             .await
             .map(|rsp| rsp.block_header)
     }
 
     pub async fn get_block_headers_range(
         &self,
-        start_height: u64,
-        end_height: u64,
+        range: RangeInclusive<u64>,
     ) -> Fallible<(Vec<BlockHeaderResponse>, bool)> {
         #[derive(Deserialize)]
         struct R {
@@ -250,13 +274,14 @@ impl DaemonClient {
         }
 
         let params = empty()
-            .chain(once(("start_height", start_height.into())))
-            .chain(once(("end_height", end_height.into())));
+            .chain(once(("start_height", range.start().clone().into())))
+            .chain(once(("end_height", range.end().clone().into())));
 
         let Rsp { headers, untrusted } = self
             .inner
-            .request::<Rsp>("get_block_headers_range", RpcParams::map(params))
-            .await?;
+            .request::<MoneroResult<Rsp>>("get_block_headers_range", RpcParams::map(params))
+            .await?
+            .into_inner();
 
         Ok((headers.into_iter().map(From::from).collect(), untrusted))
     }
