@@ -619,6 +619,70 @@ impl WalletClient {
             .map(|v| v.tx_hash_list.into_iter().map(|v| v.0).collect())
     }
 
+    pub async fn export_key_images(&self) -> Fallible<Vec<SignedKeyImage>> {
+        #[derive(Deserialize)]
+        struct R {
+            key_image: HashString<Vec<u8>>,
+            signature: HashString<Vec<u8>>,
+        }
+
+        #[derive(Deserialize)]
+        struct Rsp {
+            #[serde(default = Default::default)]
+            signed_key_images: Vec<R>,
+        }
+
+        impl From<Rsp> for Vec<SignedKeyImage> {
+            fn from(rsp: Rsp) -> Self {
+                rsp.signed_key_images
+                    .into_iter()
+                    .map(
+                        |R {
+                             key_image,
+                             signature,
+                         }| SignedKeyImage {
+                            key_image: key_image.0,
+                            signature: signature.0,
+                        },
+                    )
+                    .collect()
+            }
+        }
+
+        self.inner
+            .request::<Rsp>("export_key_images", RpcParams::None)
+            .await
+            .map(From::from)
+    }
+
+    pub async fn import_key_images(
+        &self,
+        signed_key_images: Vec<SignedKeyImage>,
+    ) -> Fallible<KeyImageImportResponse> {
+        let params = empty().chain(once((
+            "signed_key_images",
+            signed_key_images
+                .into_iter()
+                .map(
+                    |SignedKeyImage {
+                         key_image,
+                         signature,
+                     }| {
+                        json!({
+                            "key_image": HashString(key_image),
+                            "signature": HashString(signature),
+                        })
+                    },
+                )
+                .collect::<Vec<_>>()
+                .into(),
+        )));
+
+        self.inner
+            .request::<KeyImageImportResponse>("import_key_images", RpcParams::map(params))
+            .await
+    }
+
     /// Get RPC version Major & Minor integer-format, where Major is the first 16 bits and Minor the last 16 bits.
     pub async fn get_version(&self) -> Fallible<(u16, u16)> {
         #[derive(Deserialize)]

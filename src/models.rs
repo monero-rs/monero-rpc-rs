@@ -158,3 +158,16 @@ pub struct SignedTransferOutput {
     pub tx_hash_list: Vec<CryptoNoteHash>,
     pub tx_raw_list: Vec<Vec<u8>>,
 }
+
+#[derive(Clone, Debug)]
+pub struct SignedKeyImage {
+    pub key_image: Vec<u8>,
+    pub signature: Vec<u8>,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct KeyImageImportResponse {
+    pub height: u64,
+    pub spent: u64,
+    pub unspent: u64,
+}
