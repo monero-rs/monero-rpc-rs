@@ -3,7 +3,6 @@
 #![feature(async_await)]
 
 use {
-    chrono::prelude::*,
     core::ops::Deref,
     failure::{format_err, Fallible},
     futures::compat::*,
@@ -206,7 +205,7 @@ impl DaemonClient {
     ) -> Fallible<BlockHeaderResponse> {
         #[derive(Deserialize)]
         struct Rsp {
-            block_header: BlockHeaderResponse,
+            block_header: BlockHeaderResponseR,
         }
 
         let (request, params) = match selector {
@@ -226,7 +225,7 @@ impl DaemonClient {
         self.inner
             .request::<Rsp>(request, params)
             .await
-            .map(|rsp| rsp.block_header)
+            .map(|rsp| rsp.block_header.into())
     }
 
     /// Similar to get_block_header_by_height above, but for a range of blocks. This method includes a starting block height and an ending block height as parameters to retrieve basic information about the range of blocks.
@@ -235,46 +234,8 @@ impl DaemonClient {
         range: RangeInclusive<u64>,
     ) -> Fallible<(Vec<BlockHeaderResponse>, bool)> {
         #[derive(Deserialize)]
-        struct R {
-            block_size: u64,
-            depth: u64,
-            difficulty: u64,
-            hash: HashString<BlockHash>,
-            height: u64,
-            major_version: u64,
-            minor_version: u64,
-            nonce: u32,
-            num_txes: u64,
-            orphan_status: bool,
-            prev_hash: HashString<BlockHash>,
-            reward: u64,
-            #[serde(with = "chrono::serde::ts_seconds")]
-            timestamp: DateTime<Utc>,
-        }
-
-        impl From<R> for BlockHeaderResponse {
-            fn from(value: R) -> Self {
-                Self {
-                    block_size: value.block_size,
-                    depth: value.depth,
-                    difficulty: value.difficulty,
-                    hash: value.hash.0,
-                    height: value.height,
-                    major_version: value.major_version,
-                    minor_version: value.minor_version,
-                    nonce: value.nonce,
-                    num_txes: value.num_txes,
-                    orphan_status: value.orphan_status,
-                    prev_hash: value.prev_hash.0,
-                    reward: value.reward,
-                    timestamp: value.timestamp,
-                }
-            }
-        }
-
-        #[derive(Deserialize)]
         struct Rsp {
-            headers: Vec<R>,
+            headers: Vec<BlockHeaderResponseR>,
             untrusted: bool,
         }
 

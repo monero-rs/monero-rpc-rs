@@ -54,6 +54,43 @@ pub struct BlockTemplate {
     pub reserved_offset: u64,
     pub untrusted: bool,
 }
+#[derive(Deserialize)]
+pub(crate) struct BlockHeaderResponseR {
+    pub block_size: u64,
+    pub depth: u64,
+    pub difficulty: u64,
+    pub hash: HashString<BlockHash>,
+    pub height: u64,
+    pub major_version: u64,
+    pub minor_version: u64,
+    pub nonce: u32,
+    pub num_txes: u64,
+    pub orphan_status: bool,
+    pub prev_hash: HashString<BlockHash>,
+    pub reward: u64,
+    #[serde(with = "chrono::serde::ts_seconds")]
+    pub timestamp: DateTime<Utc>,
+}
+
+impl From<BlockHeaderResponseR> for BlockHeaderResponse {
+    fn from(value: BlockHeaderResponseR) -> Self {
+        Self {
+            block_size: value.block_size,
+            depth: value.depth,
+            difficulty: value.difficulty,
+            hash: value.hash.0,
+            height: value.height,
+            major_version: value.major_version,
+            minor_version: value.minor_version,
+            nonce: value.nonce,
+            num_txes: value.num_txes,
+            orphan_status: value.orphan_status,
+            prev_hash: value.prev_hash.0,
+            reward: value.reward,
+            timestamp: value.timestamp,
+        }
+    }
+}
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct BlockHeaderResponse {
