@@ -491,7 +491,7 @@ impl WalletClient {
     ) -> Fallible<Vec<Payment>> {
         #[derive(Deserialize)]
         struct Rsp {
-            #[serde(default = "Default::default")]
+            #[serde(default)]
             payments: Vec<Payment>,
         }
 
@@ -628,7 +628,7 @@ impl WalletClient {
 
         #[derive(Deserialize)]
         struct Rsp {
-            #[serde(default = Default::default)]
+            #[serde(default)]
             signed_key_images: Vec<R>,
         }
 
