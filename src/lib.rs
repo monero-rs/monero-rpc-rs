@@ -575,7 +575,7 @@ impl WalletClient {
         )));
 
         self.inner
-            .request::<Rsp>("sign_transfer", RpcParams::map(params))
+            .request::<Rsp>("submit_transfer", RpcParams::map(params))
             .await
             .map(|v| v.tx_hash_list.into_iter().map(|v| v.0).collect())
     }
