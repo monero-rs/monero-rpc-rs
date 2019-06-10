@@ -139,7 +139,6 @@ pub enum TransferPriority {
 pub struct TransferData {
     pub amount: u64,
     pub fee: u64,
-    pub multisig_txset: Vec<()>,
     pub tx_blob: HashString<Vec<u8>>,
     pub tx_hash: HashString<CryptoNoteHash>,
     pub tx_key: HashString<Vec<u8>>,
