@@ -297,7 +297,47 @@ pub struct SignedTransferOutput {
     pub tx_raw_list: Vec<Vec<u8>>,
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct TransactionInputData {
+    /// The amount of the input, in atomic units.
+    pub amount: u64,
+    /// A list of integer offets to the input.
+    pub key_offsets: Vec<u64>,
+    /// The key image for the given input.
+    pub k_image: Vec<u8>,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct TransactionInput {
+    /// The public key of the previous output spent in this transaction.
+    pub key: TransactionInputKey,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct TransactionOutputTarget {
+    /// The stealth public key of the receiver.
+    /// Whoever owns the private key associated with this key controls this transaction output.
+    pub key: Vec<u8>,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct TransactionOutput {
+    /// Amount of transaction output, in atomic units.
+    pub amount: u64,
+    /// Output destination information.
+    pub target: TransactionOutputTarget,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct JsonTransactionInfo {
+    pub version: u8,
+    pub unlock_time: u8,
+    pub inputs: Vec<TransactionInput>,
+    pub outputs: Vec<TransactionOutput>,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct SignedKeyImage {
     pub key_image: Vec<u8>,
     pub signature: Vec<u8>,
@@ -310,4 +350,56 @@ pub struct KeyImageImportResponse {
     pub spent: u64,
     /// Amount still available from key images.
     pub unspent: u64,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct SpentKeyImage {
+    /// Key image.
+    pub id_hash: Vec<u8>,
+    /// Tx hashes of the txes (usually one) spending that key image.
+    pub txs_hashes: Vec<CryptoNoteHash>,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct MempoolTransactionData {
+    /// The size of the full transaction blob.
+    pub blob_size: u64,
+    /// States if this transaction has been seen as double spend.
+    pub double_spend_seen: bool,
+    /// States if this transaction should not be relayed.
+    pub do_not_relay: bool,
+    /// The amount of the mining fee included in the transaction, in atomic units.
+    pub fee: u64,
+    /// The transaction ID hash.
+    pub id_hash: CryptoNoteHash,
+    /// States if the tx was included in a block at least once.
+    pub kept_by_block: bool,
+    /// If the transaction validation has previously failed, this tells at what height that occured.
+    pub last_failed_height: u64,
+    /// Like the previous, this tells the previous transaction ID hash.
+    pub last_failed_id_hash: CryptoNoteHash,
+    /// Last time at which the transaction has been relayed.
+    pub last_relayed_time: DateTime<Utc>,
+    /// Tells the height of the most recent block with an output used in this transaction.
+    pub max_used_block_height: u64,
+    /// Tells the hash of the most recent block with an output used in this transaction.
+    pub max_used_block_hash: BlockHash,
+    /// The Unix time that the transaction was first seen on the network by the node.
+    pub receive_time: u64,
+    /// States if this transaction has been relayed.
+    pub relayed: bool,
+    /// Hexadecimal blob representing the transaction.
+    pub tx_blob: Vec<u8>,
+    /// Additional data about transaction.
+    pub tx_info: JsonTransactionInfo,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct MempoolData {
+    /// List of spent output key images.
+    pub spent_key_images: Vec<SpentKeyImage>,
+    /// General RPC error code.
+    pub status: Status,
+    /// List of transactions in the mempool are not in a block on the main chain at the moment.
+    pub transactions: Vec<MempoolTransactionData>,
 }

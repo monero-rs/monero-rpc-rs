@@ -761,4 +761,18 @@ impl WalletClient {
 
         Ok((u16::try_from(major)?, u16::try_from(minor)?))
     }
+
+    /// Show information about valid transactions seen by the node but not yet mined into a block, as well as spent key image information for the txpool in the node's memory.
+    pub async fn get_mempool_data(&self) -> Fallible<MempoolData> {
+        Ok(self
+            .inner
+            .client
+            .get(&format!("{}/get_transaction_pool", self.inner.addr))
+            .send()
+            .compat()
+            .await?
+            .json::<MempoolData>()
+            .compat()
+            .await?)
+    }
 }
