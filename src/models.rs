@@ -123,6 +123,7 @@ pub struct SubaddressBalanceData {
 pub struct BalanceData {
     pub balance: u64,
     pub multisig_import_needed: bool,
+    #[serde(default)]
     pub per_subaddress: Vec<SubaddressBalanceData>,
     pub unlocked_balance: u64,
 }
