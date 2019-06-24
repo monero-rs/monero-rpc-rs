@@ -5,7 +5,7 @@
 use {
     core::ops::Deref,
     failure::{format_err, Fallible},
-    futures::compat::*,
+    futures::{compat::*, prelude::*},
     jsonrpc_core::types::*,
     log::trace,
     monero::{cryptonote::hash::Hash as CryptoNoteHash, Address, PaymentId},
@@ -14,8 +14,10 @@ use {
     std::{
         collections::HashMap,
         convert::TryFrom,
+        fmt::Debug,
         iter::{empty, once},
         ops::RangeInclusive,
+        pin::Pin,
     },
     uuid::Uuid,
 };
@@ -59,6 +61,81 @@ impl From<RpcParams> for Params {
     }
 }
 
+trait JsonRpcCaller: Debug + Send + Sync + 'static {
+    fn call(
+        &self,
+        method: &'static str,
+        params: RpcParams,
+    ) -> Pin<Box<dyn Future<Output = Fallible<Value>> + Send>>;
+}
+
+#[derive(Debug)]
+struct RemoteCaller {
+    client: reqwest::r#async::Client,
+    addr: String,
+}
+
+impl JsonRpcCaller for RemoteCaller {
+    fn call(
+        &self,
+        method: &'static str,
+        params: RpcParams,
+    ) -> Pin<Box<dyn Future<Output = Fallible<Value>> + Send>> {
+        let client = self.client.clone();
+        let addr = self.addr.clone();
+        async move {
+            let params = params.into();
+
+            let method = method.to_string();
+
+            let addr = format!("{}/json_rpc", &addr);
+
+            let body = serde_json::to_string(&MethodCall {
+                jsonrpc: Some(Version::V2),
+                method: method.to_string(),
+                params,
+                id: Id::Str(Uuid::new_v4().to_string()),
+            })
+            .unwrap();
+
+            trace!("Sending {} to {}", body, addr);
+
+            let rsp = client
+                .post(&addr)
+                .header("Content-Type", "application/json")
+                .body(body)
+                .send()
+                .compat()
+                .await?
+                .json::<Value>()
+                .compat()
+                .await?;
+
+            trace!("Received response {} from addr {}", rsp, addr);
+
+            let rsp = serde_json::from_value::<response::Output>(rsp)?;
+
+            let v = jsonrpc_core::Result::<Value>::from(rsp)
+                .map_err(|e| format_err!("Code: {:?}, Message: {}", e.code, e.message))?;
+
+            Ok(v)
+        }
+            .boxed()
+    }
+}
+
+#[derive(Debug)]
+struct CallerWrapper(Box<dyn JsonRpcCaller>);
+
+impl CallerWrapper {
+    async fn request<T>(&self, method: &'static str, params: RpcParams) -> Fallible<T>
+    where
+        T: for<'de> Deserialize<'de>,
+    {
+        Ok(serde_json::from_value(self.0.call(method, params).await?)?)
+    }
+}
+
 /// Base RPC client. It is useless on its own, please see the attached methods instead.
 #[derive(Debug)]
 pub struct RpcClient {
@@ -74,62 +151,26 @@ impl RpcClient {
         }
     }
 
-    async fn request<T>(&self, method: &'static str, params: RpcParams) -> Fallible<T>
-    where
-        T: for<'de> Deserialize<'de>,
-    {
-        let params = params.into();
-
-        let method = method.to_string();
-
-        let addr = format!("{}/json_rpc", &self.addr);
-
-        let body = serde_json::to_string(&MethodCall {
-            jsonrpc: Some(Version::V2),
-            method: method.to_string(),
-            params,
-            id: Id::Str(Uuid::new_v4().to_string()),
-        })
-        .unwrap();
-
-        trace!("Sending {} to {}", body, addr);
-
-        let rsp = self
-            .client
-            .post(&addr)
-            .header("Content-Type", "application/json")
-            .body(body)
-            .send()
-            .compat()
-            .await?
-            .json::<Value>()
-            .compat()
-            .await?;
-
-        trace!("Received response {} from addr {}", rsp, addr);
-
-        let rsp = serde_json::from_value::<response::Output>(rsp)?;
-
-        let v = jsonrpc_core::Result::<Value>::from(rsp)
-            .map_err(|e| format_err!("Code: {:?}, Message: {}", e.code, e.message))?;
-
-        Ok(serde_json::from_value(v)?)
-    }
-
     /// Create a daemon client.
     pub fn daemon(self) -> DaemonClient {
-        DaemonClient { inner: self }
+        let Self { client, addr } = self;
+        DaemonClient {
+            inner: CallerWrapper(Box::new(RemoteCaller { client, addr })),
+        }
     }
 
     /// Create a wallet client.
     pub fn wallet(self) -> WalletClient {
-        WalletClient { inner: self }
+        let Self { client, addr } = self;
+        WalletClient {
+            inner: CallerWrapper(Box::new(RemoteCaller { client, addr })),
+        }
     }
 }
 
 #[derive(Debug)]
 pub struct DaemonClient {
-    inner: RpcClient,
+    inner: CallerWrapper,
 }
 
 #[derive(Debug)]
@@ -329,7 +370,7 @@ impl<'de> Deserialize<'de> for TransferPriority {
 
 #[derive(Debug)]
 pub struct WalletClient {
-    inner: RpcClient,
+    inner: CallerWrapper,
 }
 
 impl WalletClient {
