@@ -1,7 +1,8 @@
 use {
     chrono::prelude::*,
     monero::{cryptonote::hash::Hash as CryptoNoteHash, Address, PaymentId},
-    serde::{Deserialize, Serialize},
+    serde::{Deserialize, Deserializer, Serialize},
+    std::{collections::HashMap, num::NonZeroU64},
 };
 
 use crate::util::*;
@@ -187,6 +188,106 @@ pub struct TransferOptions {
     pub unlock_time: Option<u64>,
     pub payment_id: Option<PaymentId>,
     pub do_not_relay: Option<bool>,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[serde(rename_all = "lowercase")]
+pub enum GetTransfersCategory {
+    In,
+    Out,
+    Pending,
+    Failed,
+    Pool,
+}
+
+impl From<GetTransfersCategory> for &'static str {
+    fn from(value: GetTransfersCategory) -> Self {
+        use GetTransfersCategory::*;
+
+        match value {
+            In => "in",
+            Out => "out",
+            Pending => "pending",
+            Failed => "failed",
+            Pool => "pool",
+        }
+    }
+}
+
+#[derive(Clone, Debug)]
+pub struct GetTransfersSelector<T> {
+    pub category_selector: HashMap<GetTransfersCategory, bool>,
+    /// Filter transfers by block height.
+    pub filter_by_height: Option<T>,
+    /// Index of the account to query for transfers. (defaults to 0)
+    pub account_index: Option<u64>,
+    /// List of subaddress indices to query for transfers. (Defaults to empty - all indices)
+    pub subaddr_indices: Option<Vec<u64>>,
+}
+
+impl<T> Default for GetTransfersSelector<T> {
+    fn default() -> Self {
+        Self {
+            category_selector: Default::default(),
+            filter_by_height: Default::default(),
+            account_index: Default::default(),
+            subaddr_indices: Default::default(),
+        }
+    }
+}
+
+#[derive(Clone, Debug)]
+pub enum TransferHeight {
+    Confirmed(NonZeroU64),
+    InPool,
+}
+
+impl<'de> Deserialize<'de> for TransferHeight {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        let h = u64::deserialize(deserializer)?;
+
+        Ok({
+            if let Some(h) = NonZeroU64::new(h) {
+                TransferHeight::Confirmed(h)
+            } else {
+                TransferHeight::InPool
+            }
+        })
+    }
+}
+
+#[derive(Clone, Debug, Deserialize)]
+pub struct GotTransfer {
+    /// Public address of the transfer.
+    pub address: Address,
+    /// Amount transferred.
+    pub amount: u64,
+    /// Number of block mined since the block containing this transaction (or block height at which the transaction should be added to a block if not yet confirmed).
+    pub confirmations: u64,
+    /// True if the key image(s) for the transfer have been seen before.
+    pub double_spend_seen: bool,
+    /// Transaction fee for this transfer.
+    pub fee: u64,
+    /// Height of the first block that confirmed this transfer (0 if not mined yet).
+    pub height: TransferHeight,
+    /// Note about this transfer.
+    pub note: String,
+    /// Payment ID for this transfer.
+    pub payment_id: HashString<PaymentId>,
+    /// JSON object containing the major & minor subaddress index.
+    pub subaddr_index: SubaddressIndex,
+    /// Estimation of the confirmations needed for the transaction to be included in a block.
+    pub suggested_confirmations_threshold: u64,
+    /// POSIX timestamp for when this transfer was first confirmed in a block (or timestamp submission if not mined yet).
+    #[serde(with = "chrono::serde::ts_seconds")]
+    pub timestamp: DateTime<Utc>,
+    /// Transaction ID for this transfer.
+    pub txid: HashString<Vec<u8>>,
+    /// Number of blocks until transfer is safely spendable.
+    pub unlock_time: u64,
 }
 
 #[derive(Clone, Debug)]

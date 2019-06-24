@@ -16,7 +16,7 @@ use {
         convert::TryFrom,
         fmt::Debug,
         iter::{empty, once},
-        ops::RangeInclusive,
+        ops::{Bound, RangeBounds, RangeInclusive},
         pin::Pin,
     },
     uuid::Uuid,
@@ -622,6 +622,60 @@ impl WalletClient {
             .request::<Rsp>("submit_transfer", RpcParams::map(params))
             .await
             .map(|v| v.tx_hash_list.into_iter().map(|v| v.0).collect())
+    }
+
+    /// Returns a list of transfers.
+    pub async fn get_transfers<T>(
+        &self,
+        selector: GetTransfersSelector<T>,
+    ) -> Fallible<HashMap<GetTransfersCategory, Vec<GotTransfer>>>
+    where
+        T: RangeBounds<u64>,
+    {
+        let GetTransfersSelector {
+            category_selector,
+            filter_by_height,
+            account_index,
+            subaddr_indices,
+        } = selector;
+
+        let params = empty()
+            .chain(
+                category_selector
+                    .into_iter()
+                    .map(|(cat, b)| (cat.into(), b.into())),
+            )
+            .chain({
+                filter_by_height
+                    .map(|range| {
+                        empty()
+                            .chain(Some(("filter_by_height", true.into())))
+                            .chain({
+                                match range.start_bound() {
+                                    Bound::Included(b) => Some(*b),
+                                    Bound::Excluded(b) => Some(b + 1),
+                                    Bound::Unbounded => None,
+                                }
+                                .map(|b| ("min_height", b.into()))
+                            })
+                            .chain({
+                                match range.end_bound() {
+                                    Bound::Included(b) => Some(*b),
+                                    Bound::Excluded(b) => Some(b.checked_sub(1).unwrap_or(0)),
+                                    Bound::Unbounded => None,
+                                }
+                                .map(|b| ("max_height", b.into()))
+                            })
+                    })
+                    .into_iter()
+                    .flatten()
+            })
+            .chain(account_index.map(|v| ("account_index", v.into())))
+            .chain(subaddr_indices.map(|v| ("subaddr_indices", v.into())));
+
+        self.inner
+            .request("get_transfers", RpcParams::map(params))
+            .await
     }
 
     /// Export a signed set of key images.
