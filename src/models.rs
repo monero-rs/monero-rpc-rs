@@ -205,6 +205,8 @@ pub struct SignedKeyImage {
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct KeyImageImportResponse {
     pub height: u64,
+    /// Amount spent from key images.
     pub spent: u64,
+    /// Amount still available from key images.
     pub unspent: u64,
 }

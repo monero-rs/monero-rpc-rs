@@ -59,6 +59,7 @@ impl From<RpcParams> for Params {
     }
 }
 
+/// Base RPC client. It is useless on its own, please see the attached methods instead.
 #[derive(Debug)]
 pub struct RpcClient {
     client: reqwest::r#async::Client,
@@ -115,10 +116,12 @@ impl RpcClient {
         Ok(serde_json::from_value(v)?)
     }
 
+    /// Create a daemon client.
     pub fn daemon(self) -> DaemonClient {
         DaemonClient { inner: self }
     }
 
+    /// Create a wallet client.
     pub fn wallet(self) -> WalletClient {
         WalletClient { inner: self }
     }
@@ -580,6 +583,7 @@ impl WalletClient {
             .map(|v| v.tx_hash_list.into_iter().map(|v| v.0).collect())
     }
 
+    /// Export a signed set of key images.
     pub async fn export_key_images(&self) -> Fallible<Vec<SignedKeyImage>> {
         #[derive(Deserialize)]
         struct R {
@@ -616,6 +620,7 @@ impl WalletClient {
             .map(From::from)
     }
 
+    /// Import signed key images list and verify their spent status.
     pub async fn import_key_images(
         &self,
         signed_key_images: Vec<SignedKeyImage>,
