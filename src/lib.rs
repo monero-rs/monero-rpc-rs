@@ -4,7 +4,7 @@
 
 use {
     core::ops::Deref,
-    failure::{format_err, Fallible},
+    failure::Fallible,
     futures::{compat::*, prelude::*},
     jsonrpc_core::types::*,
     log::trace,
@@ -66,7 +66,7 @@ trait JsonRpcCaller: Debug + Send + Sync + 'static {
         &self,
         method: &'static str,
         params: RpcParams,
-    ) -> Pin<Box<dyn Future<Output = Fallible<Value>> + Send>>;
+    ) -> Pin<Box<dyn Future<Output = Fallible<jsonrpc_core::Result<Value>>> + Send>>;
 }
 
 #[derive(Debug)]
@@ -80,7 +80,7 @@ impl JsonRpcCaller for RemoteCaller {
         &self,
         method: &'static str,
         params: RpcParams,
-    ) -> Pin<Box<dyn Future<Output = Fallible<Value>> + Send>> {
+    ) -> Pin<Box<dyn Future<Output = Fallible<jsonrpc_core::Result<Value>>> + Send>> {
         let client = self.client.clone();
         let addr = self.addr.clone();
         async move {
@@ -115,8 +115,7 @@ impl JsonRpcCaller for RemoteCaller {
 
             let rsp = serde_json::from_value::<response::Output>(rsp)?;
 
-            let v = jsonrpc_core::Result::<Value>::from(rsp)
-                .map_err(|e| format_err!("Code: {:?}, Message: {}", e.code, e.message))?;
+            let v = jsonrpc_core::Result::<Value>::from(rsp);
 
             Ok(v)
         }
@@ -132,7 +131,7 @@ impl CallerWrapper {
     where
         T: for<'de> Deserialize<'de>,
     {
-        Ok(serde_json::from_value(self.0.call(method, params).await?)?)
+        Ok(serde_json::from_value(self.0.call(method, params).await??)?)
     }
 }
 
@@ -676,6 +675,39 @@ impl WalletClient {
         self.inner
             .request("get_transfers", RpcParams::map(params))
             .await
+    }
+
+    pub async fn get_transfer(
+        &self,
+        txid: CryptoNoteHash,
+        account_index: Option<u64>,
+    ) -> Fallible<Option<GotTransfer>> {
+        #[derive(Deserialize)]
+        struct Rsp {
+            transfer: GotTransfer,
+        }
+
+        let params = empty()
+            .chain(Some(("txid", HashString(txid).to_string().into())))
+            .chain(account_index.map(|v| ("account_index", v.into())));
+
+        let rsp = match self
+            .inner
+            .0
+            .call("get_transfer", RpcParams::map(params))
+            .await?
+        {
+            Ok(v) => serde_json::from_value::<Rsp>(v)?,
+            Err(e) => {
+                if e.code == jsonrpc_core::ErrorCode::ServerError(-8) {
+                    return Ok(None);
+                } else {
+                    return Err(e.into());
+                }
+            }
+        };
+
+        Ok(Some(rsp.transfer))
     }
 
     /// Export a signed set of key images.

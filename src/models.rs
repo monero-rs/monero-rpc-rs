@@ -286,6 +286,9 @@ pub struct GotTransfer {
     pub timestamp: DateTime<Utc>,
     /// Transaction ID for this transfer.
     pub txid: HashString<Vec<u8>>,
+    /// Type of transfer.
+    #[serde(rename = "type")]
+    pub transfer_type: GetTransfersCategory,
     /// Number of blocks until transfer is safely spendable.
     pub unlock_time: u64,
 }
