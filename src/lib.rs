@@ -629,7 +629,7 @@ impl WalletClient {
         selector: GetTransfersSelector<T>,
     ) -> Fallible<HashMap<GetTransfersCategory, Vec<GotTransfer>>>
     where
-        T: RangeBounds<u64>,
+        T: RangeBounds<u64> + Send,
     {
         let GetTransfersSelector {
             category_selector,
