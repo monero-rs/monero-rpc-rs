@@ -30,8 +30,8 @@ mod models;
 pub use {self::models::*, self::util::*};
 
 enum RpcParams {
-    Array(Box<dyn Iterator<Item = Value> + Send>),
-    Map(Box<dyn Iterator<Item = (&'static str, Value)> + Send>),
+    Array(Box<dyn Iterator<Item = Value> + Send + 'static>),
+    Map(Box<dyn Iterator<Item = (String, Value)> + Send + 'static>),
     None,
 }
 
@@ -47,14 +47,14 @@ impl RpcParams {
     where
         M: Iterator<Item = (&'static str, Value)> + Send + 'static,
     {
-        RpcParams::Map(Box::new(v))
+        RpcParams::Map(Box::new(v.map(|(k, v)| (k.to_string(), v))))
     }
 }
 
 impl From<RpcParams> for Params {
     fn from(value: RpcParams) -> Self {
         match value {
-            RpcParams::Map(v) => Params::Map(v.map(|(k, v)| (k.to_string(), v)).collect()),
+            RpcParams::Map(v) => Params::Map(v.collect()),
             RpcParams::Array(v) => Params::Array(v.collect()),
             RpcParams::None => Params::None,
         }
@@ -66,7 +66,7 @@ trait JsonRpcCaller: Debug + Send + Sync + 'static {
         &self,
         method: &'static str,
         params: RpcParams,
-    ) -> Pin<Box<dyn Future<Output = Fallible<jsonrpc_core::Result<Value>>> + Send>>;
+    ) -> Pin<Box<dyn Future<Output = Fallible<jsonrpc_core::Result<Value>>> + Send + 'static>>;
 }
 
 #[derive(Debug)]
@@ -80,7 +80,7 @@ impl JsonRpcCaller for RemoteCaller {
         &self,
         method: &'static str,
         params: RpcParams,
-    ) -> Pin<Box<dyn Future<Output = Fallible<jsonrpc_core::Result<Value>>> + Send>> {
+    ) -> Pin<Box<dyn Future<Output = Fallible<jsonrpc_core::Result<Value>>> + Send + 'static>> {
         let client = self.client.clone();
         let addr = self.addr.clone();
         async move {
@@ -127,11 +127,16 @@ impl JsonRpcCaller for RemoteCaller {
 struct CallerWrapper(Box<dyn JsonRpcCaller>);
 
 impl CallerWrapper {
-    async fn request<T>(&self, method: &'static str, params: RpcParams) -> Fallible<T>
+    fn request<T>(
+        &self,
+        method: &'static str,
+        params: RpcParams,
+    ) -> impl Future<Output = Fallible<T>> + Send + 'static
     where
-        T: for<'de> Deserialize<'de>,
+        T: for<'de> Deserialize<'de> + Send + 'static,
     {
-        Ok(serde_json::from_value(self.0.call(method, params).await??)?)
+        let c = self.0.call(method, params);
+        async move { Ok(serde_json::from_value(c.await??)?) }
     }
 }
 
