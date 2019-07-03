@@ -629,10 +629,10 @@ impl WalletClient {
     }
 
     /// Returns a list of transfers.
-    pub async fn get_transfers<T>(
+    pub fn get_transfers<T>(
         &self,
         selector: GetTransfersSelector<T>,
-    ) -> Fallible<HashMap<GetTransfersCategory, Vec<GotTransfer>>>
+    ) -> impl Future<Output = Fallible<HashMap<GetTransfersCategory, Vec<GotTransfer>>>> + Send + 'static
     where
         T: RangeBounds<u64> + Send,
     {
@@ -677,9 +677,7 @@ impl WalletClient {
             .chain(account_index.map(|v| ("account_index", v.into())))
             .chain(subaddr_indices.map(|v| ("subaddr_indices", v.into())));
 
-        self.inner
-            .request("get_transfers", RpcParams::map(params))
-            .await
+        self.inner.request("get_transfers", RpcParams::map(params))
     }
 
     pub async fn get_transfer(
