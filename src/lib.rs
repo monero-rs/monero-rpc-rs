@@ -544,6 +544,20 @@ impl WalletClient {
         Ok(monero::PrivateKey::from_slice(&rsp.key.0)?)
     }
 
+    /// Returns the wallet's current block height.
+    pub async fn get_height(&self) -> Fallible<NonZeroU64> {
+        #[derive(Deserialize)]
+        struct Rsp {
+            height: NonZeroU64,
+        }
+
+        Ok(self
+            .inner
+            .request::<Rsp>("get_height", RpcParams::None)
+            .await?
+            .height)
+    }
+
     /// Send monero to a number of recipients.
     pub async fn transfer(
         &self,
