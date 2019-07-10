@@ -16,6 +16,7 @@ use {
         convert::TryFrom,
         fmt::Debug,
         iter::{empty, once},
+        num::NonZeroU64,
         ops::{Bound, RangeBounds, RangeInclusive},
         pin::Pin,
     },
@@ -196,10 +197,15 @@ pub enum GetBlockHeaderSelector {
 
 impl DaemonClient {
     /// Look up how many blocks are in the longest chain known to the node.
-    pub async fn get_block_count(&self) -> Fallible<u64> {
+    pub async fn get_block_count(&self) -> Fallible<NonZeroU64> {
+        #[derive(Deserialize)]
+        struct Rsp {
+            count: NonZeroU64,
+        }
+
         Ok(self
             .inner
-            .request::<MoneroResult<BlockCount>>("get_block_count", RpcParams::array(empty()))
+            .request::<MoneroResult<Rsp>>("get_block_count", RpcParams::array(empty()))
             .await?
             .into_inner()
             .count)

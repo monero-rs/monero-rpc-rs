@@ -40,11 +40,6 @@ impl<T> MoneroResult<T> {
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct BlockCount {
-    pub count: u64,
-}
-
-#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct BlockTemplate {
     pub blockhashing_blob: HashString<Vec<u8>>,
     pub blocktemplate_blob: HashString<Vec<u8>>,
