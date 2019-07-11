@@ -717,7 +717,7 @@ impl WalletClient {
         let rsp = match self
             .inner
             .0
-            .call("get_transfer", RpcParams::map(params))
+            .call("get_transfer_by_txid", RpcParams::map(params))
             .await?
         {
             Ok(v) => serde_json::from_value::<Rsp>(v)?,
