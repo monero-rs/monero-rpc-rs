@@ -185,6 +185,23 @@ pub struct TransferOptions {
     pub do_not_relay: Option<bool>,
 }
 
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct GotAccount {
+    pub account_index: u64,
+    pub balance: u64,
+    pub base_address: monero::Address,
+    pub label: Option<String>,
+    pub tag: Option<String>,
+    pub unlocked_balance: u64,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct GetAccountsData {
+    pub subaddress_accounts: Vec<GotAccount>,
+    pub total_balance: u64,
+    pub total_unlocked_balance: u64,
+}
+
 #[derive(Clone, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
 pub enum GetTransfersCategory {

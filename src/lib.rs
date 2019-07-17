@@ -484,6 +484,15 @@ impl WalletClient {
         Ok(())
     }
 
+    /// Get all accounts for a wallet. Optionally filter accounts by tag.
+    pub async fn get_accounts(&self, tag: Option<String>) -> Fallible<GetAccountsData> {
+        let params = empty().chain(tag.map(|v| ("tag", v.into())));
+
+        self.inner
+            .request("get_accounts", RpcParams::map(params))
+            .await
+    }
+
     /// Get a list of incoming payments using a given payment id.
     pub async fn get_payments(&self, payment_id: PaymentId) -> Fallible<Vec<Payment>> {
         let params = empty().chain(once((
