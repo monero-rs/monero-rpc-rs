@@ -492,7 +492,7 @@ impl WalletClient {
         )));
 
         self.inner
-            .request::<Vec<Payment>>("get_payments", RpcParams::map(params))
+            .request("get_payments", RpcParams::map(params))
             .await
     }
 
@@ -795,7 +795,7 @@ impl WalletClient {
         )));
 
         self.inner
-            .request::<KeyImageImportResponse>("import_key_images", RpcParams::map(params))
+            .request("import_key_images", RpcParams::map(params))
             .await
     }
 
