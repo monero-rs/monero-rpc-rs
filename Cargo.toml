@@ -10,16 +10,16 @@ license = "MIT OR Apache-2.0"
 maintenance = { status = "actively-developed" }
 
 [dependencies]
-chrono = { version = "*", features = ["serde"] }
-failure = "*"
+chrono = { version = "0.4", features = ["serde"] }
+failure = "0.1"
 futures-preview = { version = "0.3.0-alpha.17", features = ["compat"] }
 fixed-hash = "0.3"
-hex = { git = "https://github.com/KokaKiwi/rust-hex" }
-jsonrpc-core = "*"
-log = "*"
-monero = { git = "https://github.com/monero-rs/monero-rs", features = ["serde"] }
-reqwest = "*"
-rustc-hex = "*"
+hex = "0.3"
+jsonrpc-core = "12.0"
+log = "0.4"
+monero = { version = "0.2", features = ["serde"] }
+reqwest = "0.9"
+rustc-hex = "2.0"
 serde = { version = "1", features = ["derive"] }
-serde_json = "*"
-uuid = { version = "*", features = ["v4"] }
+serde_json = "1.0"
+uuid = { version = "0.7", features = ["v4"] }
