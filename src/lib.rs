@@ -3,9 +3,11 @@
 use {
     core::ops::Deref,
     failure::Fallible,
-    futures::{compat::*, prelude::*},
+    futures::prelude::*,
+    headers::HeaderMapExt,
+    http::HttpTryFrom,
     jsonrpc_core::types::*,
-    log::trace,
+    log::*,
     monero::{cryptonote::hash::Hash as CryptoNoteHash, Address, PaymentId},
     serde::{de::IgnoredAny, Deserialize, Deserializer, Serialize, Serializer},
     serde_json::{json, Value},
@@ -27,6 +29,8 @@ mod util;
 mod models;
 
 pub use {self::models::*, self::util::*};
+
+pub type HttpClient = hyper::Client<hyper_tls::HttpsConnector<hyper::client::HttpConnector>>;
 
 enum RpcParams {
     Array(Box<dyn Iterator<Item = Value> + Send + 'static>),
@@ -70,7 +74,7 @@ trait JsonRpcCaller: Debug + Send + Sync + 'static {
 
 #[derive(Debug)]
 struct RemoteCaller {
-    client: reqwest::r#async::Client,
+    http_client: HttpClient,
     addr: String,
 }
 
@@ -80,39 +84,39 @@ impl JsonRpcCaller for RemoteCaller {
         method: &'static str,
         params: RpcParams,
     ) -> Pin<Box<dyn Future<Output = Fallible<jsonrpc_core::Result<Value>>> + Send + 'static>> {
-        let client = self.client.clone();
+        let client = self.http_client.clone();
         let addr = self.addr.clone();
         async move {
             let params = params.into();
 
             let method = method.to_string();
 
-            let addr = format!("{}/json_rpc", &addr);
+            let addr = HttpTryFrom::try_from(format!("{}/json_rpc", &addr))?;
 
-            let body = serde_json::to_string(&MethodCall {
+            let body = serde_json::to_value(&MethodCall {
                 jsonrpc: Some(Version::V2),
                 method: method.to_string(),
                 params,
                 id: Id::Str(Uuid::new_v4().to_string()),
-            })
-            .unwrap();
+            })?;
 
-            trace!("Sending {} to {}", body, addr);
+            let mut req = http::Request::default();
+            *req.uri_mut() = addr;
+            *req.body_mut() = serde_json::to_string(&body)?.into();
+            *req.method_mut() = http::Method::POST;
+            req.headers_mut().typed_insert(headers::ContentType::json());
 
-            let rsp = client
-                .post(&addr)
-                .header("Content-Type", "application/json")
-                .body(body)
-                .send()
-                .compat()
-                .await?
-                .json::<Value>()
-                .compat()
-                .await?;
+            debug!("Sending request: {:?}", req);
 
-            trace!("Received response {} from addr {}", rsp, addr);
+            let rsp = client.request(req).await?;
 
-            let rsp = serde_json::from_value::<response::Output>(rsp)?;
+            let rsp_dbg = format!("{:?}", rsp);
+
+            let body = String::from_utf8(rsp.into_body().try_concat().await?.to_vec())?;
+
+            debug!("Received response: {} with body {}", rsp_dbg, body);
+
+            let rsp = serde_json::from_str::<response::Output>(&body)?;
 
             let v = jsonrpc_core::Result::<Value>::from(rsp);
 
@@ -142,31 +146,28 @@ impl CallerWrapper {
 /// Base RPC client. It is useless on its own, please see the attached methods instead.
 #[derive(Debug)]
 pub struct RpcClient {
-    client: reqwest::r#async::Client,
+    http_client: HttpClient,
     addr: String,
 }
 
 impl RpcClient {
-    pub fn new(addr: String) -> Self {
-        Self {
-            client: reqwest::r#async::Client::new(),
-            addr,
-        }
+    pub fn new(http_client: HttpClient, addr: String) -> Self {
+        Self { http_client, addr }
     }
 
     /// Create a daemon client.
     pub fn daemon(self) -> DaemonClient {
-        let Self { client, addr } = self;
+        let Self { http_client, addr } = self;
         DaemonClient {
-            inner: CallerWrapper(Box::new(RemoteCaller { client, addr })),
+            inner: CallerWrapper(Box::new(RemoteCaller { http_client, addr })),
         }
     }
 
     /// Create a wallet client.
     pub fn wallet(self) -> WalletClient {
-        let Self { client, addr } = self;
+        let Self { http_client, addr } = self;
         WalletClient {
-            inner: CallerWrapper(Box::new(RemoteCaller { client, addr })),
+            inner: CallerWrapper(Box::new(RemoteCaller { http_client, addr })),
         }
     }
 }
