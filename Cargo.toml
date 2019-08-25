@@ -14,7 +14,7 @@ maintenance = { status = "actively-developed" }
 [dependencies]
 chrono = { version = "0.4", features = ["serde"] }
 failure = "0.1"
-futures-preview = { version = "0.3.0-alpha.17", features = ["compat"] }
+futures-preview = "0.3.0-alpha.18"
 fixed-hash = "0.3"
 hex = "0.3"
 jsonrpc-core = "12.0"

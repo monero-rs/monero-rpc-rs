@@ -1,7 +1,5 @@
 //! Monero daemon and wallet RPC. Requires Rust nightly 2019-05-09 or later.
 
-#![feature(async_await)]
-
 use {
     core::ops::Deref,
     failure::Fallible,
