@@ -19,6 +19,7 @@ use {
         num::NonZeroU64,
         ops::{Bound, RangeBounds, RangeInclusive},
         pin::Pin,
+        sync::Arc,
     },
     uuid::Uuid,
 };
@@ -126,8 +127,8 @@ impl JsonRpcCaller for RemoteCaller {
     }
 }
 
-#[derive(Debug)]
-struct CallerWrapper(Box<dyn JsonRpcCaller>);
+#[derive(Clone, Debug)]
+struct CallerWrapper(Arc<dyn JsonRpcCaller>);
 
 impl CallerWrapper {
     fn request<T>(
@@ -144,7 +145,7 @@ impl CallerWrapper {
 }
 
 /// Base RPC client. It is useless on its own, please see the attached methods instead.
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub struct RpcClient {
     http_client: HttpClient,
     addr: String,
@@ -159,7 +160,7 @@ impl RpcClient {
     pub fn daemon(self) -> DaemonClient {
         let Self { http_client, addr } = self;
         DaemonClient {
-            inner: CallerWrapper(Box::new(RemoteCaller { http_client, addr })),
+            inner: CallerWrapper(Arc::new(RemoteCaller { http_client, addr })),
         }
     }
 
@@ -167,17 +168,17 @@ impl RpcClient {
     pub fn wallet(self) -> WalletClient {
         let Self { http_client, addr } = self;
         WalletClient {
-            inner: CallerWrapper(Box::new(RemoteCaller { http_client, addr })),
+            inner: CallerWrapper(Arc::new(RemoteCaller { http_client, addr })),
         }
     }
 }
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub struct DaemonClient {
     inner: CallerWrapper,
 }
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub struct RegtestDaemonClient(pub DaemonClient);
 
 impl Deref for RegtestDaemonClient {
@@ -377,7 +378,7 @@ impl<'de> Deserialize<'de> for TransferPriority {
     }
 }
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub struct WalletClient {
     inner: CallerWrapper,
 }
