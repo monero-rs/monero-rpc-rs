@@ -16,11 +16,9 @@ chrono = { version = "0.4", features = ["serde"] }
 failure = "0.1"
 futures-preview = "0.3.0-alpha.18"
 fixed-hash = "0.3"
-headers = "*"
 hex = "0.3"
 http = "*"
-hyper = { git = "https://github.com/hyperium/hyper" }
-hyper-tls = { git = "https://github.com/hyperium/hyper-tls" }
+hyper-client-util = { git = "https://github.com/vorot93/hyper-client-util" }
 jsonrpc-core = "12.0"
 log = "*"
 monero = { version = "0.2", features = ["serde"] }

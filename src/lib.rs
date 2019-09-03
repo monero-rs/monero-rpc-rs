@@ -4,10 +4,8 @@ use {
     core::ops::Deref,
     failure::Fallible,
     futures::prelude::*,
-    headers::HeaderMapExt,
-    http::HttpTryFrom,
+    hyper_client_util::*,
     jsonrpc_core::types::*,
-    log::*,
     monero::{cryptonote::hash::Hash as CryptoNoteHash, Address, PaymentId},
     serde::{de::IgnoredAny, Deserialize, Deserializer, Serialize, Serializer},
     serde_json::{json, Value},
@@ -30,8 +28,6 @@ mod util;
 mod models;
 
 pub use {self::models::*, self::util::*};
-
-pub type HttpClient = hyper::Client<hyper_tls::HttpsConnector<hyper::client::HttpConnector>>;
 
 enum RpcParams {
     Array(Box<dyn Iterator<Item = Value> + Send + 'static>),
@@ -88,36 +84,18 @@ impl JsonRpcCaller for RemoteCaller {
         let client = self.http_client.clone();
         let addr = self.addr.clone();
         async move {
-            let params = params.into();
-
-            let method = method.to_string();
-
-            let addr = HttpTryFrom::try_from(format!("{}/json_rpc", &addr))?;
-
-            let body = serde_json::to_value(&MethodCall {
-                jsonrpc: Some(Version::V2),
-                method: method.to_string(),
-                params,
-                id: Id::Str(Uuid::new_v4().to_string()),
-            })?;
-
-            let mut req = http::Request::default();
-            *req.uri_mut() = addr;
-            *req.body_mut() = serde_json::to_string(&body)?.into();
-            *req.method_mut() = http::Method::POST;
-            req.headers_mut().typed_insert(headers::ContentType::json());
-
-            debug!("Sending request: {:?}", req);
-
-            let rsp = client.request(req).await?;
-
-            let rsp_dbg = format!("{:?}", rsp);
-
-            let body = String::from_utf8(rsp.into_body().try_concat().await?.to_vec())?;
-
-            debug!("Received response: {} with body {}", rsp_dbg, body);
-
-            let rsp = serde_json::from_str::<response::Output>(&body)?;
+            let rsp = client
+                .build_request()
+                .method(http::Method::POST)
+                .uri(&format!("{}/json_rpc", &addr))?
+                .body_json(&MethodCall {
+                    jsonrpc: Some(Version::V2),
+                    method: method.to_string(),
+                    params: params.into(),
+                    id: Id::Str(Uuid::new_v4().to_string()),
+                })?
+                .recv_json::<response::Output>()
+                .await?;
 
             let v = jsonrpc_core::Result::<Value>::from(rsp);
 
