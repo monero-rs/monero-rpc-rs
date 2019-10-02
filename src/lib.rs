@@ -4,7 +4,6 @@ use {
     core::ops::Deref,
     failure::Fallible,
     futures::prelude::*,
-    hyper_client_util::*,
     jsonrpc_core::types::*,
     monero::{cryptonote::hash::Hash as CryptoNoteHash, Address, PaymentId},
     serde::{de::IgnoredAny, Deserialize, Deserializer, Serialize, Serializer},
@@ -71,7 +70,7 @@ trait JsonRpcCaller: Debug + Send + Sync + 'static {
 
 #[derive(Debug)]
 struct RemoteCaller {
-    http_client: HttpClient,
+    http_client: reqwest::Client,
     addr: String,
 }
 
@@ -82,19 +81,19 @@ impl JsonRpcCaller for RemoteCaller {
         params: RpcParams,
     ) -> Pin<Box<dyn Future<Output = Fallible<jsonrpc_core::Result<Value>>> + Send + 'static>> {
         let client = self.http_client.clone();
-        let addr = self.addr.clone();
+        let uri = format!("{}/json_rpc", &self.addr);
         async move {
             let rsp = client
-                .build_request()
-                .method(http::Method::POST)
-                .uri(&format!("{}/json_rpc", &addr))?
-                .body_json(&MethodCall {
+                .post(&uri)
+                .json(&MethodCall {
                     jsonrpc: Some(Version::V2),
                     method: method.to_string(),
                     params: params.into(),
                     id: Id::Str(Uuid::new_v4().to_string()),
-                })?
-                .recv_json::<response::Output>()
+                })
+                .send()
+                .await?
+                .json::<response::Output>()
                 .await?;
 
             let v = jsonrpc_core::Result::<Value>::from(rsp);
@@ -125,29 +124,29 @@ impl CallerWrapper {
 /// Base RPC client. It is useless on its own, please see the attached methods instead.
 #[derive(Clone, Debug)]
 pub struct RpcClient {
-    http_client: HttpClient,
-    addr: String,
+    inner: CallerWrapper,
 }
 
 impl RpcClient {
-    pub fn new(http_client: HttpClient, addr: String) -> Self {
-        Self { http_client, addr }
+    pub fn new(addr: String) -> Self {
+        Self {
+            inner: CallerWrapper(Arc::new(RemoteCaller {
+                http_client: reqwest::ClientBuilder::new().build().unwrap(),
+                addr,
+            })),
+        }
     }
 
     /// Create a daemon client.
     pub fn daemon(self) -> DaemonClient {
-        let Self { http_client, addr } = self;
-        DaemonClient {
-            inner: CallerWrapper(Arc::new(RemoteCaller { http_client, addr })),
-        }
+        let Self { inner } = self;
+        DaemonClient { inner }
     }
 
     /// Create a wallet client.
     pub fn wallet(self) -> WalletClient {
-        let Self { http_client, addr } = self;
-        WalletClient {
-            inner: CallerWrapper(Arc::new(RemoteCaller { http_client, addr })),
-        }
+        let Self { inner } = self;
+        WalletClient { inner }
     }
 }
 
