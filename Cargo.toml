@@ -13,16 +13,15 @@ maintenance = { status = "actively-developed" }
 
 [dependencies]
 chrono = { version = "0.4", features = ["serde"] }
-failure = "0.1"
 futures-preview = "0.3.0-alpha"
 fixed-hash = "0.3"
-hex = "0.3"
+hex = "0.4"
 http = "*"
 jsonrpc-core = "12.0"
 log = "*"
 monero = { git = "https://github.com/monero-rs/monero-rs", features = ["serde"] }
 reqwest = { version = "0.10.0-alpha", features = ["json"] }
-rustc-hex = "2.0"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1.0"
+snafu = "*"
 uuid = { version = "0.7", features = ["v4"] }

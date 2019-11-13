@@ -2,12 +2,13 @@
 
 use {
     core::ops::Deref,
-    failure::Fallible,
     futures::prelude::*,
     jsonrpc_core::types::*,
+    log::*,
     monero::{cryptonote::hash::Hash as CryptoNoteHash, Address, PaymentId},
     serde::{de::IgnoredAny, Deserialize, Deserializer, Serialize, Serializer},
     serde_json::{json, Value},
+    snafu::*,
     std::{
         collections::HashMap,
         convert::TryFrom,
@@ -20,6 +21,30 @@ use {
     },
     uuid::Uuid,
 };
+
+pub type StdError = Box<dyn std::error::Error + Send + Sync + 'static>;
+
+#[derive(Debug, Snafu)]
+pub enum Error {
+    NetworkError {
+        source: reqwest::Error,
+        backtrace: Backtrace,
+    },
+    ParseError {
+        source: StdError,
+        backtrace: Backtrace,
+    },
+    RpcError {
+        source: jsonrpc_core::Error,
+        backtrace: Backtrace,
+    },
+}
+
+impl Error {
+    fn from_parse_error<E: std::error::Error + Send + Sync + 'static>(e: E) -> Self {
+        ParseError.into_error(Box::new(e) as StdError)
+    }
+}
 
 #[macro_use]
 mod util;
@@ -65,7 +90,7 @@ trait JsonRpcCaller: Debug + Send + Sync + 'static {
         &self,
         method: &'static str,
         params: RpcParams,
-    ) -> Pin<Box<dyn Future<Output = Fallible<jsonrpc_core::Result<Value>>> + Send + 'static>>;
+    ) -> Pin<Box<dyn Future<Output = Result<jsonrpc_core::Result<Value>, Error>> + Send + 'static>>;
 }
 
 #[derive(Debug)]
@@ -79,22 +104,31 @@ impl JsonRpcCaller for RemoteCaller {
         &self,
         method: &'static str,
         params: RpcParams,
-    ) -> Pin<Box<dyn Future<Output = Fallible<jsonrpc_core::Result<Value>>> + Send + 'static>> {
+    ) -> Pin<Box<dyn Future<Output = Result<jsonrpc_core::Result<Value>, Error>> + Send + 'static>>
+    {
         let client = self.http_client.clone();
         let uri = format!("{}/json_rpc", &self.addr);
         async move {
+            let method_call = MethodCall {
+                jsonrpc: Some(Version::V2),
+                method: method.to_string(),
+                params: params.into(),
+                id: Id::Str(Uuid::new_v4().to_string()),
+            };
+
+            trace!("Sending JSON-RPC method call: {:?}", method_call);
+
             let rsp = client
                 .post(&uri)
-                .json(&MethodCall {
-                    jsonrpc: Some(Version::V2),
-                    method: method.to_string(),
-                    params: params.into(),
-                    id: Id::Str(Uuid::new_v4().to_string()),
-                })
+                .json(&method_call)
                 .send()
-                .await?
+                .await
+                .context(NetworkError)?
                 .json::<response::Output>()
-                .await?;
+                .await
+                .context(NetworkError)?;
+
+            trace!("Received JSON-RPC response: {:?}", rsp);
 
             let v = jsonrpc_core::Result::<Value>::from(rsp);
 
@@ -112,12 +146,15 @@ impl CallerWrapper {
         &self,
         method: &'static str,
         params: RpcParams,
-    ) -> impl Future<Output = Fallible<T>> + Send + 'static
+    ) -> impl Future<Output = Result<T, Error>> + Send + 'static
     where
         T: for<'de> Deserialize<'de> + Send + 'static,
     {
         let c = self.0.call(method, params);
-        async move { Ok(serde_json::from_value(c.await??)?) }
+        async move {
+            Ok(serde_json::from_value(c.await?.context(RpcError)?)
+                .map_err(Error::from_parse_error)?)
+        }
     }
 }
 
@@ -174,7 +211,7 @@ pub enum GetBlockHeaderSelector {
 
 impl DaemonClient {
     /// Look up how many blocks are in the longest chain known to the node.
-    pub async fn get_block_count(&self) -> Fallible<NonZeroU64> {
+    pub async fn get_block_count(&self) -> Result<NonZeroU64, Error> {
         #[derive(Deserialize)]
         struct Rsp {
             count: NonZeroU64,
@@ -189,7 +226,7 @@ impl DaemonClient {
     }
 
     /// Look up a block's hash by its height.
-    pub async fn on_get_block_hash(&self, height: u64) -> Fallible<BlockHash> {
+    pub async fn on_get_block_hash(&self, height: u64) -> Result<BlockHash, Error> {
         self.inner
             .request::<HashString<BlockHash>>(
                 "on_get_block_hash",
@@ -204,7 +241,7 @@ impl DaemonClient {
         &self,
         wallet_address: Address,
         reserve_size: u64,
-    ) -> Fallible<BlockTemplate> {
+    ) -> Result<BlockTemplate, Error> {
         Ok(self
             .inner
             .request::<MoneroResult<BlockTemplate>>(
@@ -220,7 +257,7 @@ impl DaemonClient {
     }
 
     /// Submit a mined block to the network.
-    pub async fn submit_block(&self, block_blob_data: String) -> Fallible<String> {
+    pub async fn submit_block(&self, block_blob_data: String) -> Result<String, Error> {
         self.inner
             .request(
                 "submit_block",
@@ -233,7 +270,7 @@ impl DaemonClient {
     pub async fn get_block_header(
         &self,
         selector: GetBlockHeaderSelector,
-    ) -> Fallible<BlockHeaderResponse> {
+    ) -> Result<BlockHeaderResponse, Error> {
         #[derive(Deserialize)]
         struct Rsp {
             block_header: BlockHeaderResponseR,
@@ -263,7 +300,7 @@ impl DaemonClient {
     pub async fn get_block_headers_range(
         &self,
         range: RangeInclusive<u64>,
-    ) -> Fallible<(Vec<BlockHeaderResponse>, bool)> {
+    ) -> Result<(Vec<BlockHeaderResponse>, bool), Error> {
         #[derive(Deserialize)]
         struct Rsp {
             headers: Vec<BlockHeaderResponseR>,
@@ -295,7 +332,7 @@ impl RegtestDaemonClient {
         &self,
         amount_of_blocks: u64,
         wallet_address: Address,
-    ) -> Fallible<u64> {
+    ) -> Result<u64, Error> {
         #[derive(Deserialize)]
         struct Rsp {
             height: u64,
@@ -366,7 +403,7 @@ impl WalletClient {
         &self,
         account: u64,
         addresses: Option<Vec<u64>>,
-    ) -> Fallible<BalanceData> {
+    ) -> Result<BalanceData, Error> {
         let params = empty()
             .chain(once(account.into()))
             .chain(addresses.map(Value::from));
@@ -381,7 +418,7 @@ impl WalletClient {
         &self,
         account: u64,
         addresses: Option<Vec<u64>>,
-    ) -> Fallible<AddressData> {
+    ) -> Result<AddressData, Error> {
         let params = empty()
             .chain(once(("account_index", account.into())))
             .chain(addresses.map(|v| {
@@ -397,7 +434,7 @@ impl WalletClient {
     }
 
     /// Get account and address indexes from a specific (sub)address.
-    pub async fn get_address_index(&self, address: Address) -> Fallible<(u64, u64)> {
+    pub async fn get_address_index(&self, address: Address) -> Result<(u64, u64), Error> {
         #[derive(Deserialize)]
         struct Rsp {
             index: SubaddressIndex,
@@ -418,7 +455,7 @@ impl WalletClient {
         &self,
         account_index: u64,
         label: Option<String>,
-    ) -> Fallible<(Address, u64)> {
+    ) -> Result<(Address, u64), Error> {
         #[derive(Deserialize)]
         struct Rsp {
             address: Address,
@@ -443,7 +480,7 @@ impl WalletClient {
         account_index: u64,
         address_index: u64,
         label: String,
-    ) -> Fallible<()> {
+    ) -> Result<(), Error> {
         let params = empty()
             .chain(once((
                 "index".into(),
@@ -462,7 +499,7 @@ impl WalletClient {
     }
 
     /// Get all accounts for a wallet. Optionally filter accounts by tag.
-    pub async fn get_accounts(&self, tag: Option<String>) -> Fallible<GetAccountsData> {
+    pub async fn get_accounts(&self, tag: Option<String>) -> Result<GetAccountsData, Error> {
         let params = empty().chain(tag.map(|v| ("tag", v.into())));
 
         self.inner
@@ -471,7 +508,7 @@ impl WalletClient {
     }
 
     /// Get a list of incoming payments using a given payment id.
-    pub async fn get_payments(&self, payment_id: PaymentId) -> Fallible<Vec<Payment>> {
+    pub async fn get_payments(&self, payment_id: PaymentId) -> Result<Vec<Payment>, Error> {
         let params = empty().chain(once((
             "payment_id",
             HashString(payment_id).to_string().into(),
@@ -489,7 +526,7 @@ impl WalletClient {
         &self,
         payment_ids: Vec<PaymentId>,
         min_block_height: u64,
-    ) -> Fallible<Vec<Payment>> {
+    ) -> Result<Vec<Payment>, Error> {
         #[derive(Deserialize)]
         struct Rsp {
             #[serde(default)]
@@ -514,7 +551,7 @@ impl WalletClient {
     }
 
     /// Return the view private key.
-    pub async fn query_view_key(&self) -> Fallible<monero::PrivateKey> {
+    pub async fn query_view_key(&self) -> Result<monero::PrivateKey, Error> {
         #[derive(Deserialize)]
         struct Rsp {
             key: HashString<Vec<u8>>,
@@ -527,11 +564,11 @@ impl WalletClient {
             .request::<Rsp>("query_key", RpcParams::map(params))
             .await?;
 
-        Ok(monero::PrivateKey::from_slice(&rsp.key.0)?)
+        Ok(monero::PrivateKey::from_slice(&rsp.key.0).map_err(Error::from_parse_error)?)
     }
 
     /// Returns the wallet's current block height.
-    pub async fn get_height(&self) -> Fallible<NonZeroU64> {
+    pub async fn get_height(&self) -> Result<NonZeroU64, Error> {
         #[derive(Deserialize)]
         struct Rsp {
             height: NonZeroU64,
@@ -550,7 +587,7 @@ impl WalletClient {
         destinations: HashMap<Address, u64>,
         priority: TransferPriority,
         options: TransferOptions,
-    ) -> Fallible<TransferData> {
+    ) -> Result<TransferData, Error> {
         let params = empty()
             .chain(once((
                 "destinations",
@@ -560,7 +597,10 @@ impl WalletClient {
                     .collect::<Vec<Value>>()
                     .into(),
             )))
-            .chain(once(("priority", serde_json::to_value(priority)?)))
+            .chain(once((
+                "priority",
+                serde_json::to_value(priority).map_err(Error::from_parse_error)?,
+            )))
             .chain(options.account_index.map(|v| ("account_index", v.into())))
             .chain(options.subaddr_indices.map(|v| {
                 (
@@ -585,7 +625,10 @@ impl WalletClient {
     }
 
     /// Sign a transaction created on a read-only wallet (in cold-signing process).
-    pub async fn sign_transfer(&self, unsigned_txset: Vec<u8>) -> Fallible<SignedTransferOutput> {
+    pub async fn sign_transfer(
+        &self,
+        unsigned_txset: Vec<u8>,
+    ) -> Result<SignedTransferOutput, Error> {
         #[derive(Deserialize)]
         struct Rsp {
             signed_txset: HashString<Vec<u8>>,
@@ -617,7 +660,10 @@ impl WalletClient {
     }
 
     /// Submit a previously signed transaction on a read-only wallet (in cold-signing process).
-    pub async fn submit_transfer(&self, tx_data_hex: Vec<u8>) -> Fallible<Vec<CryptoNoteHash>> {
+    pub async fn submit_transfer(
+        &self,
+        tx_data_hex: Vec<u8>,
+    ) -> Result<Vec<CryptoNoteHash>, Error> {
         #[derive(Deserialize)]
         struct Rsp {
             tx_hash_list: Vec<HashString<CryptoNoteHash>>,
@@ -638,7 +684,9 @@ impl WalletClient {
     pub fn get_transfers<T>(
         &self,
         selector: GetTransfersSelector<T>,
-    ) -> impl Future<Output = Fallible<HashMap<GetTransfersCategory, Vec<GotTransfer>>>> + Send + 'static
+    ) -> impl Future<Output = Result<HashMap<GetTransfersCategory, Vec<GotTransfer>>, Error>>
+           + Send
+           + 'static
     where
         T: RangeBounds<u64> + Send,
     {
@@ -690,7 +738,7 @@ impl WalletClient {
         &self,
         txid: CryptoNoteHash,
         account_index: Option<u64>,
-    ) -> Fallible<Option<GotTransfer>> {
+    ) -> Result<Option<GotTransfer>, Error> {
         #[derive(Deserialize)]
         struct Rsp {
             transfer: GotTransfer,
@@ -706,12 +754,12 @@ impl WalletClient {
             .call("get_transfer_by_txid", RpcParams::map(params))
             .await?
         {
-            Ok(v) => serde_json::from_value::<Rsp>(v)?,
+            Ok(v) => serde_json::from_value::<Rsp>(v).map_err(Error::from_parse_error)?,
             Err(e) => {
                 if e.code == jsonrpc_core::ErrorCode::ServerError(-8) {
                     return Ok(None);
                 } else {
-                    return Err(e.into());
+                    return Err(e).context(RpcError);
                 }
             }
         };
@@ -720,7 +768,7 @@ impl WalletClient {
     }
 
     /// Export a signed set of key images.
-    pub async fn export_key_images(&self) -> Fallible<Vec<SignedKeyImage>> {
+    pub async fn export_key_images(&self) -> Result<Vec<SignedKeyImage>, Error> {
         #[derive(Deserialize)]
         struct R {
             key_image: HashString<Vec<u8>>,
@@ -760,7 +808,7 @@ impl WalletClient {
     pub async fn import_key_images(
         &self,
         signed_key_images: Vec<SignedKeyImage>,
-    ) -> Fallible<KeyImageImportResponse> {
+    ) -> Result<KeyImageImportResponse, Error> {
         let params = empty().chain(once((
             "signed_key_images",
             signed_key_images
@@ -786,7 +834,7 @@ impl WalletClient {
     }
 
     /// Get RPC version Major & Minor integer-format, where Major is the first 16 bits and Minor the last 16 bits.
-    pub async fn get_version(&self) -> Fallible<(u16, u16)> {
+    pub async fn get_version(&self) -> Result<(u16, u16), Error> {
         #[derive(Deserialize)]
         struct Rsp {
             version: u32,
@@ -800,6 +848,9 @@ impl WalletClient {
         let major = version.version >> 16;
         let minor = version.version - (major << 16);
 
-        Ok((u16::try_from(major)?, u16::try_from(minor)?))
+        Ok((
+            u16::try_from(major).map_err(Error::from_parse_error)?,
+            u16::try_from(minor).map_err(Error::from_parse_error)?,
+        ))
     }
 }

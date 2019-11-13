@@ -9,8 +9,8 @@ use crate::util::*;
 
 macro_rules! hash_type {
     ($name:ident, $len:expr) => {
-        fixed_hash::construct_fixed_hash! {
-            #[derive(Serialize, Deserialize)]
+        ::fixed_hash::construct_fixed_hash! {
+            #[derive(::serde::Serialize, ::serde::Deserialize)]
             pub struct $name($len);
         }
 
