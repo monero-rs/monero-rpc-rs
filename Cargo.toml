@@ -17,11 +17,11 @@ futures-preview = "0.3.0-alpha"
 fixed-hash = "0.3"
 hex = "0.4"
 http = "*"
-jsonrpc-core = "12.0"
+jsonrpc-core = "14"
 log = "*"
 monero = { git = "https://github.com/monero-rs/monero-rs", features = ["serde"] }
 reqwest = { version = "0.10.0-alpha", features = ["json"] }
 serde = { version = "1", features = ["derive"] }
-serde_json = "1.0"
+serde_json = "1"
 snafu = "*"
-uuid = { version = "0.7", features = ["v4"] }
+uuid = { version = "0.8", features = ["v4"] }
