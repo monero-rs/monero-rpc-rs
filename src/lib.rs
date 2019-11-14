@@ -1,4 +1,10 @@
-//! Monero daemon and wallet RPC. Requires Rust nightly 2019-05-09 or later.
+//! Monero daemon and wallet RPC.
+
+#[macro_use]
+mod util;
+mod models;
+
+pub use {self::models::*, self::util::*};
 
 use {
     core::ops::Deref,
@@ -45,13 +51,6 @@ impl Error {
         ParseError.into_error(Box::new(e) as StdError)
     }
 }
-
-#[macro_use]
-mod util;
-
-mod models;
-
-pub use {self::models::*, self::util::*};
 
 enum RpcParams {
     Array(Box<dyn Iterator<Item = Value> + Send + 'static>),
