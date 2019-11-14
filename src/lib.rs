@@ -710,8 +710,8 @@ impl WalletClient {
                             .chain(Some(("filter_by_height", true.into())))
                             .chain({
                                 match range.start_bound() {
-                                    Bound::Included(b) => Some(*b),
-                                    Bound::Excluded(b) => Some(b + 1),
+                                    Bound::Included(b) => Some(b - 1),
+                                    Bound::Excluded(b) => Some(*b),
                                     Bound::Unbounded => None,
                                 }
                                 .map(|b| ("min_height", b.into()))
