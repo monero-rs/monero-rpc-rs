@@ -422,7 +422,7 @@ impl WalletClient {
             .chain(once(("account_index", account.into())))
             .chain(addresses.map(|v| {
                 (
-                    "address_index".into(),
+                    "address_index",
                     v.into_iter().map(Value::from).collect::<Vec<_>>().into(),
                 )
             }));
@@ -482,7 +482,7 @@ impl WalletClient {
     ) -> Result<(), Error> {
         let params = empty()
             .chain(once((
-                "index".into(),
+                "index",
                 json!(SubaddressIndex {
                     major: account_index,
                     minor: address_index,
