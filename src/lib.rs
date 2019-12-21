@@ -7,8 +7,6 @@ mod models;
 pub use {self::models::*, self::util::*};
 
 use {
-    core::ops::Deref,
-    futures::prelude::*,
     jsonrpc_core::types::*,
     log::*,
     monero::{cryptonote::hash::Hash as CryptoNoteHash, Address, PaymentId},
@@ -19,9 +17,10 @@ use {
         collections::HashMap,
         convert::TryFrom,
         fmt::Debug,
+        future::Future,
         iter::{empty, once},
         num::NonZeroU64,
-        ops::{Bound, RangeBounds, RangeInclusive},
+        ops::{Bound, Deref, RangeBounds, RangeInclusive},
         pin::Pin,
         sync::Arc,
     },
@@ -107,7 +106,7 @@ impl JsonRpcCaller for RemoteCaller {
     {
         let client = self.http_client.clone();
         let uri = format!("{}/json_rpc", &self.addr);
-        async move {
+        Box::pin(async move {
             let method_call = MethodCall {
                 jsonrpc: Some(Version::V2),
                 method: method.to_string(),
@@ -132,8 +131,7 @@ impl JsonRpcCaller for RemoteCaller {
             let v = jsonrpc_core::Result::<Value>::from(rsp);
 
             Ok(v)
-        }
-            .boxed()
+        })
     }
 }
 
