@@ -1,11 +1,8 @@
-use {
-    chrono::prelude::*,
-    monero::{cryptonote::hash::Hash as CryptoNoteHash, Address, PaymentId},
-    serde::{Deserialize, Deserializer, Serialize},
-    std::{collections::HashMap, num::NonZeroU64},
-};
-
 use crate::util::*;
+use chrono::prelude::*;
+use monero::{cryptonote::hash::Hash as CryptoNoteHash, util::address::PaymentId, Address};
+use serde::{Deserialize, Deserializer, Serialize};
+use std::{collections::HashMap, num::NonZeroU64};
 
 macro_rules! hash_type {
     ($name:ident, $len:expr) => {

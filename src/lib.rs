@@ -4,28 +4,26 @@
 mod util;
 mod models;
 
-pub use {self::models::*, self::util::*};
+pub use self::{models::*, util::*};
 
-use {
-    jsonrpc_core::types::*,
-    log::*,
-    monero::{cryptonote::hash::Hash as CryptoNoteHash, Address, PaymentId},
-    serde::{de::IgnoredAny, Deserialize, Deserializer, Serialize, Serializer},
-    serde_json::{json, Value},
-    snafu::*,
-    std::{
-        collections::HashMap,
-        convert::TryFrom,
-        fmt::Debug,
-        future::Future,
-        iter::{empty, once},
-        num::NonZeroU64,
-        ops::{Bound, Deref, RangeBounds, RangeInclusive},
-        pin::Pin,
-        sync::Arc,
-    },
-    uuid::Uuid,
+use jsonrpc_core::types::*;
+use log::*;
+use monero::{cryptonote::hash::Hash as CryptoNoteHash, util::address::PaymentId, Address};
+use serde::{de::IgnoredAny, Deserialize, Deserializer, Serialize, Serializer};
+use serde_json::{json, Value};
+use snafu::*;
+use std::{
+    collections::HashMap,
+    convert::TryFrom,
+    fmt::Debug,
+    future::Future,
+    iter::{empty, once},
+    num::NonZeroU64,
+    ops::{Bound, Deref, RangeBounds, RangeInclusive},
+    pin::Pin,
+    sync::Arc,
 };
+use uuid::Uuid;
 
 pub type StdError = Box<dyn std::error::Error + Send + Sync + 'static>;
 

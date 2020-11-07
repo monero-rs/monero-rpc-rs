@@ -1,7 +1,5 @@
-use {
-    serde::{Deserialize, Deserializer, Serialize},
-    std::fmt::{self, Display},
-};
+use serde::{Deserialize, Deserializer, Serialize};
+use std::fmt::{self, Display};
 
 pub trait HashType: Sized {
     fn bytes(&self) -> &[u8];
@@ -21,7 +19,7 @@ macro_rules! hash_type_impl {
     };
 }
 
-hash_type_impl!(monero::PaymentId);
+hash_type_impl!(monero::util::address::PaymentId);
 hash_type_impl!(monero::cryptonote::hash::Hash);
 
 impl HashType for Vec<u8> {
