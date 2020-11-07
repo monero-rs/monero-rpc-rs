@@ -7,7 +7,6 @@ mod models;
 pub use self::{models::*, util::*};
 
 use jsonrpc_core::types::*;
-use log::*;
 use monero::{cryptonote::hash::Hash as CryptoNoteHash, util::address::PaymentId, Address};
 use serde::{de::IgnoredAny, Deserialize, Deserializer, Serialize, Serializer};
 use serde_json::{json, Value};
@@ -23,6 +22,7 @@ use std::{
     pin::Pin,
     sync::Arc,
 };
+use tracing::*;
 use uuid::Uuid;
 
 pub type StdError = Box<dyn std::error::Error + Send + Sync + 'static>;
