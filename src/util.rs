@@ -3,7 +3,7 @@ use std::fmt::{self, Display};
 
 pub trait HashType: Sized {
     fn bytes(&self) -> &[u8];
-    fn from_str(v: &str) -> Result<Self, super::Error>;
+    fn from_str(v: &str) -> anyhow::Result<Self>;
 }
 
 macro_rules! hash_type_impl {
@@ -12,8 +12,8 @@ macro_rules! hash_type_impl {
             fn bytes(&self) -> &[u8] {
                 self.as_bytes()
             }
-            fn from_str(v: &str) -> Result<Self, crate::Error> {
-                Ok(v.parse().map_err($crate::Error::from_parse_error)?)
+            fn from_str(v: &str) -> anyhow::Result<Self> {
+                Ok(v.parse()?)
             }
         }
     };
@@ -26,8 +26,8 @@ impl HashType for Vec<u8> {
     fn bytes(&self) -> &[u8] {
         &*self
     }
-    fn from_str(v: &str) -> Result<Self, crate::Error> {
-        Ok(hex::decode(v).map_err(crate::Error::from_parse_error)?)
+    fn from_str(v: &str) -> anyhow::Result<Self> {
+        Ok(hex::decode(v)?)
     }
 }
 
