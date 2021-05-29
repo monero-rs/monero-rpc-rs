@@ -270,8 +270,8 @@ impl DaemonClient {
         }
 
         let params = empty()
-            .chain(once(("start_height", range.start().clone().into())))
-            .chain(once(("end_height", range.end().clone().into())));
+            .chain(once(("start_height", (*range.start()).into())))
+            .chain(once(("end_height", (*range.end()).into())));
 
         let Rsp { headers, untrusted } = self
             .inner

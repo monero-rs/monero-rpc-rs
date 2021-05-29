@@ -15,12 +15,12 @@ maintenance = { status = "actively-developed" }
 anyhow = "1"
 async-trait = "0.1"
 chrono = { version = "0.4", features = ["serde"] }
-fixed-hash = "0.6"
+fixed-hash = "0.7"
 hex = "0.4"
 http = "0.2"
-jsonrpc-core = "15"
-monero = { version = "0.10", features = ["serde_support"] }
-reqwest = { version = "0.10", features = ["json"] }
+jsonrpc-core = "17"
+monero = { version = "0.12", features = ["serde_support"] }
+reqwest = { version = "0.11", features = ["json"] }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 tracing = "0.1"
