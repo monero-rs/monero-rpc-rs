@@ -792,6 +792,33 @@ impl WalletClient {
             .await
     }
 
+    /// Check a tx_key is valid given a txid and receiver address.
+    pub async fn check_tx_key(
+        &self,
+        txid: CryptoNoteHash,
+        tx_key: CryptoNoteHash,
+        address: Address,
+    ) -> anyhow::Result<(NonZeroU64, bool, NonZeroU64)> {
+        #[derive(Deserialize)]
+        struct Rsp {
+            confirmations: NonZeroU64,
+            in_pool: bool,
+            received: NonZeroU64,
+        }
+
+        let params = empty()
+            .chain(once(("txid", HashString(txid).to_string().into())))
+            .chain(once(("tx_key", HashString(tx_key).to_string().into())))
+            .chain(once(("address", address.to_string().into())));
+
+        let rsp = self
+            .inner
+            .request::<Rsp>("check_tx_key", RpcParams::map(params))
+            .await?;
+
+        Ok((rsp.confirmations, rsp.in_pool, rsp.received))
+    }
+
     /// Get RPC version Major & Minor integer-format, where Major is the first 16 bits and Minor the last 16 bits.
     pub async fn get_version(&self) -> anyhow::Result<(u16, u16)> {
         #[derive(Deserialize)]
