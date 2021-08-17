@@ -2,6 +2,7 @@
 
 #[macro_use]
 mod util;
+#[macro_use]
 mod models;
 
 pub use self::{models::*, util::*};
@@ -360,6 +361,43 @@ pub struct WalletClient {
 }
 
 impl WalletClient {
+    /// Generate a new wallet from viewkey, address and optionally a spend key
+    /// Requires the rpc wallet to run with the --wallet-dir argument
+    pub async fn generate_from_keys(
+        &self,
+        args: GenerateFromKeysArgs,
+    ) -> anyhow::Result<WalletCreation> {
+        let params = empty()
+            .chain(args.restore_height.map(|v| ("restore_height", v.into())))
+            .chain(once(("filename", args.filename.into())))
+            .chain(once(("address", args.address.to_string().into())))
+            .chain(args.spendkey.map(|v| ("spendkey", v.to_string().into())))
+            .chain(once(("viewkey", args.viewkey.to_string().into())))
+            .chain(once(("password", args.password.into())))
+            .chain(
+                args.autosave_current
+                    .map(|v| ("autosave_current", v.into())),
+            );
+        self.inner
+            .request("generate_from_keys", RpcParams::map(params))
+            .await
+    }
+
+    /// Opens an existing wallet file
+    pub async fn open_wallet(
+        &self,
+        filename: String,
+        password: Option<String>,
+    ) -> anyhow::Result<WalletOpen> {
+        let params = empty()
+            .chain(once(("filename", filename.into())))
+            .chain(password.map(|v| ("password", v.into())));
+
+        self.inner
+            .request("open_wallet", RpcParams::map(params))
+            .await
+    }
+
     /// Return the wallet's balance.
     pub async fn get_balance(
         &self,
