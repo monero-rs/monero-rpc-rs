@@ -6,7 +6,6 @@ mod models;
 
 pub use self::{models::*, util::*};
 
-use async_trait::async_trait;
 use jsonrpc_core::types::{Id, *};
 use monero::{cryptonote::hash::Hash as CryptoNoteHash, util::address::PaymentId, Address};
 use serde::{de::IgnoredAny, Deserialize, Deserializer, Serialize, Serializer};
