@@ -207,6 +207,7 @@ pub enum GetTransfersCategory {
     Pending,
     Failed,
     Pool,
+    Block,
 }
 
 impl From<GetTransfersCategory> for &'static str {
@@ -219,6 +220,7 @@ impl From<GetTransfersCategory> for &'static str {
             Pending => "pending",
             Failed => "failed",
             Pool => "pool",
+            Block => "block",
         }
     }
 }
