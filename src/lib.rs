@@ -383,6 +383,22 @@ impl WalletClient {
             .await
     }
 
+    /// Create a new wallet
+    pub async fn create_wallet(
+        &self,
+        filename: String,
+        password: Option<String>,
+        language: String,
+    ) -> anyhow::Result<()> {
+        let params = empty()
+            .chain(once(("filename", filename.into())))
+            .chain(password.map(|v| ("password", v.into())))
+            .chain(once(("language", language.into())));
+        self.inner
+            .request("create_wallet", RpcParams::map(params))
+            .await
+    }
+
     /// Opens an existing wallet file
     pub async fn open_wallet(
         &self,
