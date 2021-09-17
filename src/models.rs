@@ -118,11 +118,11 @@ pub struct TransactionsResponse {
 pub struct Transaction {
     pub as_hex: String,
     pub as_json: Option<String>, // needs to be parsed as JsonTransaction, but is received as a string
-    pub block_height: u64,
-    pub block_timestamp: u64,
+    pub block_height: Option<u64>,
+    pub block_timestamp: Option<u64>,
     pub double_spend_seen: bool,
     pub in_pool: bool,
-    pub output_indices: Vec<u64>,
+    pub output_indices: Option<Vec<u64>>,
     pub tx_hash: HashString<CryptoNoteHash>,
 }
 
