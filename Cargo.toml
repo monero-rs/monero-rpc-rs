@@ -5,7 +5,7 @@ version = "0.1.0"
 authors = ["Artem Vorotnikov <artem@vorotnikov.me>"]
 repository = "https://github.com/monero-ecosystem/monero-rpc-rs"
 edition = "2018"
-license = "MIT OR Apache-2.0"
+license = "Apache-2.0"
 keywords = ["asynchronous", "net"]
 
 [badges]
