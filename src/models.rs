@@ -319,7 +319,9 @@ pub struct GetTransfersSelector {
 
 #[derive(Clone, Debug)]
 pub struct BlockHeightFilter {
+    // excluded bound
     pub min_height: Option<u64>,
+    // included bound
     pub max_height: Option<u64>,
 }
 
