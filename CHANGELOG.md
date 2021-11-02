@@ -7,4 +7,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-[Unreleased]: https://github.com/farcaster-project/farcaster-node/compare/363c433023318877e9d397dbe2b50bdf88cdee9d...HEAD
+[Unreleased]: https://github.com/monero-ecosystem/monero-rpc-rs/compare/363c433023318877e9d397dbe2b50bdf88cdee9d...HEAD
