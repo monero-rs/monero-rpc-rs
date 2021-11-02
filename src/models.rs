@@ -307,6 +307,12 @@ pub struct GetAccountsData {
     pub total_unlocked_balance: u64,
 }
 
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub enum PrivateKeyType {
+    View,
+    Spend
+}
+
 #[derive(Clone, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
 pub enum GetTransfersCategory {

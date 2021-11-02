@@ -650,36 +650,21 @@ impl WalletClient {
             .map(|rsp| rsp.payments)
     }
 
-    /// Return the view private key.
-    pub async fn query_view_key(&self) -> anyhow::Result<monero::PrivateKey> {
+    /// Get either the private view or spend key
+    pub async fn query_key(&self, key_selector: PrivateKeyType) -> anyhow::Result<monero::PrivateKey> {
         #[derive(Deserialize)]
         struct Rsp {
             key: HashString<Vec<u8>>,
         }
 
-        let params = empty().chain(once(("key_type", "view_key".into())));
-
-        let rsp = self
-            .inner
-            .request::<Rsp>("query_key", RpcParams::map(params))
-            .await?;
-
-        Ok(monero::PrivateKey::from_slice(&rsp.key.0)?)
-    }
-
-    /// Return the view private key.
-    pub async fn query_spend_key(&self) -> anyhow::Result<monero::PrivateKey> {
-        #[derive(Deserialize)]
-        struct Rsp {
-            key: HashString<Vec<u8>>,
-        }
-
-        let params = empty().chain(once(("key_type", "spend_key".into())));
-
-        let rsp = self
-            .inner
-            .request::<Rsp>("query_key", RpcParams::map(params))
-            .await?;
+        let params = empty().chain({
+            match key_selector {
+                PrivateKeyType::View => empty().chain(once(("key_type", "view_key".into()))),
+                PrivateKeyType::Spend => empty().chain(once(("key_type", "spend_key".into()))),
+            }
+        });
+        let rsp = self.inner.request::<Rsp>("query_key", RpcParams::map(params))
+        .await?;
 
         Ok(monero::PrivateKey::from_slice(&rsp.key.0)?)
     }
