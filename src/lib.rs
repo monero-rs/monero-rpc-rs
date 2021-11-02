@@ -525,6 +525,13 @@ impl WalletClient {
         Ok(())
     }
 
+    /// refresh opened wallet
+    pub async fn refresh(&self, start_height: Option<u64>) -> anyhow::Result<RefreshData> {
+        let params = empty().chain(start_height.map(|v| ("start_height", v.into())));
+
+        self.inner.request("refresh", RpcParams::map(params)).await
+    }
+
     /// Get all accounts for a wallet. Optionally filter accounts by tag.
     pub async fn get_accounts(&self, tag: Option<String>) -> anyhow::Result<GetAccountsData> {
         let params = empty().chain(tag.map(|v| ("tag", v.into())));

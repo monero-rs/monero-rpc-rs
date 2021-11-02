@@ -225,6 +225,12 @@ pub struct GotAccount {
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct RefreshData {
+    pub blocks_fetched: u64,
+    pub received_money: bool,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct GetAccountsData {
     pub subaddress_accounts: Vec<GotAccount>,
     pub total_balance: u64,
