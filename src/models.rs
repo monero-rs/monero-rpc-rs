@@ -245,6 +245,7 @@ pub enum GetTransfersCategory {
     Pending,
     Failed,
     Pool,
+    Block,
 }
 
 impl From<GetTransfersCategory> for &'static str {
@@ -257,6 +258,7 @@ impl From<GetTransfersCategory> for &'static str {
             Pending => "pending",
             Failed => "failed",
             Pool => "pool",
+            Block => "block",
         }
     }
 }
@@ -313,7 +315,7 @@ pub struct GotTransfer {
     /// Amount transferred.
     pub amount: u64,
     /// Number of block mined since the block containing this transaction (or block height at which the transaction should be added to a block if not yet confirmed).
-    pub confirmations: u64,
+    pub confirmations: Option<u64>,
     /// True if the key image(s) for the transfer have been seen before.
     pub double_spend_seen: bool,
     /// Transaction fee for this transfer.
