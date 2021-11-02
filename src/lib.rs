@@ -16,7 +16,7 @@ use std::{
     fmt::Debug,
     iter::{empty, once},
     num::NonZeroU64,
-    ops::{Bound, Deref, RangeBounds, RangeInclusive},
+    ops::{Deref, RangeInclusive},
     sync::Arc,
 };
 use tracing::*;
@@ -87,9 +87,7 @@ impl RemoteCaller {
             .await?;
 
         trace!("Received JSON-RPC response: {:?}", rsp);
-
         let v = jsonrpc_core::Result::<Value>::from(rsp);
-
         Ok(v)
     }
 
@@ -797,18 +795,15 @@ impl WalletClient {
     }
 
     /// Returns a list of transfers.
-    pub async fn get_transfers<T>(
+    pub async fn get_transfers(
         &self,
-        selector: GetTransfersSelector<T>,
-    ) -> anyhow::Result<HashMap<GetTransfersCategory, Vec<GotTransfer>>>
-    where
-        T: RangeBounds<u64> + Send,
-    {
+        selector: GetTransfersSelector,
+    ) -> anyhow::Result<HashMap<GetTransfersCategory, Vec<GotTransfer>>> {
         let GetTransfersSelector {
             category_selector,
-            filter_by_height,
             account_index,
             subaddr_indices,
+            block_height_filter,
         } = selector;
 
         let params = empty()
@@ -817,33 +812,25 @@ impl WalletClient {
                     .into_iter()
                     .map(|(cat, b)| (cat.into(), b.into())),
             )
+            .chain(account_index.map(|v| ("account_index", v.into())))
+            .chain(subaddr_indices.map(|v| ("subaddr_indices", v.into())))
             .chain({
-                filter_by_height
+                block_height_filter
                     .map(|range| {
                         empty()
-                            .chain(Some(("filter_by_height", true.into())))
+                            .chain(once(("filter_by_height", true.into())))
                             .chain({
-                                match range.start_bound() {
-                                    Bound::Included(b) => Some(b - 1),
-                                    Bound::Excluded(b) => Some(*b),
-                                    Bound::Unbounded => None,
+                                match range.min_height {
+                                    Some(x) => Some(x),
+                                    None => Some(0),
                                 }
                                 .map(|b| ("min_height", b.into()))
                             })
-                            .chain({
-                                match range.end_bound() {
-                                    Bound::Included(b) => Some(*b),
-                                    Bound::Excluded(b) => Some(b.checked_sub(1).unwrap_or(0)),
-                                    Bound::Unbounded => None,
-                                }
-                                .map(|b| ("max_height", b.into()))
-                            })
+                            .chain(range.max_height.map(|b| ("max_height", b.into())))
                     })
                     .into_iter()
                     .flatten()
-            })
-            .chain(account_index.map(|v| ("account_index", v.into())))
-            .chain(subaddr_indices.map(|v| ("subaddr_indices", v.into())));
+            });
 
         self.inner
             .request("get_transfers", RpcParams::map(params))
