@@ -1,12 +1,12 @@
 [package]
 name = "monero-rpc"
-description = "RPC client for Monero daemon and wallet"
 version = "0.1.0"
 authors = ["Artem Vorotnikov <artem@vorotnikov.me>"]
-repository = "https://github.com/monero-ecosystem/monero-rpc-rs"
 edition = "2018"
-license = "Apache-2.0"
 keywords = ["asynchronous", "net"]
+license = "Apache-2.0"
+repository = "https://github.com/monero-ecosystem/monero-rpc-rs"
+description = "RPC client for Monero daemon and wallet"
 
 [dependencies]
 anyhow = "1"
