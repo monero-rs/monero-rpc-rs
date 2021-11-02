@@ -198,6 +198,15 @@ pub struct Payment {
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct WalletCreation {
+    pub address: Address,
+    pub info: String,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct WalletOpen;
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct AddressData {
     pub address: Address,
     pub addresses: Vec<SubaddressData>,
@@ -212,6 +221,17 @@ pub struct TransferOptions {
     pub unlock_time: Option<u64>,
     pub payment_id: Option<PaymentId>,
     pub do_not_relay: Option<bool>,
+}
+
+#[derive(Clone, Debug)]
+pub struct GenerateFromKeysArgs {
+    pub restore_height: Option<u64>,
+    pub filename: String,
+    pub address: Address,
+    pub spendkey: Option<monero::PrivateKey>,
+    pub viewkey: monero::PrivateKey,
+    pub password: String,
+    pub autosave_current: Option<bool>,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
