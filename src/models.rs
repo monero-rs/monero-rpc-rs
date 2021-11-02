@@ -103,6 +103,38 @@ pub struct BlockHeaderResponse {
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct TransactionsResponse {
+    pub credits: u64,
+    pub top_hash: String,
+    pub status: String,
+    pub missed_tx: Option<Vec<HashString<CryptoNoteHash>>>,
+    pub txs: Option<Vec<Transaction>>,
+    pub txs_as_hex: Option<Vec<String>>,
+    pub txs_as_json: Option<Vec<String>>, // needs to be parsed as JsonTransaction, but is received as a string
+    pub untrusted: bool,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct Transaction {
+    pub as_hex: String,
+    pub as_json: Option<String>, // needs to be parsed as JsonTransaction, but is received as a string
+    pub block_height: u64,
+    pub block_timestamp: u64,
+    pub double_spend_seen: bool,
+    pub in_pool: bool,
+    pub output_indices: Vec<u64>,
+    pub tx_hash: HashString<CryptoNoteHash>,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct JsonTransaction {
+    pub version: u64,
+    pub unlock_time: u64,
+    // TODO: these fields are skipped for now, their content changes often from hardfork to hardfork
+    // vin, vout, extra, rct_signatures, rct_sig_prunable
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct SubaddressBalanceData {
     pub address: Address,
     pub address_index: u64,

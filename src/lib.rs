@@ -6,7 +6,6 @@ mod models;
 
 pub use self::{models::*, util::*};
 
-use async_trait::async_trait;
 use jsonrpc_core::types::{Id, *};
 use monero::{cryptonote::hash::Hash as CryptoNoteHash, util::address::PaymentId, Address};
 use serde::{de::IgnoredAny, Deserialize, Deserializer, Serialize, Serializer};
@@ -55,24 +54,14 @@ impl From<RpcParams> for Params {
     }
 }
 
-#[async_trait]
-trait JsonRpcCaller: Debug + Send + Sync + 'static {
-    async fn call(
-        &self,
-        method: &'static str,
-        params: RpcParams,
-    ) -> anyhow::Result<jsonrpc_core::Result<Value>>;
-}
-
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 struct RemoteCaller {
     http_client: reqwest::Client,
     addr: String,
 }
 
-#[async_trait]
-impl JsonRpcCaller for RemoteCaller {
-    async fn call(
+impl RemoteCaller {
+    async fn json_rpc_call(
         &self,
         method: &'static str,
         params: RpcParams,
@@ -103,18 +92,58 @@ impl JsonRpcCaller for RemoteCaller {
 
         Ok(v)
     }
+
+    async fn daemon_rpc_call<T>(&self, method: &'static str, params: RpcParams) -> anyhow::Result<T>
+    where
+        T: for<'de> Deserialize<'de> + Send + 'static + Debug,
+    {
+        let client = self.http_client.clone();
+        let uri = format!("{}/{}", &self.addr, method);
+
+        let json_params: jsonrpc_core::types::params::Params = params.into();
+
+        trace!(
+            "Sending daemon RPC call: {:?}, with params {:?}",
+            method,
+            json_params
+        );
+
+        let rsp = client
+            .post(uri)
+            .json(&json_params)
+            .send()
+            .await?
+            .json::<T>()
+            .await?;
+
+        trace!("Received daemon RPC response: {:?}", rsp);
+
+        Ok(rsp)
+    }
 }
 
 #[derive(Clone, Debug)]
-struct CallerWrapper(Arc<dyn JsonRpcCaller>);
+struct CallerWrapper(Arc<RemoteCaller>);
 
 impl CallerWrapper {
     async fn request<T>(&self, method: &'static str, params: RpcParams) -> anyhow::Result<T>
     where
         T: for<'de> Deserialize<'de> + Send + 'static,
     {
-        let c = self.0.call(method, params);
+        let c = self.0.json_rpc_call(method, params);
         Ok(serde_json::from_value(c.await??)?)
+    }
+
+    async fn daemon_rpc_request<T>(
+        &self,
+        method: &'static str,
+        params: RpcParams,
+    ) -> anyhow::Result<T>
+    where
+        T: for<'de> Deserialize<'de> + Send + 'static + Debug,
+    {
+        let c = self.0.daemon_rpc_call(method, params).await?;
+        Ok(serde_json::from_value(c)?)
     }
 }
 
@@ -138,6 +167,12 @@ impl RpcClient {
     pub fn daemon(self) -> DaemonClient {
         let Self { inner } = self;
         DaemonClient { inner }
+    }
+
+    /// Create a daemon rpc client
+    pub fn daemon_rpc(self) -> DaemonRpcClient {
+        let Self { inner } = self;
+        DaemonRpcClient { inner }
     }
 
     /// Create a wallet client.
@@ -285,6 +320,36 @@ impl DaemonClient {
     /// Enable additional functions for regtest mode
     pub fn regtest(self) -> RegtestDaemonClient {
         RegtestDaemonClient(self)
+    }
+}
+
+#[derive(Clone, Debug)]
+pub struct DaemonRpcClient {
+    inner: CallerWrapper,
+}
+
+impl DaemonRpcClient {
+    pub async fn get_transactions(
+        &self,
+        txs_hashes: Vec<CryptoNoteHash>,
+        decode_as_json: Option<bool>,
+        prune: Option<bool>,
+    ) -> anyhow::Result<TransactionsResponse> {
+        let params = empty()
+            .chain(once((
+                "txs_hashes",
+                txs_hashes
+                    .into_iter()
+                    .map(|s| HashString(s).to_string())
+                    .collect::<Vec<_>>()
+                    .into(),
+            )))
+            .chain(decode_as_json.map(|v| ("decode_as_json", v.into())))
+            .chain(prune.map(|v| ("prune", v.into())));
+        Ok(self
+            .inner
+            .daemon_rpc_request::<TransactionsResponse>("get_transactions", RpcParams::map(params))
+            .await?)
     }
 }
 
@@ -710,7 +775,7 @@ impl WalletClient {
         let rsp = match self
             .inner
             .0
-            .call("get_transfer_by_txid", RpcParams::map(params))
+            .json_rpc_call("get_transfer_by_txid", RpcParams::map(params))
             .await?
         {
             Ok(v) => serde_json::from_value::<Rsp>(v)?,
