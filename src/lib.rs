@@ -2,7 +2,6 @@
 
 #[macro_use]
 mod util;
-#[macro_use]
 mod models;
 
 pub use self::{models::*, util::*};

@@ -172,7 +172,7 @@ pub struct WalletCreation {
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct WalletOpen {}
+pub struct WalletOpen;
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct AddressData {
