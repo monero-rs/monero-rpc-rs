@@ -711,6 +711,21 @@ impl WalletClient {
             .await
     }
 
+    /// Relay tx
+    pub async fn relay_tx(&self, tx_metadata_hex: String) -> anyhow::Result<CryptoNoteHash> {
+        #[derive(Deserialize)]
+        struct Rsp {
+            tx_hash: HashString<CryptoNoteHash>,
+        }
+        let params = empty().chain(once(("hex", tx_metadata_hex.into())));
+        Ok(self
+            .inner
+            .request::<Rsp>("relay_tx", RpcParams::map(params))
+            .await?
+            .tx_hash
+            .0)
+    }
+
     /// Send monero to a number of recipients.
     pub async fn transfer(
         &self,
