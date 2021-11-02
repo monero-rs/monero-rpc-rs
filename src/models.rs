@@ -212,6 +212,29 @@ pub struct AddressData {
     pub addresses: Vec<SubaddressData>,
 }
 
+#[derive(Copy, Clone, Debug)]
+pub enum TransferType {
+    All,
+    Available,
+    Unavailable,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct IncomingTransfers {
+    pub transfers: Option<Vec<IncomingTransfer>>,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct IncomingTransfer {
+    pub amount: u64,
+    pub global_index: u64,
+    pub key_image: Vec<u8>,
+    pub spent: bool,
+    pub subaddr_index: u64,
+    pub tx_hash: HashString<CryptoNoteHash>,
+    pub tx_size: u64,
+}
+
 #[derive(Clone, Debug, Default)]
 pub struct TransferOptions {
     pub account_index: Option<u64>,

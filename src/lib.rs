@@ -384,6 +384,19 @@ impl RegtestDaemonClient {
     }
 }
 
+impl Serialize for TransferType {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        serializer.serialize_str(match self {
+            TransferType::All => "all",
+            TransferType::Available => "available",
+            TransferType::Unavailable => "unavailable",
+        })
+    }
+}
+
 impl Serialize for TransferPriority {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
@@ -762,6 +775,25 @@ impl WalletClient {
             .request::<Rsp>("submit_transfer", RpcParams::map(params))
             .await
             .map(|v| v.tx_hash_list.into_iter().map(|v| v.0).collect())
+    }
+
+    pub async fn incoming_transfers(
+        &self,
+        transfer_type: TransferType,
+        account_index: Option<u64>,
+        subaddr_indices: Option<Vec<u64>>,
+    ) -> anyhow::Result<IncomingTransfers> {
+        let params = empty()
+            .chain(once((
+                "transfer_type",
+                serde_json::to_value(transfer_type)?,
+            )))
+            .chain(account_index.map(|v| ("account_index", v.into())))
+            .chain(subaddr_indices.map(|v| ("subaddr_indices", v.into())));
+
+        self.inner
+            .request("incoming_transfers", RpcParams::map(params))
+            .await
     }
 
     /// Returns a list of transfers.
