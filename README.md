@@ -1,4 +1,5 @@
 [![Build Status](https://img.shields.io/github/workflow/status/monero-ecosystem/monero-rpc-rs/Continuous%20integration)](https://github.com/monero-ecosystem/monero-rpc-rs/blob/master/.github/workflows/main.yml)
+![MSRV](https://img.shields.io/badge/MSRV-1.51.0-blue)
 
 # Monero Daemon & Wallet RPC
 
