@@ -311,7 +311,7 @@ pub struct GetAccountsData {
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub enum PrivateKeyType {
     View,
-    Spend
+    Spend,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]

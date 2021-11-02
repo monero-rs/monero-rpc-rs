@@ -651,7 +651,10 @@ impl WalletClient {
     }
 
     /// Get either the private view or spend key
-    pub async fn query_key(&self, key_selector: PrivateKeyType) -> anyhow::Result<monero::PrivateKey> {
+    pub async fn query_key(
+        &self,
+        key_selector: PrivateKeyType,
+    ) -> anyhow::Result<monero::PrivateKey> {
         #[derive(Deserialize)]
         struct Rsp {
             key: HashString<Vec<u8>>,
@@ -663,8 +666,10 @@ impl WalletClient {
                 PrivateKeyType::Spend => empty().chain(once(("key_type", "spend_key".into()))),
             }
         });
-        let rsp = self.inner.request::<Rsp>("query_key", RpcParams::map(params))
-        .await?;
+        let rsp = self
+            .inner
+            .request::<Rsp>("query_key", RpcParams::map(params))
+            .await?;
 
         Ok(monero::PrivateKey::from_slice(&rsp.key.0)?)
     }
