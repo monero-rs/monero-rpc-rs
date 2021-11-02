@@ -4,6 +4,12 @@ name: Continuous integration
 
 jobs:
   check:
+    strategy:
+      matrix:
+        rust: [
+          1.51.0,
+          stable,
+      ]
     name: Check
     runs-on: ubuntu-latest
     steps:
@@ -11,7 +17,7 @@ jobs:
       - uses: actions-rs/toolchain@v1
         with:
           profile: minimal
-          toolchain: stable
+          toolchain: ${{ matrix.rust }}
           override: true
       - uses: actions-rs/cargo@v1
         with:

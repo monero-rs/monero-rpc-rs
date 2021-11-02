@@ -1,5 +1,7 @@
 //! Monero daemon and wallet RPC.
 
+#![forbid(unsafe_code)]
+
 #[macro_use]
 mod util;
 mod models;

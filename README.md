@@ -1,14 +1,15 @@
-# monero-rpc
+[![Build Status](https://img.shields.io/github/workflow/status/monero-ecosystem/monero-rpc-rs/Continuous%20integration)](https://github.com/monero-ecosystem/monero-rpc-rs/blob/master/.github/workflows/main.yml)
+[![unsafe forbidden](https://img.shields.io/badge/unsafe-forbidden-success.svg)](https://github.com/rust-secure-code/safety-dance/)
+[![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
+![MSRV](https://img.shields.io/badge/MSRV-1.51.0-blue)
 
-[![GitHub Actions workflow status](https://github.com/vorot93/monero-rpc-rs/workflows/Continuous%20integration/badge.svg)](https://github.com/vorot93/monero-rpc-rs/actions)
+# Monero Daemon & Wallet RPC
 
-Monero daemon and wallet RPC.
-
-License: MIT OR Apache-2.0
+Monero daemon and wallet RPC written in asynchronous Rust :crab:.
 
 ## Example with tokio::test
 
-```
+```rust
 #[tokio::test]
 async fn monero_daemon_transactions_test() {
     let tx_id = "7c50844eced8ab78a8f26a126fbc1f731134e0ae3e6f9ba0f205f98c1426ff60".to_string();
@@ -26,3 +27,11 @@ async fn monero_daemon_transactions_test() {
     );
 }
 ```
+
+## Release Notes
+
+See [CHANGELOG.md](CHANGELOG.md).
+
+## Licensing
+
+The code in this project is licensed under the [Apache-2.0](LICENSE)

@@ -8,9 +8,6 @@ edition = "2018"
 license = "Apache-2.0"
 keywords = ["asynchronous", "net"]
 
-[badges]
-maintenance = { status = "actively-developed" }
-
 [dependencies]
 anyhow = "1"
 chrono = { version = "0.4", features = ["serde"] }
