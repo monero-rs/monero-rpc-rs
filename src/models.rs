@@ -234,6 +234,7 @@ pub struct IncomingTransfer {
     pub tx_hash: HashString<CryptoNoteHash>,
     pub tx_size: u64,
 }
+
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct SweepAllArgs {
     pub address: Address,
