@@ -1,4 +1,5 @@
 [![Build Status](https://img.shields.io/github/workflow/status/monero-ecosystem/monero-rpc-rs/Continuous%20integration)](https://github.com/monero-ecosystem/monero-rpc-rs/blob/master/.github/workflows/main.yml)
+[![unsafe forbidden](https://img.shields.io/badge/unsafe-forbidden-success.svg)](https://github.com/rust-secure-code/safety-dance/)
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 ![MSRV](https://img.shields.io/badge/MSRV-1.51.0-blue)
 
