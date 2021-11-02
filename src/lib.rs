@@ -667,6 +667,23 @@ impl WalletClient {
         Ok(monero::PrivateKey::from_slice(&rsp.key.0)?)
     }
 
+    /// Return the view private key.
+    pub async fn query_spend_key(&self) -> anyhow::Result<monero::PrivateKey> {
+        #[derive(Deserialize)]
+        struct Rsp {
+            key: HashString<Vec<u8>>,
+        }
+
+        let params = empty().chain(once(("key_type", "spend_key".into())));
+
+        let rsp = self
+            .inner
+            .request::<Rsp>("query_key", RpcParams::map(params))
+            .await?;
+
+        Ok(monero::PrivateKey::from_slice(&rsp.key.0)?)
+    }
+
     /// Returns the wallet's current block height.
     pub async fn get_height(&self) -> anyhow::Result<NonZeroU64> {
         #[derive(Deserialize)]
