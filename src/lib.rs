@@ -650,15 +650,22 @@ impl WalletClient {
             .map(|rsp| rsp.payments)
     }
 
-    /// Return the view private key.
-    pub async fn query_view_key(&self) -> anyhow::Result<monero::PrivateKey> {
+    /// Get either the private view or spend key
+    pub async fn query_key(
+        &self,
+        key_selector: PrivateKeyType,
+    ) -> anyhow::Result<monero::PrivateKey> {
         #[derive(Deserialize)]
         struct Rsp {
             key: HashString<Vec<u8>>,
         }
 
-        let params = empty().chain(once(("key_type", "view_key".into())));
-
+        let params = empty().chain({
+            match key_selector {
+                PrivateKeyType::View => empty().chain(once(("key_type", "view_key".into()))),
+                PrivateKeyType::Spend => empty().chain(once(("key_type", "spend_key".into()))),
+            }
+        });
         let rsp = self
             .inner
             .request::<Rsp>("query_key", RpcParams::map(params))
@@ -679,6 +686,29 @@ impl WalletClient {
             .request::<Rsp>("get_height", RpcParams::None)
             .await?
             .height)
+    }
+
+    /// Sweep a wallet's entire unlocked balance
+    pub async fn sweep_all(&self, args: SweepAllArgs) -> anyhow::Result<SweepAllData> {
+        let params = empty()
+            .chain(once(("address", serde_json::to_value(args.address)?)))
+            .chain(once((
+                "account_index",
+                Value::Number(args.account_index.into()),
+            )))
+            .chain(args.subaddr_indices.map(|v| ("subaddr_indices", v.into())))
+            .chain(once(("priority", serde_json::to_value(args.priority)?)))
+            .chain(once(("mixin", args.mixin.into())))
+            .chain(once(("ring_size", args.ring_size.into())))
+            .chain(once(("unlock_time", args.unlock_time.into())))
+            .chain(args.get_tx_keys.map(|v| ("get_tx_keys", v.into())))
+            .chain(args.below_amount.map(|v| ("below_amount", v.into())))
+            .chain(args.do_not_relay.map(|v| ("do_not_relay", v.into())))
+            .chain(args.get_tx_hex.map(|v| ("get_tx_hex", v.into())))
+            .chain(args.get_tx_metadata.map(|v| ("get_tx_metadata", v.into())));
+        self.inner
+            .request("sweep_all", RpcParams::map(params))
+            .await
     }
 
     /// Send monero to a number of recipients.

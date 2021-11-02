@@ -235,6 +235,34 @@ pub struct IncomingTransfer {
     pub tx_size: u64,
 }
 
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct SweepAllArgs {
+    pub address: Address,
+    pub account_index: u64,
+    pub subaddr_indices: Option<Vec<u64>>,
+    pub priority: TransferPriority,
+    pub mixin: u64,
+    pub ring_size: u64,
+    pub unlock_time: u64,
+    pub get_tx_keys: Option<bool>,
+    pub below_amount: Option<u64>,
+    pub do_not_relay: Option<bool>,
+    pub get_tx_hex: Option<bool>,
+    pub get_tx_metadata: Option<bool>,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct SweepAllData {
+    pub tx_hash_list: Vec<HashString<CryptoNoteHash>>,
+    pub tx_key_list: Option<Vec<HashString<CryptoNoteHash>>>,
+    pub amount_list: Vec<u64>,
+    pub fee_list: Vec<u64>,
+    pub tx_blob_list: Option<Vec<String>>,
+    pub tx_metadata_list: Option<Vec<String>>,
+    pub multisig_txset: String,
+    pub unsigned_txset: String,
+}
+
 #[derive(Clone, Debug, Default)]
 pub struct TransferOptions {
     pub account_index: Option<u64>,
@@ -278,6 +306,12 @@ pub struct GetAccountsData {
     pub subaddress_accounts: Vec<GotAccount>,
     pub total_balance: u64,
     pub total_unlocked_balance: u64,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub enum PrivateKeyType {
+    View,
+    Spend,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
