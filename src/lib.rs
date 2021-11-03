@@ -481,14 +481,15 @@ impl WalletClient {
         &self,
         filename: String,
         password: Option<String>,
-    ) -> anyhow::Result<WalletOpen> {
+    ) -> anyhow::Result<()> {
         let params = empty()
             .chain(once(("filename", filename.into())))
             .chain(password.map(|v| ("password", v.into())));
 
         self.inner
             .request("open_wallet", RpcParams::map(params))
-            .await
+            .await?;
+        Ok(())
     }
 
     /// Return the wallet's balance.
