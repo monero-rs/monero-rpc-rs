@@ -204,9 +204,6 @@ pub struct WalletCreation {
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct WalletOpen;
-
-#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct AddressData {
     pub address: Address,
     pub addresses: Vec<SubaddressData>,
