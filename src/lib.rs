@@ -854,6 +854,17 @@ impl WalletClient {
             block_height_filter,
         } = selector;
 
+        let mut min_height = None;
+        let mut max_height = None;
+
+        if let Some(block_filter) = block_height_filter.clone() {
+            min_height = match block_filter.min_height {
+                Some(x) => Some(x),
+                None => Some(0),
+            };
+            max_height = block_filter.max_height;
+        }
+
         let params = empty()
             .chain(
                 category_selector
@@ -862,23 +873,13 @@ impl WalletClient {
             )
             .chain(account_index.map(|v| ("account_index", v.into())))
             .chain(subaddr_indices.map(|v| ("subaddr_indices", v.into())))
-            .chain({
+            .chain(
                 block_height_filter
-                    .map(|range| {
-                        empty()
-                            .chain(once(("filter_by_height", true.into())))
-                            .chain({
-                                match range.min_height {
-                                    Some(x) => Some(x),
-                                    None => Some(0),
-                                }
-                                .map(|b| ("min_height", b.into()))
-                            })
-                            .chain(range.max_height.map(|b| ("max_height", b.into())))
-                    })
-                    .into_iter()
-                    .flatten()
-            });
+                    .clone()
+                    .map(|_| ("filter_by_height", true.into())),
+            )
+            .chain(min_height.map(|b| ("min_height", b.into())))
+            .chain(max_height.map(|b| ("max_height", b.into())));
 
         self.inner
             .request("get_transfers", RpcParams::map(params))

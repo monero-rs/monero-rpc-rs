@@ -337,7 +337,7 @@ impl From<GetTransfersCategory> for &'static str {
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct GetTransfersSelector {
     pub category_selector: HashMap<GetTransfersCategory, bool>,
     /// Index of the account to query for transfers. (defaults to 0)
@@ -348,7 +348,7 @@ pub struct GetTransfersSelector {
     pub block_height_filter: Option<BlockHeightFilter>,
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct BlockHeightFilter {
     // excluded bound
     pub min_height: Option<u64>,
