@@ -487,7 +487,7 @@ impl WalletClient {
             .chain(password.map(|v| ("password", v.into())));
 
         self.inner
-            .request("open_wallet", RpcParams::map(params))
+            .request::<IgnoredAny>("open_wallet", RpcParams::map(params))
             .await?;
         Ok(())
     }
