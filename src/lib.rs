@@ -692,10 +692,10 @@ impl WalletClient {
     /// Sweep a wallet's entire unlocked balance
     pub async fn sweep_all(&self, args: SweepAllArgs) -> anyhow::Result<SweepAllData> {
         let params = empty()
-            .chain(once(("address", serde_json::to_value(args.address)?)))
+            .chain(once(("address", args.address.to_string().into())))
             .chain(once((
                 "account_index",
-                Value::Number(args.account_index.into()),
+                args.account_index.into(),
             )))
             .chain(args.subaddr_indices.map(|v| ("subaddr_indices", v.into())))
             .chain(once(("priority", serde_json::to_value(args.priority)?)))
