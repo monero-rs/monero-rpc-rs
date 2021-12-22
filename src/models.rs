@@ -343,7 +343,7 @@ impl From<GetTransfersCategory> for &'static str {
     }
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, Default, Debug, Serialize, Deserialize)]
 pub struct GetTransfersSelector {
     pub category_selector: HashMap<GetTransfersCategory, bool>,
     /// Index of the account to query for transfers. (defaults to 0)
@@ -360,17 +360,6 @@ pub struct BlockHeightFilter {
     pub min_height: Option<u64>,
     // included bound
     pub max_height: Option<u64>,
-}
-
-impl Default for GetTransfersSelector {
-    fn default() -> Self {
-        Self {
-            category_selector: Default::default(),
-            account_index: Default::default(),
-            subaddr_indices: Default::default(),
-            block_height_filter: Default::default(),
-        }
-    }
 }
 
 #[derive(Clone, Debug)]

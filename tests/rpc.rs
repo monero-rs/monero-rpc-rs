@@ -100,9 +100,15 @@ async fn functional_wallet_test() {
         .await
         .unwrap();
 
-    let res = wallet
+    match wallet
         .check_tx_key(transfer_data.tx_hash.0, transfer_data.tx_key.0, address)
-        .await;
+        .await
+    {
+        Ok(_) => {}
+        Err(err) => {
+            assert_eq!(format!("{}", err), "lol");
+        }
+    }
 
     wallet.export_key_images().await.unwrap();
 
@@ -218,11 +224,11 @@ async fn functional_wallet_test() {
 }
 
 fn setup_monero() -> (monero_rpc::RegtestDaemonClient, monero_rpc::WalletClient) {
-    let dhost = env::var("MONERO_DAEMON_HOST").unwrap_or("localhost".into());
+    let dhost = env::var("MONERO_DAEMON_HOST").unwrap_or_else(|_| "localhost".into());
     let daemon_client = monero_rpc::RpcClient::new(format!("http://{}:18081", dhost));
     let daemon = daemon_client.daemon();
     let regtest = daemon.regtest();
-    let whost = env::var("MONERO_WALLET_HOST_1").unwrap_or("localhost".into());
+    let whost = env::var("MONERO_WALLET_HOST_1").unwrap_or_else(|_| "localhost".into());
     let wallet_client = monero_rpc::RpcClient::new(format!("http://{}:18083", whost));
     let wallet = wallet_client.wallet();
     (regtest, wallet)
