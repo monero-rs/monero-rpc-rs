@@ -106,7 +106,7 @@ async fn functional_wallet_test() {
     {
         Ok(_) => {}
         Err(err) => {
-            assert_eq!(format!("{}", err), "lol");
+            assert_eq!(format!("{}", err), "expected a non-zero value");
         }
     }
 
