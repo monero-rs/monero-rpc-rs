@@ -241,10 +241,13 @@ impl DaemonClient {
             .inner
             .request::<MoneroResult<BlockTemplate>>(
                 "get_block_template",
-                RpcParams::array(
+                RpcParams::map(
                     empty()
-                        .chain(once(serde_json::to_value(wallet_address).unwrap()))
-                        .chain(once(reserve_size.into())),
+                        .chain(once((
+                            "wallet_address",
+                            serde_json::to_value(wallet_address).unwrap(),
+                        )))
+                        .chain(once(("reserve_size", reserve_size.into()))),
                 ),
             )
             .await?
