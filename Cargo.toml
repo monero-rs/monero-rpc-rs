@@ -3,6 +3,7 @@ name = "monero-rpc"
 version = "0.1.0"
 authors = ["Artem Vorotnikov <artem@vorotnikov.me>"]
 edition = "2018"
+exclude = ["/test"]
 keywords = ["asynchronous", "net"]
 license = "Apache-2.0"
 repository = "https://github.com/monero-ecosystem/monero-rpc-rs"
@@ -21,3 +22,9 @@ serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 tracing = "0.1"
 uuid = { version = "0.8", features = ["v4"] }
+
+[dev-dependencies]
+# Async
+tokio = { version = "1.12.0", features = ["full"] }
+rand = "0.8.4"
+
