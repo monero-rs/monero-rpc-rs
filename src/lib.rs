@@ -736,7 +736,7 @@ impl WalletClient {
     /// Send monero to a number of recipients.
     pub async fn transfer(
         &self,
-        destinations: HashMap<Address, u64>,
+        destinations: HashMap<Address, monero::Amount>,
         priority: TransferPriority,
         options: TransferOptions,
     ) -> anyhow::Result<TransferData> {
@@ -745,7 +745,9 @@ impl WalletClient {
                 "destinations",
                 destinations
                     .into_iter()
-                    .map(|(address, amount)| json!({"address": address, "amount": amount}))
+                    .map(
+                        |(address, amount)| json!({"address": address, "amount": amount.as_pico()}),
+                    )
                     .collect::<Vec<Value>>()
                     .into(),
             )))
