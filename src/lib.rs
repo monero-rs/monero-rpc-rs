@@ -475,8 +475,9 @@ impl WalletClient {
             .chain(password.map(|v| ("password", v.into())))
             .chain(once(("language", language.into())));
         self.inner
-            .request("create_wallet", RpcParams::map(params))
-            .await
+            .request::<IgnoredAny>("create_wallet", RpcParams::map(params))
+            .await?;
+        Ok(())
     }
 
     /// Opens an existing wallet file
