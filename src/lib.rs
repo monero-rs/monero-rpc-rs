@@ -499,15 +499,20 @@ impl WalletClient {
     /// Return the wallet's balance.
     pub async fn get_balance(
         &self,
-        account: u64,
-        addresses: Option<Vec<u64>>,
+        account_index: u64,
+        address_indices: Option<Vec<u64>>,
     ) -> anyhow::Result<BalanceData> {
         let params = empty()
-            .chain(once(account.into()))
-            .chain(addresses.map(Value::from));
+            .chain(once(("account_index", account_index.into())))
+            .chain(address_indices.map(|v| {
+                (
+                    "adress_indices",
+                    v.into_iter().map(Value::from).collect::<Vec<_>>().into(),
+                )
+            }));
 
         self.inner
-            .request("get_balance", RpcParams::array(params))
+            .request("get_balance", RpcParams::map(params))
             .await
     }
 
