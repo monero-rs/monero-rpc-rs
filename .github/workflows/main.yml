@@ -26,19 +26,19 @@ jobs:
   test:
     name: Test Suite
     runs-on: ubuntu-latest
-    services:
-      monerod:
-        image: ghcr.io/farcaster-project/containers/monerod:0.17.2.3
-        env:
-          NETWORK: regtest
-          MONEROD_RPC_PORT: 18081
-          OFFLINE: --offline
-          DIFFICULTY: 1
-      monero-wallet-rpc-1:
-        image: ghcr.io/farcaster-project/containers/monero-wallet-rpc:0.17.2.3
-        env:
-          MONEROD_ADDRESS: monerod:18081
-          WALLET_RPC_PORT: 18083
+    # services:
+    #   monerod:
+    #     image: ghcr.io/farcaster-project/containers/monerod:0.17.2.3
+    #     env:
+    #       NETWORK: regtest
+    #       MONEROD_RPC_PORT: 18081
+    #       OFFLINE: --offline
+    #       DIFFICULTY: 1
+    #   monero-wallet-rpc-1:
+    #     image: ghcr.io/farcaster-project/containers/monero-wallet-rpc:0.17.2.3
+    #     env:
+    #       MONEROD_ADDRESS: monerod:18081
+    #       WALLET_RPC_PORT: 18083
     steps:
       - uses: actions/checkout@v2
       - uses: actions-rs/toolchain@v1
@@ -46,12 +46,14 @@ jobs:
           profile: minimal
           toolchain: stable
           override: true
+      - name: Compose docker services
+        run: sudo apt-get install -y docker-compose && cd tests && docker-compose up -d && cd ..
       - uses: actions-rs/cargo@v1
-        with:
-          command: test
-        env:
-          MONERO_DAEMON_HOST: monerod
-          MONERO_WALLET_HOST_1: monero-wallet-rpc-1
+      - name: Test
+        run: cargo test
+        # env:
+        #   MONERO_DAEMON_HOST: monerod
+        #   MONERO_WALLET_HOST_1: monero-wallet-rpc-1
 
   fmt:
     name: Rustfmt
