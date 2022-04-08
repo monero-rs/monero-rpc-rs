@@ -36,7 +36,7 @@ jobs:
 
       - name: Add & Commit
         id: make-commit
-        uses: EndBug/add-and-commit@v7.4.0
+        uses: EndBug/add-and-commit@v9.0.0
         with:
           message: Prepare release ${{ github.event.inputs.version }}
           branch: release/${{ github.event.inputs.version }}
