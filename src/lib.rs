@@ -241,10 +241,13 @@ impl DaemonClient {
             .inner
             .request::<MoneroResult<BlockTemplate>>(
                 "get_block_template",
-                RpcParams::array(
+                RpcParams::map(
                     empty()
-                        .chain(once(serde_json::to_value(wallet_address).unwrap()))
-                        .chain(once(reserve_size.into())),
+                        .chain(once((
+                            "wallet_address",
+                            serde_json::to_value(wallet_address).unwrap(),
+                        )))
+                        .chain(once(("reserve_size", reserve_size.into()))),
                 ),
             )
             .await?
@@ -346,10 +349,9 @@ impl DaemonRpcClient {
             )))
             .chain(decode_as_json.map(|v| ("decode_as_json", v.into())))
             .chain(prune.map(|v| ("prune", v.into())));
-        Ok(self
-            .inner
+        self.inner
             .daemon_rpc_request::<TransactionsResponse>("get_transactions", RpcParams::map(params))
-            .await?)
+            .await
     }
 }
 
@@ -472,8 +474,9 @@ impl WalletClient {
             .chain(password.map(|v| ("password", v.into())))
             .chain(once(("language", language.into())));
         self.inner
-            .request("create_wallet", RpcParams::map(params))
-            .await
+            .request::<IgnoredAny>("create_wallet", RpcParams::map(params))
+            .await?;
+        Ok(())
     }
 
     /// Opens an existing wallet file
@@ -492,18 +495,32 @@ impl WalletClient {
         Ok(())
     }
 
+    /// Closes an open wallet
+    pub async fn close_wallet(&self) -> anyhow::Result<()> {
+        let params = empty();
+        self.inner
+            .request::<IgnoredAny>("close_wallet", RpcParams::map(params))
+            .await?;
+        Ok(())
+    }
+
     /// Return the wallet's balance.
     pub async fn get_balance(
         &self,
-        account: u64,
-        addresses: Option<Vec<u64>>,
+        account_index: u64,
+        address_indices: Option<Vec<u64>>,
     ) -> anyhow::Result<BalanceData> {
         let params = empty()
-            .chain(once(account.into()))
-            .chain(addresses.map(Value::from));
+            .chain(once(("account_index", account_index.into())))
+            .chain(address_indices.map(|v| {
+                (
+                    "adress_indices",
+                    v.into_iter().map(Value::from).collect::<Vec<_>>().into(),
+                )
+            }));
 
         self.inner
-            .request("get_balance", RpcParams::array(params))
+            .request("get_balance", RpcParams::map(params))
             .await
     }
 
@@ -727,7 +744,7 @@ impl WalletClient {
     /// Send monero to a number of recipients.
     pub async fn transfer(
         &self,
-        destinations: HashMap<Address, u64>,
+        destinations: HashMap<Address, monero::Amount>,
         priority: TransferPriority,
         options: TransferOptions,
     ) -> anyhow::Result<TransferData> {
@@ -736,7 +753,9 @@ impl WalletClient {
                 "destinations",
                 destinations
                     .into_iter()
-                    .map(|(address, amount)| json!({"address": address, "amount": amount}))
+                    .map(
+                        |(address, amount)| json!({"address": address, "amount": amount.as_pico()}),
+                    )
                     .collect::<Vec<Value>>()
                     .into(),
             )))

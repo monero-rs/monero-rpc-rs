@@ -167,7 +167,7 @@ pub struct TransferData {
     pub fee: u64,
     pub tx_blob: HashString<Vec<u8>>,
     pub tx_hash: HashString<CryptoNoteHash>,
-    pub tx_key: HashString<Vec<u8>>,
+    pub tx_key: HashString<CryptoNoteHash>,
     pub tx_metadata: HashString<Vec<u8>>,
     pub unsigned_txset: HashString<Vec<u8>>,
 }
@@ -225,11 +225,17 @@ pub struct IncomingTransfers {
 pub struct IncomingTransfer {
     pub amount: u64,
     pub global_index: u64,
-    pub key_image: Vec<u8>,
+    pub key_image: Option<String>,
     pub spent: bool,
-    pub subaddr_index: u64,
+    pub subaddr_index: SubAddressIndex,
     pub tx_hash: HashString<CryptoNoteHash>,
-    pub tx_size: u64,
+    pub tx_size: Option<u64>,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct SubAddressIndex {
+    pub major: u64,
+    pub minor: u64,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -337,7 +343,7 @@ impl From<GetTransfersCategory> for &'static str {
     }
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, Default, Debug, Serialize, Deserialize)]
 pub struct GetTransfersSelector {
     pub category_selector: HashMap<GetTransfersCategory, bool>,
     /// Index of the account to query for transfers. (defaults to 0)
@@ -354,17 +360,6 @@ pub struct BlockHeightFilter {
     pub min_height: Option<u64>,
     // included bound
     pub max_height: Option<u64>,
-}
-
-impl Default for GetTransfersSelector {
-    fn default() -> Self {
-        Self {
-            category_selector: Default::default(),
-            account_index: Default::default(),
-            subaddr_indices: Default::default(),
-            block_height_filter: Default::default(),
-        }
-    }
 }
 
 #[derive(Clone, Debug)]
