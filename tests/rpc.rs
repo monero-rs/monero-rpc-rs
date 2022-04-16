@@ -55,6 +55,21 @@ async fn functional_wallet_test() {
         .open_wallet(spend_wallet_name.clone(), None)
         .await
         .unwrap();
+
+    // test closing the wallet again
+    wallet.close_wallet().await.unwrap();
+    assert_eq!(
+        format!(
+            "{}",
+            wallet.get_address(0, Some(vec![0])).await.err().unwrap()
+        ),
+        "Server error: No wallet file".to_string()
+    );
+
+    wallet
+        .open_wallet(spend_wallet_name.clone(), None)
+        .await
+        .unwrap();
     wallet.get_balance(1, Some(vec![0])).await.unwrap();
     let address = wallet.get_address(0, Some(vec![0])).await.unwrap().address;
     wallet.get_address_index(address).await.unwrap();
