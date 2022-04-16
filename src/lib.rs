@@ -496,6 +496,15 @@ impl WalletClient {
         Ok(())
     }
 
+    /// Closes an open wallet
+    pub async fn close_wallet(&self) -> anyhow::Result<()> {
+        let params = empty();
+        self.inner
+            .request::<IgnoredAny>("close_wallet", RpcParams::map(params))
+            .await?;
+        Ok(())
+    }
+
     /// Return the wallet's balance.
     pub async fn get_balance(
         &self,
