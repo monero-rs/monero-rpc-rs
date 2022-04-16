@@ -349,10 +349,9 @@ impl DaemonRpcClient {
             )))
             .chain(decode_as_json.map(|v| ("decode_as_json", v.into())))
             .chain(prune.map(|v| ("prune", v.into())));
-        Ok(self
-            .inner
+        self.inner
             .daemon_rpc_request::<TransactionsResponse>("get_transactions", RpcParams::map(params))
-            .await?)
+            .await
     }
 }
 
