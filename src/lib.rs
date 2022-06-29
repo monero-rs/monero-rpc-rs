@@ -10,6 +10,8 @@
 //! [`RegtestDaemonClient::generate_blocks`].
 //!
 //! ```rust
+//! use monero_rpc::RpcClient;
+//!
 //! let client = RpcClient::new("http://node.monerooutreach.org:18081".to_string());
 //! let daemon = client.daemon();
 //! let regtest_daemon = daemon.regtest();
@@ -208,6 +210,8 @@ impl RpcClient {
 /// of information. These methods all follow a similar structure.
 ///
 /// ```rust
+/// use monero_rpc::RpcClient;
+///
 /// let client = RpcClient::new("http://node.monerooutreach.org:18081".to_string());
 /// let daemon = client.daemon();
 /// let regtest_daemon = daemon.regtest();
@@ -371,6 +375,8 @@ impl DaemonClient {
 /// specifying a method, these methods are called at their own extensions.
 ///
 /// ```rust
+/// use monero_rpc::RpcClient;
+///
 /// let client = RpcClient::new("http://node.monerooutreach.org:18081".to_string());
 /// let daemon = client.daemon_rpc();
 /// ```
@@ -486,6 +492,8 @@ impl<'de> Deserialize<'de> for TransferPriority {
 /// Result of [`RpcClient::wallet`] to interact with a Monero wallet RPC daemon.
 ///
 /// ```rust
+/// use monero_rpc::RpcClient;
+///
 /// let client = RpcClient::new("http://127.0.0.1:18083".to_string());
 /// let daemon = client.wallet();
 /// ```
