@@ -1,4 +1,4 @@
-name: Create and publish release
+name: Create release
 
 on:
   pull_request:
@@ -9,31 +9,4 @@ jobs:
   create_release:
     name: Create from merged release branch
     if: github.event.pull_request.merged == true && startsWith(github.event.pull_request.head.ref, 'release/')
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-
-      - name: Extract version from branch name
-        id: extract-version
-        shell: python
-        run: |
-          branch_name = "${{ github.event.pull_request.head.ref }}"
-          version = branch_name.split("/")[1]
-
-          print(f"::set-output name=version::{version}")
-
-      - name: Extract changelog section for release
-        id: changelog
-        uses: coditory/changelog-parser@v1
-        with:
-          version: ${{ steps.extract-version.outputs.version }}
-
-      - name: Create GitHub release
-        uses: softprops/action-gh-release@v1
-        with:
-          name: ${{ steps.extract-version.outputs.version }}
-          tag_name: ${{ format('v{0}', steps.extract-version.outputs.version) }}
-          draft: false
-          prerelease: false
-          body: ${{ steps.changelog.outputs.description }}
-          target_commitish: ${{ github.event.pull_request.merge_commit_sha }}
+    uses: monero-rs/workflows/.github/workflows/create-release.yml@v2.0.1
