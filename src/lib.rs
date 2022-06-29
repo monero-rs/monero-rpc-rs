@@ -1,4 +1,21 @@
-//! Monero daemon and wallet RPC.
+//! Monero daemon and wallet RPC library written in asynchronous Rust.
+//!
+//! ## Usage
+//!
+//! Create the base [`RpcClient`] and use the methods [`RpcClient::daemon`],
+//! [`RpcClient::daemon_rpc`], or [`RpcClient::wallet`] to retreive the specialized RPC client.
+//!
+//! On a [`DaemonClient`] you can call [`DaemonClient::regtest`] to get a [`RegtestDaemonClient`]
+//! instance that enable RPC call specific to regtest such as
+//! [`RegtestDaemonClient::generate_blocks`].
+//!
+//! ```rust
+//! use monero_rpc::RpcClient;
+//!
+//! let client = RpcClient::new("http://node.monerooutreach.org:18081".to_string());
+//! let daemon = client.daemon();
+//! let regtest_daemon = daemon.regtest();
+//! ```
 
 #![forbid(unsafe_code)]
 
@@ -147,13 +164,15 @@ impl CallerWrapper {
     }
 }
 
-/// Base RPC client. It is useless on its own, please see the attached methods instead.
+/// Base RPC client. It is useless on its own, please see the attached methods to see how to
+/// transform it into a specialized client.
 #[derive(Clone, Debug)]
 pub struct RpcClient {
     inner: CallerWrapper,
 }
 
 impl RpcClient {
+    /// Create a new generic RPC client that can be transformed into specialized client.
     pub fn new(addr: String) -> Self {
         Self {
             inner: CallerWrapper(Arc::new(RemoteCaller {
@@ -163,30 +182,46 @@ impl RpcClient {
         }
     }
 
-    /// Create a daemon client.
+    /// Transform the client into the specialized `DaemonClient` that interacts with JSON RPC
+    /// Methods on daemon.
     pub fn daemon(self) -> DaemonClient {
         let Self { inner } = self;
         DaemonClient { inner }
     }
 
-    /// Create a daemon rpc client
+    /// Transform the client into the specialized `DaemonRpcClient` that interacts with methods on
+    /// daemon called with their own extensions.
     pub fn daemon_rpc(self) -> DaemonRpcClient {
         let Self { inner } = self;
         DaemonRpcClient { inner }
     }
 
-    /// Create a wallet client.
+    /// Transform the client into the specialized `WalletClient` that interacts with a Monero
+    /// wallet RPC daemon.
     pub fn wallet(self) -> WalletClient {
         let Self { inner } = self;
         WalletClient { inner }
     }
 }
 
+/// Result of [`RpcClient::daemon`] to interact with JSON RPC Methods on daemon.
+///
+/// The majority of monerod RPC calls use the daemon's json_rpc interface to request various bits
+/// of information. These methods all follow a similar structure.
+///
+/// ```rust
+/// use monero_rpc::RpcClient;
+///
+/// let client = RpcClient::new("http://node.monerooutreach.org:18081".to_string());
+/// let daemon = client.daemon();
+/// let regtest_daemon = daemon.regtest();
+/// ```
 #[derive(Clone, Debug)]
 pub struct DaemonClient {
     inner: CallerWrapper,
 }
 
+/// Result of [`DaemonClient::regtest`] to enable methods for daemons in regtest mode.
 #[derive(Clone, Debug)]
 pub struct RegtestDaemonClient(pub DaemonClient);
 
@@ -198,9 +233,13 @@ impl Deref for RegtestDaemonClient {
     }
 }
 
+/// Selector for daemon `get_block_header`.
 pub enum GetBlockHeaderSelector {
+    /// Select the last block.
     Last,
+    /// Select the block by its hash.
     Hash(BlockHash),
+    /// Select the block by its height.
     Height(u64),
 }
 
@@ -296,7 +335,9 @@ impl DaemonClient {
             .into())
     }
 
-    /// Similar to get_block_header_by_height above, but for a range of blocks. This method includes a starting block height and an ending block height as parameters to retrieve basic information about the range of blocks.
+    /// Similar to [`Self::get_block_header`] above, but for a range of blocks. This method
+    /// includes a starting block height and an ending block height as parameters to retrieve basic
+    /// information about the range of blocks.
     pub async fn get_block_headers_range(
         &self,
         range: RangeInclusive<u64>,
@@ -320,18 +361,32 @@ impl DaemonClient {
         Ok((headers.into_iter().map(From::from).collect(), untrusted))
     }
 
-    /// Enable additional functions for regtest mode
+    /// Enable additional functions for daemons in regtest mode.
     pub fn regtest(self) -> RegtestDaemonClient {
         RegtestDaemonClient(self)
     }
 }
 
+/// Result of [`RpcClient::daemon_rpc`] to interact with methods on daemon called with their own
+/// extensions.
+///
+/// Not all daemon RPC calls use the `JSON_RPC` interface. The data structure for these calls is
+/// different. Whereas the JSON RPC methods were called using the `/json_rpc` extension and
+/// specifying a method, these methods are called at their own extensions.
+///
+/// ```rust
+/// use monero_rpc::RpcClient;
+///
+/// let client = RpcClient::new("http://node.monerooutreach.org:18081".to_string());
+/// let daemon = client.daemon_rpc();
+/// ```
 #[derive(Clone, Debug)]
 pub struct DaemonRpcClient {
     inner: CallerWrapper,
 }
 
 impl DaemonRpcClient {
+    /// Look up one or more transactions by hash.
     pub async fn get_transactions(
         &self,
         txs_hashes: Vec<CryptoNoteHash>,
@@ -434,14 +489,22 @@ impl<'de> Deserialize<'de> for TransferPriority {
     }
 }
 
+/// Result of [`RpcClient::wallet`] to interact with a Monero wallet RPC daemon.
+///
+/// ```rust
+/// use monero_rpc::RpcClient;
+///
+/// let client = RpcClient::new("http://127.0.0.1:18083".to_string());
+/// let daemon = client.wallet();
+/// ```
 #[derive(Clone, Debug)]
 pub struct WalletClient {
     inner: CallerWrapper,
 }
 
 impl WalletClient {
-    /// Generate a new wallet from viewkey, address and optionally a spend key
-    /// Requires the rpc wallet to run with the --wallet-dir argument
+    /// Generate a new wallet from viewkey, address and optionally a spend key.  Requires the rpc
+    /// wallet to run with the `--wallet-dir` argument.
     pub async fn generate_from_keys(
         &self,
         args: GenerateFromKeysArgs,
@@ -462,7 +525,8 @@ impl WalletClient {
             .await
     }
 
-    /// Create a new wallet
+    /// Create a new wallet. You need to have set the argument `--wallet-dir` when launching
+    /// monero-wallet-rpc to make this work.
     pub async fn create_wallet(
         &self,
         filename: String,
@@ -479,7 +543,8 @@ impl WalletClient {
         Ok(())
     }
 
-    /// Opens an existing wallet file
+    /// Open a wallet. You need to have set the argument `--wallet-dir` when launching
+    /// monero-wallet-rpc to make this work.
     pub async fn open_wallet(
         &self,
         filename: String,
@@ -495,7 +560,7 @@ impl WalletClient {
         Ok(())
     }
 
-    /// Closes an open wallet
+    /// Close the currently opened wallet, after trying to save it.
     pub async fn close_wallet(&self) -> anyhow::Result<()> {
         let params = empty();
         self.inner
@@ -524,7 +589,8 @@ impl WalletClient {
             .await
     }
 
-    /// Return the wallet's addresses for an account. Optionally filter for specific set of subaddresses.
+    /// Return the wallet's addresses for an account. Optionally filter for specific set of
+    /// subaddresses.
     pub async fn get_address(
         &self,
         account: u64,
@@ -609,7 +675,7 @@ impl WalletClient {
         Ok(())
     }
 
-    /// refresh opened wallet
+    /// Refresh a wallet after openning.
     pub async fn refresh(&self, start_height: Option<u64>) -> anyhow::Result<RefreshData> {
         let params = empty().chain(start_height.map(|v| ("start_height", v.into())));
 
@@ -637,9 +703,10 @@ impl WalletClient {
             .await
     }
 
-    /// Get a list of incoming payments using a given payment id, or a list of payments ids, from a given height.
-    /// This method is the preferred method over `WalletClient::get_payments` because it has the same functionality but is more extendable.
-    /// Either is fine for looking up transactions by a single payment ID.
+    /// Get a list of incoming payments using a given payment id, or a list of payments ids, from a
+    /// given height. This method is the preferred method over [`Self::get_payments`] because it
+    /// has the same functionality but is more extendable. Either is fine for looking up
+    /// transactions by a single payment ID.
     pub async fn get_bulk_payments(
         &self,
         payment_ids: Vec<PaymentId>,
@@ -668,7 +735,7 @@ impl WalletClient {
             .map(|rsp| rsp.payments)
     }
 
-    /// Get either the private view or spend key
+    /// Return the spend or view private key.
     pub async fn query_key(
         &self,
         key_selector: PrivateKeyType,
@@ -706,7 +773,7 @@ impl WalletClient {
             .height)
     }
 
-    /// Sweep a wallet's entire unlocked balance
+    /// Send all unlocked balance to an address.
     pub async fn sweep_all(&self, args: SweepAllArgs) -> anyhow::Result<SweepAllData> {
         let params = empty()
             .chain(once(("address", args.address.to_string().into())))
@@ -726,7 +793,7 @@ impl WalletClient {
             .await
     }
 
-    /// Relay tx
+    /// Relay a transaction previously created with `"do_not_relay":true`.
     pub async fn relay_tx(&self, tx_metadata_hex: String) -> anyhow::Result<CryptoNoteHash> {
         #[derive(Deserialize)]
         struct Rsp {
@@ -839,6 +906,7 @@ impl WalletClient {
             .map(|v| v.tx_hash_list.into_iter().map(|v| v.0).collect())
     }
 
+    /// Return a list of incoming transfers to the wallet.
     pub async fn incoming_transfers(
         &self,
         transfer_type: TransferType,
@@ -902,6 +970,8 @@ impl WalletClient {
             .await
     }
 
+    /// Show information about a transfer to/from this address. **Called `get_transfer_by_txid` in
+    /// RPC.**
     pub async fn get_transfer(
         &self,
         txid: CryptoNoteHash,
@@ -1001,7 +1071,7 @@ impl WalletClient {
             .await
     }
 
-    /// Check a tx_key is valid given a txid and receiver address.
+    /// Check a transaction in the blockchain with its secret key.
     pub async fn check_tx_key(
         &self,
         txid: CryptoNoteHash,
@@ -1028,7 +1098,8 @@ impl WalletClient {
         Ok((rsp.confirmations, rsp.in_pool, rsp.received))
     }
 
-    /// Get RPC version Major & Minor integer-format, where Major is the first 16 bits and Minor the last 16 bits.
+    /// Get RPC version Major & Minor integer-format, where Major is the first 16 bits and Minor
+    /// the last 16 bits.
     pub async fn get_version(&self) -> anyhow::Result<(u16, u16)> {
         #[derive(Deserialize)]
         struct Rsp {
