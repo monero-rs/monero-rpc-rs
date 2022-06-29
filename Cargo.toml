@@ -1,12 +1,13 @@
 [package]
 name = "monero-rpc"
 version = "0.1.0"
-authors = ["Artem Vorotnikov <artem@vorotnikov.me>"]
+authors = ["Artem Vorotnikov <artem@vorotnikov.me>", "Monero Rust Contributors"]
 edition = "2018"
 exclude = ["/test"]
-keywords = ["asynchronous", "net"]
+keywords = ["asynchronous", "net", "monero", "rpc"]
 license = "Apache-2.0"
 repository = "https://github.com/monero-ecosystem/monero-rpc-rs"
+rust-version = "1.56.1"
 description = "RPC client for Monero daemon and wallet"
 
 [dependencies]
