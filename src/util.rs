@@ -1,8 +1,11 @@
 use serde::{Deserialize, Deserializer, Serialize};
 use std::fmt::{self, Display};
 
+/// Get bytes and parse from `str` interface.
 pub trait HashType: Sized {
+    /// Get bytes representation.
     fn bytes(&self) -> &[u8];
+    /// Parse from `str`.
     fn from_str(v: &str) -> anyhow::Result<Self>;
 }
 
@@ -31,6 +34,7 @@ impl HashType for Vec<u8> {
     }
 }
 
+/// Wrapper type to help serializating types through string.
 #[derive(Clone, Debug)]
 pub struct HashString<T>(pub T);
 

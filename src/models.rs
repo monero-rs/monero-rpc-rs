@@ -7,6 +7,7 @@ use std::{collections::HashMap, num::NonZeroU64};
 macro_rules! hash_type {
     ($name:ident, $len:expr) => {
         ::fixed_hash::construct_fixed_hash! {
+            /// Return type of daemon `on_get_block_hash`.
             #[derive(::serde::Serialize, ::serde::Deserialize)]
             pub struct $name($len);
         }
@@ -22,6 +23,7 @@ pub enum Status {
     OK,
 }
 
+/// Helper type to unwrap RPC results.
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(tag = "status")]
 pub enum MoneroResult<T> {
@@ -36,6 +38,7 @@ impl<T> MoneroResult<T> {
     }
 }
 
+/// Return type of daemon `get_block_template`.
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct BlockTemplate {
     pub blockhashing_blob: HashString<Vec<u8>>,
@@ -47,6 +50,7 @@ pub struct BlockTemplate {
     pub reserved_offset: u64,
     pub untrusted: bool,
 }
+
 #[derive(Deserialize)]
 pub(crate) struct BlockHeaderResponseR {
     pub block_size: u64,
@@ -85,6 +89,7 @@ impl From<BlockHeaderResponseR> for BlockHeaderResponse {
     }
 }
 
+/// Return type of daemon `get_block_header` and `get_block_headers_range`.
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct BlockHeaderResponse {
     pub block_size: u64,
@@ -102,6 +107,7 @@ pub struct BlockHeaderResponse {
     pub timestamp: DateTime<Utc>,
 }
 
+/// Return type of daemon RPC `get_transactions`.
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct TransactionsResponse {
     pub credits: u64,
@@ -114,6 +120,7 @@ pub struct TransactionsResponse {
     pub untrusted: bool,
 }
 
+/// Sub-type of [`TransactionsResponse`]'s return type of daemon RPC `get_transactions`.
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Transaction {
     pub as_hex: String,
@@ -126,6 +133,7 @@ pub struct Transaction {
     pub tx_hash: HashString<CryptoNoteHash>,
 }
 
+/// Helper type to partially decode `as_json` string fields in other RPC return types.
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct JsonTransaction {
     pub version: u64,
@@ -134,6 +142,7 @@ pub struct JsonTransaction {
     // vin, vout, extra, rct_signatures, rct_sig_prunable
 }
 
+/// Sub-type of [`BalanceData`]'s return type of wallet `get_balance`.
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct SubaddressBalanceData {
     pub address: Address,
@@ -144,15 +153,21 @@ pub struct SubaddressBalanceData {
     pub unlocked_balance: u64,
 }
 
+/// Return type of wallet `get_balance`.
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct BalanceData {
+    /// Balance amount of account queried.
     pub balance: u64,
+    /// If multisig import is needed.
     pub multisig_import_needed: bool,
+    /// Balance data for each sub indicies queried.
     #[serde(default)]
     pub per_subaddress: Vec<SubaddressBalanceData>,
+    /// Amount of unlocked balance in account queried.
     pub unlocked_balance: u64,
 }
 
+/// Argument type of wallet `transfer`.
 #[derive(Copy, Clone, Debug)]
 pub enum TransferPriority {
     Default,
@@ -161,6 +176,7 @@ pub enum TransferPriority {
     Priority,
 }
 
+/// Return type of wallet `transfer`.
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct TransferData {
     pub amount: u64,
@@ -172,6 +188,7 @@ pub struct TransferData {
     pub unsigned_txset: HashString<Vec<u8>>,
 }
 
+/// Sub-type of [`AddressData`]'s return type of wallet `get_address`.
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct SubaddressData {
     pub address: Address,
@@ -186,6 +203,7 @@ pub struct SubaddressIndex {
     pub minor: u64,
 }
 
+/// Return type of wallet `get_payments`.
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Payment {
     pub payment_id: HashString<PaymentId>,
@@ -197,18 +215,25 @@ pub struct Payment {
     pub address: Address,
 }
 
+/// Return type of wallet `generate_from_keys`.
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct WalletCreation {
+    /// Generated wallet address.
     pub address: Address,
+    /// Info on generated wallet.
     pub info: String,
 }
 
+/// Return type of wallet `get_address`.
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct AddressData {
+    /// Address of the account queried.
     pub address: Address,
+    /// A set of filtered subaddress.
     pub addresses: Vec<SubaddressData>,
 }
 
+/// Argument type of wallet `incoming_transfers`.
 #[derive(Copy, Clone, Debug)]
 pub enum TransferType {
     All,
@@ -216,11 +241,13 @@ pub enum TransferType {
     Unavailable,
 }
 
+/// Return type of wallet `incoming_transfers`.
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct IncomingTransfers {
     pub transfers: Option<Vec<IncomingTransfer>>,
 }
 
+/// Sub-type of [`IncomingTransfers`]. Represent one incoming transfer.
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct IncomingTransfer {
     pub amount: u64,
@@ -238,6 +265,7 @@ pub struct SubAddressIndex {
     pub minor: u64,
 }
 
+/// Argument type of wallet `sweep_all`.
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct SweepAllArgs {
     pub address: Address,
@@ -254,6 +282,7 @@ pub struct SweepAllArgs {
     pub get_tx_metadata: Option<bool>,
 }
 
+/// Return type of wallet `sweep_all`.
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct SweepAllData {
     pub tx_hash_list: Vec<HashString<CryptoNoteHash>>,
@@ -266,6 +295,7 @@ pub struct SweepAllData {
     pub unsigned_txset: String,
 }
 
+/// Argument type of wallet `transfer`.
 #[derive(Clone, Debug, Default)]
 pub struct TransferOptions {
     pub account_index: Option<u64>,
@@ -277,6 +307,7 @@ pub struct TransferOptions {
     pub do_not_relay: Option<bool>,
 }
 
+/// Argument type of wallet `generate_from_keys`.
 #[derive(Clone, Debug)]
 pub struct GenerateFromKeysArgs {
     pub restore_height: Option<u64>,
@@ -288,6 +319,7 @@ pub struct GenerateFromKeysArgs {
     pub autosave_current: Option<bool>,
 }
 
+/// Return sub-type of wallet `get_accounts`.
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct GotAccount {
     pub account_index: u64,
@@ -298,12 +330,14 @@ pub struct GotAccount {
     pub unlocked_balance: u64,
 }
 
+/// Return type of wallet `refresh`.
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct RefreshData {
     pub blocks_fetched: u64,
     pub received_money: bool,
 }
 
+/// Return type of wallet `get_accounts`.
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct GetAccountsData {
     pub subaddress_accounts: Vec<GotAccount>,
@@ -311,20 +345,31 @@ pub struct GetAccountsData {
     pub total_unlocked_balance: u64,
 }
 
+/// Monero uses two type of private key in its cryptographic system: (1) a view key, and (2) a
+/// spend key.
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub enum PrivateKeyType {
+    /// Viewkey type.
     View,
+    /// Spendkey type.
     Spend,
 }
 
+/// Part of return type of wallet `get_transfers`.
 #[derive(Clone, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
 pub enum GetTransfersCategory {
+    /// Incoming transfers.
     In,
+    /// Outgoing transfers.
     Out,
+    /// Pending transfers.
     Pending,
+    /// Failed transfers.
     Failed,
+    /// Pool transfers.
     Pool,
+    /// Block transfers.
     Block,
 }
 
@@ -343,6 +388,7 @@ impl From<GetTransfersCategory> for &'static str {
     }
 }
 
+/// Argument type of wallet `get_transfers`.
 #[derive(Clone, Default, Debug, Serialize, Deserialize)]
 pub struct GetTransfersSelector {
     pub category_selector: HashMap<GetTransfersCategory, bool>,
@@ -354,14 +400,16 @@ pub struct GetTransfersSelector {
     pub block_height_filter: Option<BlockHeightFilter>,
 }
 
+/// Configuration filter for [`GetTransfersSelector`].
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct BlockHeightFilter {
-    // excluded bound
+    /// Optional minimal height. (**Excluded bound**)
     pub min_height: Option<u64>,
-    // included bound
+    /// Optional maximum height. (**Included bound**)
     pub max_height: Option<u64>,
 }
 
+/// Sub-type of [`GotTransfer`].
 #[derive(Clone, Debug)]
 pub enum TransferHeight {
     Confirmed(NonZeroU64),
@@ -385,6 +433,7 @@ impl<'de> Deserialize<'de> for TransferHeight {
     }
 }
 
+/// Return type of wallet `get_transfer` and `get_transfers`.
 #[derive(Clone, Debug, Deserialize)]
 pub struct GotTransfer {
     /// Public address of the transfer.
@@ -419,6 +468,7 @@ pub struct GotTransfer {
     pub unlock_time: u64,
 }
 
+/// Return type of wallet `sign_transfer`.
 #[derive(Clone, Debug)]
 pub struct SignedTransferOutput {
     pub signed_txset: Vec<u8>,
@@ -426,12 +476,17 @@ pub struct SignedTransferOutput {
     pub tx_raw_list: Vec<Vec<u8>>,
 }
 
+/// Used to export and import signed key images. Return type of wallet `export_key_images` and
+/// argument type of wallet `import_key_images`.
 #[derive(Clone, Debug)]
 pub struct SignedKeyImage {
+    /// The key image.
     pub key_image: Vec<u8>,
+    /// Signature of the key image.
     pub signature: Vec<u8>,
 }
 
+/// Return type of wallet `import_key_images`.
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct KeyImageImportResponse {
     pub height: u64,
