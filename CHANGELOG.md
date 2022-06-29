@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.0] - 2022-06-29
+
 ### Added
 
 - Create RPC clients (`RpcClient`) for: `WalletClient`, `DaemonClient`, `RegtestDaemonClient`, and `DaemonRpcClient`
@@ -51,4 +53,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Daemon RPC methods:
   - `get_transactions`
 
-[Unreleased]: https://github.com/monero-ecosystem/monero-rpc-rs/compare/363c433023318877e9d397dbe2b50bdf88cdee9d...HEAD
+[Unreleased]: https://github.com/monero-ecosystem/monero-rpc-rs/compare/v0.1.0...HEAD
+[0.1.0]: https://github.com/monero-ecosystem/monero-rpc-rs/compare/363c433023318877e9d397dbe2b50bdf88cdee9d...v0.1.0
