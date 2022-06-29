@@ -34,10 +34,14 @@ jobs:
           toolchain: stable
           override: true
       - name: Compose docker services
-        run: sudo apt-get install -y docker-compose && cd tests && docker-compose up -d && cd ..
+        run: |
+          sudo apt-get install -y docker-compose
+          cd tests
+          docker-compose up -d
+          cd ..
       - uses: actions-rs/cargo@v1
-      - name: Test
-        run: cargo test
+        with:
+          command: test
 
   fmt:
     name: Rustfmt
