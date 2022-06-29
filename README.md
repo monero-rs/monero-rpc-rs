@@ -28,9 +28,9 @@ async fn monero_daemon_transactions_test() {
 }
 ```
 
-## Release Notes
+## Releases and Changelog
 
-See [CHANGELOG.md](CHANGELOG.md).
+See [CHANGELOG.md](CHANGELOG.md) and [RELEASING.md](RELEASING.md).
 
 ## Licensing
 
