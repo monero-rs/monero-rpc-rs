@@ -8,6 +8,7 @@ keywords = ["asynchronous", "net"]
 license = "Apache-2.0"
 repository = "https://github.com/monero-ecosystem/monero-rpc-rs"
 description = "RPC client for Monero daemon and wallet"
+rust-version = "1.56.1"
 
 [dependencies]
 anyhow = "1"

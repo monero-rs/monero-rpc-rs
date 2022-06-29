@@ -7,7 +7,7 @@ jobs:
     strategy:
       matrix:
         rust: [
-          1.60.0,
+          1.56.1,
           stable,
       ]
     name: Check
