@@ -54,4 +54,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `get_transactions`
 
 [Unreleased]: https://github.com/monero-ecosystem/monero-rpc-rs/compare/v0.1.0...HEAD
-[0.1.0]: https://github.com/monero-ecosystem/monero-rpc-rs/compare/6f4db8235439de6d4b758cba92fb1e81ae7f0bf5...v0.1.0
+[0.1.0]: https://github.com/monero-ecosystem/monero-rpc-rs/compare/363c433023318877e9d397dbe2b50bdf88cdee9d...v0.1.0
