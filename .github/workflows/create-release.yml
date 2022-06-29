@@ -9,4 +9,4 @@ jobs:
   create_release:
     name: Create from merged release branch
     if: github.event.pull_request.merged == true && startsWith(github.event.pull_request.head.ref, 'release/')
-    uses: monero-rs/workflows/.github/workflows/create-release.yml@v2.0.1
+    uses: monero-rs/workflows/.github/workflows/create-release.yml@v2.0.2
