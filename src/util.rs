@@ -61,7 +61,7 @@ where
     }
 }
 
-impl<'a, T> Serialize for HashString<T>
+impl<T> Serialize for HashString<T>
 where
     T: HashType,
 {
