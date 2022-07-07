@@ -32,11 +32,6 @@ macro_rules! hash_type {
 
 hash_type!(BlockHash, 32);
 
-#[derive(Clone, Debug, Serialize, Deserialize)]
-pub enum Status {
-    OK,
-}
-
 /// Helper type to unwrap RPC results.
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(tag = "status")]
