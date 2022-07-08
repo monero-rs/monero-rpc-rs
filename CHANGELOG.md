@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Removed
+
+- Remove `SubAddressIndex` from `src/models.rs` ([#55](https://github.com/monero-ecosystem/monero-rpc-rs/pull/55))
+
+### Changed
+
+- Change any use of `SubAddressIndex` to `SubaddressIndex` ([#55](https://github.com/monero-ecosystem/monero-rpc-rs/pull/55))
+
 ## [0.1.0] - 2022-06-29
 
 ### Added
