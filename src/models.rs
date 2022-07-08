@@ -263,15 +263,9 @@ pub struct IncomingTransfer {
     pub global_index: u64,
     pub key_image: Option<String>,
     pub spent: bool,
-    pub subaddr_index: SubAddressIndex,
+    pub subaddr_index: SubaddressIndex,
     pub tx_hash: HashString<CryptoNoteHash>,
     pub tx_size: Option<u64>,
-}
-
-#[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct SubAddressIndex {
-    pub major: u64,
-    pub minor: u64,
 }
 
 /// Argument type of wallet `sweep_all`.
