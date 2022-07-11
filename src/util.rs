@@ -16,9 +16,11 @@ use serde::{Deserialize, Deserializer, Serialize};
 use std::fmt::{self, Display};
 
 /// Get bytes and parse from `str` interface.
-pub trait HashType: Sized {
+pub trait HashType: Sized + AsRef<[u8]> {
     /// Get bytes representation.
-    fn bytes(&self) -> &[u8];
+    fn bytes(&self) -> &[u8] {
+        self.as_ref()
+    }
     /// Parse from `str`.
     fn from_str(v: &str) -> anyhow::Result<Self>;
 }
@@ -26,9 +28,6 @@ pub trait HashType: Sized {
 macro_rules! hash_type_impl {
     ($name:ty) => {
         impl HashType for $name {
-            fn bytes(&self) -> &[u8] {
-                self.as_bytes()
-            }
             fn from_str(v: &str) -> anyhow::Result<Self> {
                 Ok(v.parse()?)
             }
@@ -40,9 +39,6 @@ hash_type_impl!(monero::util::address::PaymentId);
 hash_type_impl!(monero::cryptonote::hash::Hash);
 
 impl HashType for Vec<u8> {
-    fn bytes(&self) -> &[u8] {
-        &*self
-    }
     fn from_str(v: &str) -> anyhow::Result<Self> {
         Ok(hex::decode(v)?)
     }
