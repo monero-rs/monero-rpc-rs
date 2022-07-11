@@ -14,7 +14,11 @@
 
 use crate::util::*;
 use chrono::prelude::*;
-use monero::{cryptonote::hash::Hash as CryptoNoteHash, util::address::PaymentId, Address};
+use monero::{
+    cryptonote::{hash::Hash as CryptoNoteHash, subaddress},
+    util::address::PaymentId,
+    Address,
+};
 use serde::{Deserialize, Deserializer, Serialize};
 use std::{collections::HashMap, num::NonZeroU64};
 
@@ -206,12 +210,6 @@ pub struct SubaddressData {
     pub used: bool,
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct SubaddressIndex {
-    pub major: u64,
-    pub minor: u64,
-}
-
 /// Return type of wallet `get_payments`.
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Payment {
@@ -220,7 +218,7 @@ pub struct Payment {
     pub amount: u64,
     pub block_height: u64,
     pub unlock_time: u64,
-    pub subaddr_index: SubaddressIndex,
+    pub subaddr_index: subaddress::Index,
     pub address: Address,
 }
 
@@ -263,7 +261,7 @@ pub struct IncomingTransfer {
     pub global_index: u64,
     pub key_image: Option<String>,
     pub spent: bool,
-    pub subaddr_index: SubaddressIndex,
+    pub subaddr_index: subaddress::Index,
     pub tx_hash: HashString<CryptoNoteHash>,
     pub tx_size: Option<u64>,
 }
@@ -456,7 +454,7 @@ pub struct GotTransfer {
     /// Payment ID for this transfer.
     pub payment_id: HashString<PaymentId>,
     /// JSON object containing the major & minor subaddress index.
-    pub subaddr_index: SubaddressIndex,
+    pub subaddr_index: subaddress::Index,
     /// Estimation of the confirmations needed for the transaction to be included in a block.
     pub suggested_confirmations_threshold: u64,
     /// POSIX timestamp for when this transfer was first confirmed in a block (or timestamp submission if not mined yet).

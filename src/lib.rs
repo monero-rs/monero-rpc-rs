@@ -42,7 +42,11 @@ mod models;
 pub use self::{models::*, util::*};
 
 use jsonrpc_core::types::{Id, *};
-use monero::{cryptonote::hash::Hash as CryptoNoteHash, util::address::PaymentId, Address};
+use monero::{
+    cryptonote::{hash::Hash as CryptoNoteHash, subaddress},
+    util::address::PaymentId,
+    Address,
+};
 use serde::{de::IgnoredAny, Deserialize, Deserializer, Serialize, Serializer};
 use serde_json::{json, Value};
 use std::{
@@ -627,10 +631,10 @@ impl WalletClient {
     }
 
     /// Get account and address indexes from a specific (sub)address.
-    pub async fn get_address_index(&self, address: Address) -> anyhow::Result<(u64, u64)> {
+    pub async fn get_address_index(&self, address: Address) -> anyhow::Result<(u32, u32)> {
         #[derive(Deserialize)]
         struct Rsp {
-            index: SubaddressIndex,
+            index: subaddress::Index,
         }
 
         let params = once(("address", address.to_string().into()));
@@ -670,8 +674,8 @@ impl WalletClient {
     /// Label an address.
     pub async fn label_address(
         &self,
-        account_index: u64,
-        address_index: u64,
+        account_index: u32,
+        address_index: u32,
         label: String,
     ) -> anyhow::Result<()> {
         let params = empty()
