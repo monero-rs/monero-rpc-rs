@@ -19,6 +19,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Change any use of `SubAddressIndex` to `SubaddressIndex` ([#55](https://github.com/monero-ecosystem/monero-rpc-rs/pull/55))
+- Change `HashType`'s `from_str` implementation for `Vec<u8>` in order to accept inputs starting with `0x` ([#61](https://github.com/monero-ecosystem/monero-rpc-rs/pull/61))
+- Change `HashType`'s `bytes` implementation by adding `AsRef<[u8]>` as a trait bound and returning the `as_ref` implementation ([#61](https://github.com/monero-ecosystem/monero-rpc-rs/pull/61))
 
 ## [0.1.0] - 2022-06-29
 
