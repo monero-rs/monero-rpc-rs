@@ -1,19 +1,19 @@
 version: "3.7"
 services:
-    monerod:
-        image: ghcr.io/farcaster-project/containers/monerod:0.17.3.2
-        environment:
-            NETWORK: regtest
-            OFFLINE: --offline
-            DIFFICULTY: 1
-        ports:
-            - 18081:18081
-    monero-wallet-rpc:
-        image: ghcr.io/farcaster-project/containers/monero-wallet-rpc:0.17.3.2
-        environment:
-            MONERO_DAEMON_ADDRESS: monerod:18081
-            WALLET_RPC_PORT: 18083
-        depends_on:
-            - "monerod"
-        ports:
-            - 18083:18083
+  monerod:
+    image: ghcr.io/farcaster-project/containers/monerod:0.17.3.2
+    environment:
+      NETWORK: regtest
+      OFFLINE: --offline
+      DIFFICULTY: 1
+    ports:
+      - 18081:18081
+  monero-wallet-rpc:
+    image: ghcr.io/farcaster-project/containers/monero-wallet-rpc:0.17.3.2
+    environment:
+      MONERO_DAEMON_ADDRESS: monerod:18081
+      WALLET_RPC_PORT: 18083
+    depends_on:
+      - "monerod"
+    ports:
+      - 18083:18083
