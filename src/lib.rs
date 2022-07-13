@@ -631,7 +631,7 @@ impl WalletClient {
     }
 
     /// Get account and address indexes from a specific (sub)address.
-    pub async fn get_address_index(&self, address: Address) -> anyhow::Result<(u32, u32)> {
+    pub async fn get_address_index(&self, address: Address) -> anyhow::Result<subaddress::Index> {
         #[derive(Deserialize)]
         struct Rsp {
             index: subaddress::Index,
@@ -644,7 +644,10 @@ impl WalletClient {
             .request::<Rsp>("get_address_index", RpcParams::map(params))
             .await?;
 
-        Ok((rsp.index.major, rsp.index.minor))
+        Ok(subaddress::Index {
+            major: rsp.index.major,
+            minor: rsp.index.minor,
+        })
     }
 
     /// Create a new address for an account. Optionally, label the new address.
