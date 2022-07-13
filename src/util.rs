@@ -49,7 +49,7 @@ impl HashType for Vec<u8> {
 }
 
 /// Wrapper type to help serializating types through string.
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct HashString<T>(pub T);
 
 impl<T> Display for HashString<T>
@@ -83,5 +83,105 @@ where
     {
         let s = String::deserialize(deserializer)?;
         Ok(Self(T::from_str(&s).map_err(serde::de::Error::custom)?))
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use serde_test::{assert_tokens, Token};
+
+    #[test]
+    fn trait_hash_type_for_payment_id() {
+        use monero::util::address::PaymentId;
+
+        let payment_id = PaymentId([0, 1, 2, 3, 4, 5, 6, 7]);
+
+        assert_eq!(payment_id.bytes(), &[0, 1, 2, 3, 4, 5, 6, 7]);
+
+        assert!(<PaymentId as HashType>::from_str("")
+            .unwrap_err()
+            .is::<rustc_hex::FromHexError>());
+        assert!(<PaymentId as HashType>::from_str("0x01234567")
+            .unwrap_err()
+            .is::<rustc_hex::FromHexError>());
+        assert!(<PaymentId as HashType>::from_str("0xgg")
+            .unwrap_err()
+            .is::<rustc_hex::FromHexError>());
+
+        assert_eq!(
+            <PaymentId as HashType>::from_str("0x0001020304050607").unwrap(),
+            payment_id
+        );
+        assert_eq!(
+            <PaymentId as HashType>::from_str("0001020304050607").unwrap(),
+            payment_id
+        );
+    }
+
+    #[test]
+    fn trait_hash_type_for_cryptonote_hash() {
+        use monero::cryptonote::hash::Hash;
+
+        let hash = Hash([250; 32]);
+
+        assert_eq!(hash.bytes(), [250; 32].as_slice());
+
+        assert!(<Hash as HashType>::from_str("")
+            .unwrap_err()
+            .is::<rustc_hex::FromHexError>());
+        assert!(<Hash as HashType>::from_str("0x01234567")
+            .unwrap_err()
+            .is::<rustc_hex::FromHexError>());
+        assert!(<Hash as HashType>::from_str("0xgg")
+            .unwrap_err()
+            .is::<rustc_hex::FromHexError>());
+
+        let hash_str = "fa".repeat(32);
+        assert_eq!(<Hash as HashType>::from_str(&hash_str).unwrap(), hash);
+
+        let hash_str = format!("0x{}", hash_str);
+        assert_eq!(<Hash as HashType>::from_str(&hash_str).unwrap(), hash);
+    }
+
+    #[test]
+    fn trait_hash_type_for_vec_u8() {
+        let vec_non_empty = vec![0, 1, 2, 3, 4];
+
+        assert_eq!(vec_non_empty.bytes(), &[0, 1, 2, 3, 4]);
+
+        assert_eq!(
+            <Vec<u8> as HashType>::from_str("").unwrap(),
+            Vec::<u8>::new()
+        );
+        assert!(<Vec<u8> as HashType>::from_str("0x01234567")
+            .unwrap_err()
+            .is::<hex::FromHexError>());
+        assert!(<Vec<u8> as HashType>::from_str("0xgg")
+            .unwrap_err()
+            .is::<hex::FromHexError>());
+
+        assert!(<Vec<u8> as HashType>::from_str("0x0001020304")
+            .unwrap_err()
+            .is::<hex::FromHexError>());
+        assert_eq!(
+            <Vec<u8> as HashType>::from_str("0001020304").unwrap(),
+            vec_non_empty
+        );
+    }
+
+    #[test]
+    fn display_for_hash_string() {
+        let vec = vec![0, 1, 2, 3, 4];
+        let hash_string = HashString(vec);
+        assert_eq!(hash_string.to_string(), "0001020304");
+    }
+
+    #[test]
+    fn se_de_for_hash_string() {
+        let vec = vec![0, 1, 2, 3, 4];
+        let hash_string = HashString(vec);
+
+        assert_tokens(&hash_string, &[Token::Str("0001020304")]);
     }
 }

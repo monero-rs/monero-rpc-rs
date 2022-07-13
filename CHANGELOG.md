@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Add tests for types implementing `HashType` in `utils.rs` ([#59](https://github.com/monero-ecosystem/monero-rpc-rs/pull/59))
+- Add tests for `HashString`'s implementation of the traits `Debug`, `Serialize`, and `Deserialize`, in `utils.rs` ([#59](https://github.com/monero-ecosystem/monero-rpc-rs/pull/59))
+
 ### Removed
 
 - Remove `SubAddressIndex` from `src/models.rs` ([#55](https://github.com/monero-ecosystem/monero-rpc-rs/pull/55))
