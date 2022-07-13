@@ -99,7 +99,7 @@ impl From<BlockHeaderResponseR> for BlockHeaderResponse {
 }
 
 /// Return type of daemon `get_block_header` and `get_block_headers_range`.
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct BlockHeaderResponse {
     pub block_size: u64,
     pub depth: u64,
@@ -413,7 +413,7 @@ pub struct BlockHeightFilter {
 }
 
 /// Sub-type of [`GotTransfer`].
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub enum TransferHeight {
     Confirmed(NonZeroU64),
     InPool,
@@ -497,4 +497,82 @@ pub struct KeyImageImportResponse {
     pub spent: u64,
     /// Amount still available from key images.
     pub unspent: u64,
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn monero_result_to_inner() {
+        let monero_res = MoneroResult::OK(123);
+        assert_eq!(monero_res.into_inner(), 123);
+    }
+
+    #[test]
+    fn block_header_response_from_block_header_response_r() {
+        let bhrr = BlockHeaderResponseR {
+            block_size: 123,
+            depth: 1234,
+            difficulty: 12345,
+            hash: HashString(BlockHash::zero()),
+            height: 123456,
+            major_version: 1234567,
+            minor_version: 12345678,
+            nonce: 123456789,
+            num_txes: 1,
+            orphan_status: true,
+            prev_hash: HashString(BlockHash::repeat_byte(12)),
+            reward: 12,
+            timestamp: DateTime::<Utc>::from_utc(NaiveDateTime::from_timestamp(61, 0), Utc),
+        };
+
+        let expected_bhr = BlockHeaderResponse {
+            block_size: 123,
+            depth: 1234,
+            difficulty: 12345,
+            hash: BlockHash::zero(),
+            height: 123456,
+            major_version: 1234567,
+            minor_version: 12345678,
+            nonce: 123456789,
+            num_txes: 1,
+            orphan_status: true,
+            prev_hash: BlockHash::repeat_byte(12),
+            reward: 12,
+            timestamp: DateTime::<Utc>::from_utc(NaiveDateTime::from_timestamp(61, 0), Utc),
+        };
+
+        assert_eq!(BlockHeaderResponse::from(bhrr), expected_bhr);
+    }
+
+    #[test]
+    fn str_from_get_transfers_category() {
+        use GetTransfersCategory::*;
+
+        let g_in: &str = In.into();
+        let g_out: &str = Out.into();
+        let g_pending: &str = Pending.into();
+        let g_failed: &str = Failed.into();
+        let g_pool: &str = Pool.into();
+        let g_block: &str = Block.into();
+
+        assert_eq!(g_in, "in");
+        assert_eq!(g_out, "out");
+        assert_eq!(g_pending, "pending");
+        assert_eq!(g_failed, "failed");
+        assert_eq!(g_pool, "pool");
+        assert_eq!(g_block, "block");
+    }
+
+    #[test]
+    fn deserialize_for_transfer_height() {
+        use serde_test::{assert_de_tokens, Token};
+
+        let confirmed = TransferHeight::Confirmed(NonZeroU64::new(10).unwrap());
+        let in_pool = TransferHeight::InPool;
+
+        assert_de_tokens(&confirmed, &[Token::U64(10)]);
+        assert_de_tokens(&in_pool, &[Token::U64(0)]);
+    }
 }
