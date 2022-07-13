@@ -677,18 +677,11 @@ impl WalletClient {
     /// Label an address.
     pub async fn label_address(
         &self,
-        account_index: u32,
-        address_index: u32,
+        index: subaddress::Index,
         label: String,
     ) -> anyhow::Result<()> {
         let params = empty()
-            .chain(once((
-                "index",
-                json!(SubaddressIndex {
-                    major: account_index,
-                    minor: address_index,
-                }),
-            )))
+            .chain(once(("index", json!(index))))
             .chain(once(("label", label.into())));
 
         self.inner
