@@ -33,6 +33,8 @@
 
 #![forbid(unsafe_code)]
 
+pub use monero;
+
 #[macro_use]
 mod util;
 mod models;
