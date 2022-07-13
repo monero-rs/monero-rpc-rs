@@ -592,8 +592,8 @@ impl WalletClient {
     /// Return the wallet's balance.
     pub async fn get_balance(
         &self,
-        account_index: u64,
-        address_indices: Option<Vec<u64>>,
+        account_index: u32,
+        address_indices: Option<Vec<u32>>,
     ) -> anyhow::Result<BalanceData> {
         let params = empty()
             .chain(once(("account_index", account_index.into())))
@@ -613,8 +613,8 @@ impl WalletClient {
     /// subaddresses.
     pub async fn get_address(
         &self,
-        account: u64,
-        addresses: Option<Vec<u64>>,
+        account: u32,
+        addresses: Option<Vec<u32>>,
     ) -> anyhow::Result<AddressData> {
         let params = empty()
             .chain(once(("account_index", account.into())))
@@ -653,13 +653,13 @@ impl WalletClient {
     /// Create a new address for an account. Optionally, label the new address.
     pub async fn create_address(
         &self,
-        account_index: u64,
+        account_index: u32,
         label: Option<String>,
-    ) -> anyhow::Result<(Address, u64)> {
+    ) -> anyhow::Result<(Address, u32)> {
         #[derive(Deserialize)]
         struct Rsp {
             address: Address,
-            address_index: u64,
+            address_index: u32,
         }
 
         let params = empty()
@@ -933,8 +933,8 @@ impl WalletClient {
     pub async fn incoming_transfers(
         &self,
         transfer_type: TransferType,
-        account_index: Option<u64>,
-        subaddr_indices: Option<Vec<u64>>,
+        account_index: Option<u32>,
+        subaddr_indices: Option<Vec<u32>>,
     ) -> anyhow::Result<IncomingTransfers> {
         let params = empty()
             .chain(once((
@@ -998,7 +998,7 @@ impl WalletClient {
     pub async fn get_transfer(
         &self,
         txid: CryptoNoteHash,
-        account_index: Option<u64>,
+        account_index: Option<u32>,
     ) -> anyhow::Result<Option<GotTransfer>> {
         #[derive(Deserialize)]
         struct Rsp {
