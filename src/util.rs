@@ -18,7 +18,12 @@ use std::fmt::{self, Display};
 /// Get bytes and parse from `str` interface.
 pub trait HashType: Sized {
     /// Get bytes representation.
-    fn bytes(&self) -> &[u8];
+    fn bytes(&self) -> &[u8]
+    where
+        Self: AsRef<[u8]>,
+    {
+        self.as_ref()
+    }
     /// Parse from `str`.
     fn from_str(v: &str) -> anyhow::Result<Self>;
 }
@@ -26,9 +31,6 @@ pub trait HashType: Sized {
 macro_rules! hash_type_impl {
     ($name:ty) => {
         impl HashType for $name {
-            fn bytes(&self) -> &[u8] {
-                self.as_bytes()
-            }
             fn from_str(v: &str) -> anyhow::Result<Self> {
                 Ok(v.parse()?)
             }
@@ -40,10 +42,8 @@ hash_type_impl!(monero::util::address::PaymentId);
 hash_type_impl!(monero::cryptonote::hash::Hash);
 
 impl HashType for Vec<u8> {
-    fn bytes(&self) -> &[u8] {
-        &*self
-    }
     fn from_str(v: &str) -> anyhow::Result<Self> {
+        let v = v.strip_prefix("0x").unwrap_or(v);
         Ok(hex::decode(v)?)
     }
 }
@@ -54,7 +54,7 @@ pub struct HashString<T>(pub T);
 
 impl<T> Display for HashString<T>
 where
-    T: HashType,
+    T: HashType + AsRef<[u8]>,
 {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}", hex::encode(self.0.bytes()))
@@ -63,7 +63,7 @@ where
 
 impl<T> Serialize for HashString<T>
 where
-    T: HashType,
+    T: HashType + AsRef<[u8]>,
 {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
@@ -154,16 +154,14 @@ mod tests {
             <Vec<u8> as HashType>::from_str("").unwrap(),
             Vec::<u8>::new()
         );
-        assert!(<Vec<u8> as HashType>::from_str("0x01234567")
-            .unwrap_err()
-            .is::<hex::FromHexError>());
         assert!(<Vec<u8> as HashType>::from_str("0xgg")
             .unwrap_err()
             .is::<hex::FromHexError>());
 
-        assert!(<Vec<u8> as HashType>::from_str("0x0001020304")
-            .unwrap_err()
-            .is::<hex::FromHexError>());
+        assert_eq!(
+            <Vec<u8> as HashType>::from_str("0x0001020304").unwrap(),
+            vec_non_empty
+        );
         assert_eq!(
             <Vec<u8> as HashType>::from_str("0001020304").unwrap(),
             vec_non_empty
