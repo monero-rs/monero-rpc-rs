@@ -16,7 +16,10 @@ use crate::util::*;
 use chrono::prelude::*;
 use monero::{
     cryptonote::{hash::Hash as CryptoNoteHash, subaddress},
-    util::address::PaymentId,
+    util::{
+        address::PaymentId,
+        amount::{self, Amount},
+    },
     Address,
 };
 use serde::{Deserialize, Deserializer, Serialize};
@@ -57,7 +60,8 @@ pub struct BlockTemplate {
     pub blockhashing_blob: HashString<Vec<u8>>,
     pub blocktemplate_blob: HashString<Vec<u8>>,
     pub difficulty: u64,
-    pub expected_reward: u64,
+    #[serde(with = "amount::serde::as_pico")]
+    pub expected_reward: Amount,
     pub height: u64,
     pub prev_hash: HashString<BlockHash>,
     pub reserved_offset: u64,
@@ -77,7 +81,8 @@ pub(crate) struct BlockHeaderResponseR {
     pub num_txes: u64,
     pub orphan_status: bool,
     pub prev_hash: HashString<BlockHash>,
-    pub reward: u64,
+    #[serde(with = "amount::serde::as_pico")]
+    pub reward: Amount,
     #[serde(with = "chrono::serde::ts_seconds")]
     pub timestamp: DateTime<Utc>,
 }
@@ -116,7 +121,8 @@ pub struct BlockHeaderResponse {
     pub num_txes: u64,
     pub orphan_status: bool,
     pub prev_hash: BlockHash,
-    pub reward: u64,
+    #[serde(with = "amount::serde::as_pico")]
+    pub reward: Amount,
     pub timestamp: DateTime<Utc>,
 }
 
@@ -160,24 +166,28 @@ pub struct JsonTransaction {
 pub struct SubaddressBalanceData {
     pub address: Address,
     pub address_index: u32,
-    pub balance: u64,
+    #[serde(with = "amount::serde::as_pico")]
+    pub balance: Amount,
     pub label: String,
     pub num_unspent_outputs: u64,
-    pub unlocked_balance: u64,
+    #[serde(with = "amount::serde::as_pico")]
+    pub unlocked_balance: Amount,
 }
 
 /// Return type of wallet `get_balance`.
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct BalanceData {
     /// Balance amount of account queried.
-    pub balance: u64,
+    #[serde(with = "amount::serde::as_pico")]
+    pub balance: Amount,
     /// If multisig import is needed.
     pub multisig_import_needed: bool,
     /// Balance data for each sub indicies queried.
     #[serde(default)]
     pub per_subaddress: Vec<SubaddressBalanceData>,
     /// Amount of unlocked balance in account queried.
-    pub unlocked_balance: u64,
+    #[serde(with = "amount::serde::as_pico")]
+    pub unlocked_balance: Amount,
 }
 
 /// Argument type of wallet `transfer`.
@@ -192,8 +202,10 @@ pub enum TransferPriority {
 /// Return type of wallet `transfer`.
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct TransferData {
-    pub amount: u64,
-    pub fee: u64,
+    #[serde(with = "amount::serde::as_pico")]
+    pub amount: Amount,
+    #[serde(with = "amount::serde::as_pico")]
+    pub fee: Amount,
     pub tx_blob: HashString<Vec<u8>>,
     pub tx_hash: HashString<CryptoNoteHash>,
     pub tx_key: HashString<CryptoNoteHash>,
@@ -215,7 +227,8 @@ pub struct SubaddressData {
 pub struct Payment {
     pub payment_id: HashString<PaymentId>,
     pub tx_hash: HashString<CryptoNoteHash>,
-    pub amount: u64,
+    #[serde(with = "amount::serde::as_pico")]
+    pub amount: Amount,
     pub block_height: u64,
     pub unlock_time: u64,
     pub subaddr_index: subaddress::Index,
@@ -257,7 +270,8 @@ pub struct IncomingTransfers {
 /// Sub-type of [`IncomingTransfers`]. Represent one incoming transfer.
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct IncomingTransfer {
-    pub amount: u64,
+    #[serde(with = "amount::serde::as_pico")]
+    pub amount: Amount,
     pub global_index: u64,
     pub key_image: Option<String>,
     pub spent: bool,
@@ -277,7 +291,8 @@ pub struct SweepAllArgs {
     pub ring_size: u64,
     pub unlock_time: u64,
     pub get_tx_keys: Option<bool>,
-    pub below_amount: Option<u64>,
+    #[serde(default, with = "amount::serde::as_pico::opt")]
+    pub below_amount: Option<Amount>,
     pub do_not_relay: Option<bool>,
     pub get_tx_hex: Option<bool>,
     pub get_tx_metadata: Option<bool>,
@@ -288,8 +303,18 @@ pub struct SweepAllArgs {
 pub struct SweepAllData {
     pub tx_hash_list: Vec<HashString<CryptoNoteHash>>,
     pub tx_key_list: Option<Vec<HashString<CryptoNoteHash>>>,
-    pub amount_list: Vec<u64>,
-    pub fee_list: Vec<u64>,
+    #[serde(
+        default,
+        serialize_with = "amount::serde::as_pico::slice::serialize",
+        deserialize_with = "amount::serde::as_pico::vec::deserialize_amount"
+    )]
+    pub amount_list: Vec<Amount>,
+    #[serde(
+        default,
+        serialize_with = "amount::serde::as_pico::slice::serialize",
+        deserialize_with = "amount::serde::as_pico::vec::deserialize_amount"
+    )]
+    pub fee_list: Vec<Amount>,
     pub tx_blob_list: Option<Vec<String>>,
     pub tx_metadata_list: Option<Vec<String>>,
     pub multisig_txset: String,
@@ -324,11 +349,13 @@ pub struct GenerateFromKeysArgs {
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct GotAccount {
     pub account_index: u32,
-    pub balance: u64,
+    #[serde(with = "amount::serde::as_pico")]
+    pub balance: Amount,
     pub base_address: monero::Address,
     pub label: Option<String>,
     pub tag: Option<String>,
-    pub unlocked_balance: u64,
+    #[serde(with = "amount::serde::as_pico")]
+    pub unlocked_balance: Amount,
 }
 
 /// Return type of wallet `refresh`.
@@ -342,8 +369,10 @@ pub struct RefreshData {
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct GetAccountsData {
     pub subaddress_accounts: Vec<GotAccount>,
-    pub total_balance: u64,
-    pub total_unlocked_balance: u64,
+    #[serde(with = "amount::serde::as_pico")]
+    pub total_balance: Amount,
+    #[serde(with = "amount::serde::as_pico")]
+    pub total_unlocked_balance: Amount,
 }
 
 /// Monero uses two type of private key in its cryptographic system: (1) a view key, and (2) a
@@ -440,13 +469,15 @@ pub struct GotTransfer {
     /// Public address of the transfer.
     pub address: Address,
     /// Amount transferred.
-    pub amount: u64,
+    #[serde(with = "amount::serde::as_pico")]
+    pub amount: Amount,
     /// Number of block mined since the block containing this transaction (or block height at which the transaction should be added to a block if not yet confirmed).
     pub confirmations: Option<u64>,
     /// True if the key image(s) for the transfer have been seen before.
     pub double_spend_seen: bool,
     /// Transaction fee for this transfer.
-    pub fee: u64,
+    #[serde(with = "amount::serde::as_pico")]
+    pub fee: Amount,
     /// Height of the first block that confirmed this transfer (0 if not mined yet).
     pub height: TransferHeight,
     /// Note about this transfer.
@@ -492,9 +523,11 @@ pub struct SignedKeyImage {
 pub struct KeyImageImportResponse {
     pub height: u64,
     /// Amount spent from key images.
-    pub spent: u64,
+    #[serde(with = "amount::serde::as_pico")]
+    pub spent: Amount,
     /// Amount still available from key images.
-    pub unspent: u64,
+    #[serde(with = "amount::serde::as_pico")]
+    pub unspent: Amount,
 }
 
 #[cfg(test)]
@@ -521,7 +554,7 @@ mod tests {
             num_txes: 1,
             orphan_status: true,
             prev_hash: HashString(BlockHash::repeat_byte(12)),
-            reward: 12,
+            reward: Amount::from_pico(12),
             timestamp: DateTime::<Utc>::from_utc(NaiveDateTime::from_timestamp(61, 0), Utc),
         };
 
@@ -537,7 +570,7 @@ mod tests {
             num_txes: 1,
             orphan_status: true,
             prev_hash: BlockHash::repeat_byte(12),
-            reward: 12,
+            reward: Amount::from_pico(12),
             timestamp: DateTime::<Utc>::from_utc(NaiveDateTime::from_timestamp(61, 0), Utc),
         };
 

@@ -27,6 +27,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Change types of `address` and `account` indices to use `u32` instead of u64 ([#62](https://github.com/monero-ecosystem/monero-rpc-rs/pull/62))
 - Change `label_address` to receive an argument named `index` of type `subaddress::Index` instead of receiving the arguments `account_index` and `address_index`, both of type `u64` ([#62](https://github.com/monero-ecosystem/monero-rpc-rs/pull/62))
 - Change `get_address_index` to return `anyhow::Result<subaddress::Index>` instead of `anyhow::Result<(u64, u64)>` ([#62](https://github.com/monero-ecosystem/monero-rpc-rs/pull/62))
+- Use `Amount` type from `monero-rs` where possible ([#68](https://github.com/monero-ecosystem/monero-rpc-rs/pull/68))
 
 ## [0.1.0] - 2022-06-29
 
