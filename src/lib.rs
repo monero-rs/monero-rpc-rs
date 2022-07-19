@@ -800,7 +800,10 @@ impl WalletClient {
             .chain(once(("ring_size", args.ring_size.into())))
             .chain(once(("unlock_time", args.unlock_time.into())))
             .chain(args.get_tx_keys.map(|v| ("get_tx_keys", v.into())))
-            .chain(args.below_amount.map(|v| ("below_amount", v.into())))
+            .chain(
+                args.below_amount
+                    .map(|v| ("below_amount", v.as_pico().into())),
+            )
             .chain(args.do_not_relay.map(|v| ("do_not_relay", v.into())))
             .chain(args.get_tx_hex.map(|v| ("get_tx_hex", v.into())))
             .chain(args.get_tx_metadata.map(|v| ("get_tx_metadata", v.into())));
