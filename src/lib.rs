@@ -42,7 +42,11 @@ mod models;
 pub use self::{models::*, util::*};
 
 use jsonrpc_core::types::{Id, *};
-use monero::{cryptonote::hash::Hash as CryptoNoteHash, util::address::PaymentId, Address};
+use monero::{
+    cryptonote::{hash::Hash as CryptoNoteHash, subaddress},
+    util::address::PaymentId,
+    Address,
+};
 use serde::{de::IgnoredAny, Deserialize, Deserializer, Serialize, Serializer};
 use serde_json::{json, Value};
 use std::{
@@ -588,8 +592,8 @@ impl WalletClient {
     /// Return the wallet's balance.
     pub async fn get_balance(
         &self,
-        account_index: u64,
-        address_indices: Option<Vec<u64>>,
+        account_index: u32,
+        address_indices: Option<Vec<u32>>,
     ) -> anyhow::Result<BalanceData> {
         let params = empty()
             .chain(once(("account_index", account_index.into())))
@@ -609,8 +613,8 @@ impl WalletClient {
     /// subaddresses.
     pub async fn get_address(
         &self,
-        account: u64,
-        addresses: Option<Vec<u64>>,
+        account: u32,
+        addresses: Option<Vec<u32>>,
     ) -> anyhow::Result<AddressData> {
         let params = empty()
             .chain(once(("account_index", account.into())))
@@ -627,10 +631,10 @@ impl WalletClient {
     }
 
     /// Get account and address indexes from a specific (sub)address.
-    pub async fn get_address_index(&self, address: Address) -> anyhow::Result<(u64, u64)> {
+    pub async fn get_address_index(&self, address: Address) -> anyhow::Result<subaddress::Index> {
         #[derive(Deserialize)]
         struct Rsp {
-            index: SubaddressIndex,
+            index: subaddress::Index,
         }
 
         let params = once(("address", address.to_string().into()));
@@ -640,19 +644,22 @@ impl WalletClient {
             .request::<Rsp>("get_address_index", RpcParams::map(params))
             .await?;
 
-        Ok((rsp.index.major, rsp.index.minor))
+        Ok(subaddress::Index {
+            major: rsp.index.major,
+            minor: rsp.index.minor,
+        })
     }
 
     /// Create a new address for an account. Optionally, label the new address.
     pub async fn create_address(
         &self,
-        account_index: u64,
+        account_index: u32,
         label: Option<String>,
-    ) -> anyhow::Result<(Address, u64)> {
+    ) -> anyhow::Result<(Address, u32)> {
         #[derive(Deserialize)]
         struct Rsp {
             address: Address,
-            address_index: u64,
+            address_index: u32,
         }
 
         let params = empty()
@@ -670,18 +677,11 @@ impl WalletClient {
     /// Label an address.
     pub async fn label_address(
         &self,
-        account_index: u64,
-        address_index: u64,
+        index: subaddress::Index,
         label: String,
     ) -> anyhow::Result<()> {
         let params = empty()
-            .chain(once((
-                "index",
-                json!(SubaddressIndex {
-                    major: account_index,
-                    minor: address_index,
-                }),
-            )))
+            .chain(once(("index", json!(index))))
             .chain(once(("label", label.into())));
 
         self.inner
@@ -926,8 +926,8 @@ impl WalletClient {
     pub async fn incoming_transfers(
         &self,
         transfer_type: TransferType,
-        account_index: Option<u64>,
-        subaddr_indices: Option<Vec<u64>>,
+        account_index: Option<u32>,
+        subaddr_indices: Option<Vec<u32>>,
     ) -> anyhow::Result<IncomingTransfers> {
         let params = empty()
             .chain(once((
@@ -991,7 +991,7 @@ impl WalletClient {
     pub async fn get_transfer(
         &self,
         txid: CryptoNoteHash,
-        account_index: Option<u64>,
+        account_index: Option<u32>,
     ) -> anyhow::Result<Option<GotTransfer>> {
         #[derive(Deserialize)]
         struct Rsp {

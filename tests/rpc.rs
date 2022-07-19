@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use monero::{Address, Amount};
+use monero::{cryptonote::subaddress, Address, Amount};
 use std::collections::HashMap;
 use std::env;
 use std::str::FromStr;
@@ -92,7 +92,10 @@ async fn functional_wallet_test() {
         .await
         .unwrap();
     wallet
-        .label_address(0, 0, "other_label".to_string())
+        .label_address(
+            subaddress::Index { major: 0, minor: 0 },
+            "other_label".to_string(),
+        )
         .await
         .unwrap();
     wallet.get_accounts(None).await.unwrap();
