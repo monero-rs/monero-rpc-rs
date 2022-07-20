@@ -259,7 +259,10 @@ async fn functional_wallet_test() {
     println!("res: {:?}", res);
 }
 
-fn setup_monero() -> (monero_rpc::RegtestDaemonClient, monero_rpc::WalletClient) {
+fn setup_monero() -> (
+    monero_rpc::RegtestDaemonJsonRpcClient,
+    monero_rpc::WalletClient,
+) {
     let dhost = env::var("MONERO_DAEMON_HOST").unwrap_or_else(|_| "localhost".into());
     let daemon_client = monero_rpc::RpcClient::new(format!("http://{}:18081", dhost));
     let daemon = daemon_client.daemon();

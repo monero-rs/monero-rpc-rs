@@ -19,9 +19,9 @@
 //! Create the base [`RpcClient`] and use the methods [`RpcClient::daemon`],
 //! [`RpcClient::daemon_rpc`], or [`RpcClient::wallet`] to retreive the specialized RPC client.
 //!
-//! On a [`DaemonClient`] you can call [`DaemonClient::regtest`] to get a [`RegtestDaemonClient`]
+//! On a [`DaemonJsonRpcClient`] you can call [`DaemonJsonRpcClient::regtest`] to get a [`RegtestDaemonJsonRpcClient`]
 //! instance that enable RPC call specific to regtest such as
-//! [`RegtestDaemonClient::generate_blocks`].
+//! [`RegtestDaemonJsonRpcClient::generate_blocks`].
 //!
 //! ```rust
 //! use monero_rpc::RpcClient;
@@ -202,11 +202,11 @@ impl RpcClient {
         }
     }
 
-    /// Transform the client into the specialized `DaemonClient` that interacts with JSON RPC
+    /// Transform the client into the specialized `DaemonJsonRpcClient` that interacts with JSON RPC
     /// Methods on daemon.
-    pub fn daemon(self) -> DaemonClient {
+    pub fn daemon(self) -> DaemonJsonRpcClient {
         let Self { inner } = self;
-        DaemonClient { inner }
+        DaemonJsonRpcClient { inner }
     }
 
     /// Transform the client into the specialized `DaemonRpcClient` that interacts with methods on
@@ -237,16 +237,16 @@ impl RpcClient {
 /// let regtest_daemon = daemon.regtest();
 /// ```
 #[derive(Clone, Debug)]
-pub struct DaemonClient {
+pub struct DaemonJsonRpcClient {
     inner: CallerWrapper,
 }
 
-/// Result of [`DaemonClient::regtest`] to enable methods for daemons in regtest mode.
+/// Result of [`DaemonJsonRpcClient::regtest`] to enable methods for daemons in regtest mode.
 #[derive(Clone, Debug)]
-pub struct RegtestDaemonClient(pub DaemonClient);
+pub struct RegtestDaemonJsonRpcClient(pub DaemonJsonRpcClient);
 
-impl Deref for RegtestDaemonClient {
-    type Target = DaemonClient;
+impl Deref for RegtestDaemonJsonRpcClient {
+    type Target = DaemonJsonRpcClient;
 
     fn deref(&self) -> &Self::Target {
         &self.0
@@ -263,7 +263,7 @@ pub enum GetBlockHeaderSelector {
     Height(u64),
 }
 
-impl DaemonClient {
+impl DaemonJsonRpcClient {
     /// Look up how many blocks are in the longest chain known to the node.
     pub async fn get_block_count(&self) -> anyhow::Result<NonZeroU64> {
         #[derive(Deserialize)]
@@ -382,8 +382,8 @@ impl DaemonClient {
     }
 
     /// Enable additional functions for daemons in regtest mode.
-    pub fn regtest(self) -> RegtestDaemonClient {
-        RegtestDaemonClient(self)
+    pub fn regtest(self) -> RegtestDaemonJsonRpcClient {
+        RegtestDaemonJsonRpcClient(self)
     }
 }
 
@@ -430,7 +430,7 @@ impl DaemonRpcClient {
     }
 }
 
-impl RegtestDaemonClient {
+impl RegtestDaemonJsonRpcClient {
     /// Generate blocks and give mining rewards to specified address.
     pub async fn generate_blocks(
         &self,
