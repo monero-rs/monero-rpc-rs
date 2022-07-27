@@ -281,13 +281,23 @@ impl DaemonJsonRpcClient {
 
     /// Look up a block's hash by its height.
     pub async fn on_get_block_hash(&self, height: u64) -> anyhow::Result<BlockHash> {
-        self.inner
+        let res = self
+            .inner
             .request::<HashString<BlockHash>>(
                 "on_get_block_hash",
                 RpcParams::array(once(height.into())),
             )
             .await
-            .map(|v| v.0)
+            .map(|v| v.0)?;
+
+        // see https://github.com/monero-ecosystem/monero-rpc-rs/issues/58 for rationality
+        if res == BlockHash::from_slice(&[0; 32]) {
+            Err(anyhow::Error::msg(format!(
+                "Invalid height {height} supplied."
+            )))
+        } else {
+            Ok(res)
+        }
     }
 
     /// Get a block template on which mining a new block.
