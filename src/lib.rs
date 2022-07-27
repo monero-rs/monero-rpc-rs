@@ -726,6 +726,7 @@ impl WalletClient {
     pub async fn get_bulk_payments(
         &self,
         payment_ids: Vec<PaymentId>,
+        // It seems that the `min_block_height` argument is really optional, but the docs on the Monero website do not mention it
         min_block_height: u64,
     ) -> anyhow::Result<Vec<Payment>> {
         #[derive(Deserialize)]
