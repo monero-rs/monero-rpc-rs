@@ -599,7 +599,7 @@ impl WalletClient {
             .chain(once(("account_index", account_index.into())))
             .chain(address_indices.map(|v| {
                 (
-                    "adress_indices",
+                    "address_indices",
                     v.into_iter().map(Value::from).collect::<Vec<_>>().into(),
                 )
             }));
