@@ -19,11 +19,11 @@ use monero_rpc::{RpcClient, JsonTransaction};
 #[tokio::test]
 async fn monero_daemon_transactions_test() {
     let tx_id = "7c50844eced8ab78a8f26a126fbc1f731134e0ae3e6f9ba0f205f98c1426ff60".to_string();
-    let daemon_client = RpcClient::new("http://node.monerooutreach.org:18081".to_string());
-    let daemon = daemon_client.daemon_rpc();
+    let rpc_client = monero_rpc::RpcClient::new("http://node.monerooutreach.org:18081".to_string());
+    let daemon_rpc_client = rpc_client.daemon_rpc();
     let mut fixed_hash: [u8; 32] = [0; 32];
     hex::decode_to_slice(tx_id, &mut fixed_hash).unwrap();
-    let tx = daemon
+    let tx = daemon_rpc_client
         .get_transactions(vec![fixed_hash.into()], Some(true), Some(true))
         .await;
     println!("tx {:?}", tx);

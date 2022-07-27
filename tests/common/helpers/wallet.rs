@@ -1,6 +1,8 @@
 use std::collections::HashMap;
 
-use monero::{util::address::PaymentId, Address, Amount, Hash, PrivateKey};
+use monero::{
+    cryptonote::subaddress::Index, util::address::PaymentId, Address, Amount, Hash, PrivateKey,
+};
 use monero_rpc::{
     AddressData, BalanceData, GenerateFromKeysArgs, GetAccountsData, GetTransfersCategory,
     GetTransfersSelector, GotTransfer, IncomingTransfers, KeyImageImportResponse, Payment,
@@ -167,8 +169,8 @@ pub async fn generate_from_keys_error_invalid_address(
 
 pub async fn get_address(
     wallet: &WalletClient,
-    account: u64,
-    addresses: Option<Vec<u64>>,
+    account: u32,
+    addresses: Option<Vec<u32>>,
     expected_res: AddressData,
 ) {
     let addresses = wallet.get_address(account, addresses).await.unwrap();
@@ -180,7 +182,7 @@ pub async fn get_address_error_no_wallet_file(wallet: &WalletClient) {
     assert_eq!(get_address_err.to_string(), "Server error: No wallet file");
 }
 
-pub async fn get_address_error_invalid_account_index(wallet: &WalletClient, account: u64) {
+pub async fn get_address_error_invalid_account_index(wallet: &WalletClient, account: u32) {
     let get_address_err = wallet.get_address(account, None).await.unwrap_err();
     assert_eq!(
         get_address_err.to_string(),
@@ -190,8 +192,8 @@ pub async fn get_address_error_invalid_account_index(wallet: &WalletClient, acco
 
 pub async fn get_address_error_invalid_address_index(
     wallet: &WalletClient,
-    account: u64,
-    addresses: Option<Vec<u64>>,
+    account: u32,
+    addresses: Option<Vec<u32>>,
 ) {
     let get_address_err = wallet.get_address(account, addresses).await.unwrap_err();
     assert_eq!(
@@ -200,11 +202,7 @@ pub async fn get_address_error_invalid_address_index(
     );
 }
 
-pub async fn get_address_index(
-    wallet: &WalletClient,
-    address: Address,
-    expected_index: (u64, u64),
-) {
+pub async fn get_address_index(wallet: &WalletClient, address: Address, expected_index: Index) {
     let index = wallet.get_address_index(address).await.unwrap();
     assert_eq!(index, expected_index);
 }
@@ -227,16 +225,16 @@ pub async fn get_address_index_error_invalid_address(wallet: &WalletClient, addr
 
 pub async fn create_address(
     wallet: &WalletClient,
-    account_index: u64,
+    account_index: u32,
     label: Option<String>,
-    expected_res: (Address, u64),
-) -> (Address, u64) {
+    expected_res: (Address, u32),
+) -> (Address, u32) {
     let address_created = wallet.create_address(account_index, label).await.unwrap();
     assert_eq!(address_created, expected_res);
     address_created
 }
 
-pub async fn create_address_error_invalid_account_index(wallet: &WalletClient, account_index: u64) {
+pub async fn create_address_error_invalid_account_index(wallet: &WalletClient, account_index: u32) {
     let create_address_err = wallet
         .create_address(account_index, None)
         .await
@@ -247,25 +245,13 @@ pub async fn create_address_error_invalid_account_index(wallet: &WalletClient, a
     );
 }
 
-pub async fn label_address(
-    wallet: &WalletClient,
-    account_index: u64,
-    address_index: u64,
-    label: String,
-) {
-    wallet
-        .label_address(account_index, address_index, label)
-        .await
-        .unwrap()
+pub async fn label_address(wallet: &WalletClient, index: Index, label: String) {
+    wallet.label_address(index, label).await.unwrap()
 }
 
-pub async fn label_address_error_invalid_account_index(
-    wallet: &WalletClient,
-    account_index: u64,
-    address_index: u64,
-) {
+pub async fn label_address_error_invalid_account_index(wallet: &WalletClient, index: Index) {
     let label_err = wallet
-        .label_address(account_index, address_index, "".to_string())
+        .label_address(index, "".to_string())
         .await
         .unwrap_err();
     assert_eq!(
@@ -274,13 +260,9 @@ pub async fn label_address_error_invalid_account_index(
     );
 }
 
-pub async fn label_address_error_invalid_address_index(
-    wallet: &WalletClient,
-    account_index: u64,
-    address_index: u64,
-) {
+pub async fn label_address_error_invalid_address_index(wallet: &WalletClient, index: Index) {
     let label_err = wallet
-        .label_address(account_index, address_index, "".to_string())
+        .label_address(index, "".to_string())
         .await
         .unwrap_err();
     assert_eq!(
@@ -340,8 +322,8 @@ pub async fn query_key_error_query_spend_key_for_view_only_wallet(wallet: &Walle
 
 pub async fn get_balance(
     wallet: &WalletClient,
-    account_index: u64,
-    address_indices: Option<Vec<u64>>,
+    account_index: u32,
+    address_indices: Option<Vec<u32>>,
     expected_balance_data: BalanceData,
 ) -> BalanceData {
     let balance_data = wallet
@@ -362,7 +344,7 @@ pub async fn transfer(
         .transfer(destinations.clone(), priority, options)
         .await
         .unwrap();
-    let dest_amount: u64 = destinations.into_values().map(|a| a.as_pico()).sum();
+    let dest_amount = Amount::from_pico(destinations.into_values().map(|a| a.as_pico()).sum());
     assert_eq!(t.amount, dest_amount);
     t
 }
@@ -431,7 +413,7 @@ pub async fn relay_tx_error_invalid_tx_metadata(wallet: &WalletClient, tx_metada
 pub async fn get_transfer(
     wallet: &WalletClient,
     txid: Hash,
-    account_index: Option<u64>,
+    account_index: Option<u32>,
     mut expected_got_transfer: Option<GotTransfer>,
 ) {
     let transfer = wallet.get_transfer(txid, account_index).await.unwrap();
@@ -451,7 +433,7 @@ pub async fn get_transfer_error_invalid_txid(wallet: &WalletClient, txid: Hash) 
 pub async fn get_transfer_error_invalid_account_index(
     wallet: &WalletClient,
     txid: Hash,
-    account_index: Option<u64>,
+    account_index: Option<u32>,
 ) {
     let transfer_err = wallet.get_transfer(txid, account_index).await.unwrap_err();
     assert_eq!(
@@ -465,7 +447,7 @@ pub async fn check_tx_key(
     txid: Hash,
     tx_key: Vec<u8>,
     address: Address,
-    expected_res: (u64, bool, u64),
+    expected_res: (u64, bool, Amount),
 ) {
     let res = wallet.check_tx_key(txid, tx_key, address).await.unwrap();
     assert_eq!(res, expected_res);
@@ -538,8 +520,8 @@ pub async fn import_key_images_empty_vec(wallet: &WalletClient) {
     let res = wallet.import_key_images(vec![]).await.unwrap();
     let expected_res = KeyImageImportResponse {
         height: 0,
-        spent: 0,
-        unspent: 0,
+        spent: Amount::from_pico(0),
+        unspent: Amount::from_pico(0),
     };
     assert_eq!(res, expected_res);
 }
@@ -560,8 +542,8 @@ pub async fn import_key_images_error_invalid_signature(
 pub async fn incoming_transfers(
     wallet: &WalletClient,
     transfer_type: TransferType,
-    account_index: Option<u64>,
-    subaddr_indices: Option<Vec<u64>>,
+    account_index: Option<u32>,
+    subaddr_indices: Option<Vec<u32>>,
     mut expected_incoming_transfers: IncomingTransfers,
 ) {
     let incoming_transfers = wallet

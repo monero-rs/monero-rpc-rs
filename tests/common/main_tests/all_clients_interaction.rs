@@ -10,8 +10,8 @@ use monero::{
 use monero_rpc::{
     BalanceData, BlockHeightFilter, GetTransfersCategory, GetTransfersSelector, GotTransfer,
     HashString, IncomingTransfer, IncomingTransfers, KeyImageImportResponse, Payment,
-    PrivateKeyType, SubaddressBalanceData, SubaddressIndex, SweepAllArgs, Transaction,
-    TransactionsResponse, TransferHeight, TransferOptions, TransferPriority, TransferType,
+    PrivateKeyType, SubaddressBalanceData, SweepAllArgs, Transaction, TransactionsResponse,
+    TransferHeight, TransferOptions, TransferPriority, TransferType,
 };
 
 use crate::common::helpers;
@@ -116,7 +116,7 @@ pub async fn test() {
 
     let expected_balance_data_for_wallet_2 = BalanceData {
         balance: expected_balance,
-        unlocked_balance: 0,
+        unlocked_balance: Amount::from_pico(0),
         multisig_import_needed: false,
         per_subaddress: vec![SubaddressBalanceData {
             address: wallet_2_address,
@@ -124,21 +124,21 @@ pub async fn test() {
             balance: expected_balance,
             label: "Primary account".to_string(),
             num_unspent_outputs: 1,
-            unlocked_balance: 0,
+            unlocked_balance: Amount::from_pico(0),
         }],
     };
     helpers::wallet::get_balance(&wallet, 0, None, expected_balance_data_for_wallet_2).await;
     let expected_balance_data_for_wallet_2_subaddress_1 = BalanceData {
         balance: expected_balance,
-        unlocked_balance: 0,
+        unlocked_balance: Amount::from_pico(0),
         multisig_import_needed: false,
         per_subaddress: vec![SubaddressBalanceData {
             address: wallet_2_subaddress_1,
             address_index: 1,
-            balance: 0,
+            balance: Amount::from_pico(0),
             label: wallet_2_subaddress_1_label,
             num_unspent_outputs: 0,
-            unlocked_balance: 0,
+            unlocked_balance: Amount::from_pico(0),
         }],
     };
     helpers::wallet::get_balance(
@@ -160,15 +160,15 @@ pub async fn test() {
     );
     let expected_balance_data_for_wallet_2_subaddress_12345678 = BalanceData {
         balance: expected_balance,
-        unlocked_balance: 0,
+        unlocked_balance: Amount::from_pico(0),
         multisig_import_needed: false,
         per_subaddress: vec![SubaddressBalanceData {
             address: wallet_2_subaddress_12345678,
             address_index: 12345678,
-            balance: 0,
+            balance: Amount::from_pico(0),
             label: "".to_string(),
             num_unspent_outputs: 0,
-            unlocked_balance: 0,
+            unlocked_balance: Amount::from_pico(0),
         }],
     };
     helpers::wallet::get_balance(
@@ -180,8 +180,8 @@ pub async fn test() {
     .await;
 
     let expected_balance_data_for_wallet_2_invalid_account = BalanceData {
-        balance: 0,
-        unlocked_balance: 0,
+        balance: Amount::from_pico(0),
+        unlocked_balance: Amount::from_pico(0),
         multisig_import_needed: false,
         per_subaddress: vec![],
     };
@@ -379,14 +379,14 @@ pub async fn test() {
     // get_transfer
     let expected_got_transfer = Some(GotTransfer {
         address: wallet_2_address,
-        amount: 15000000000000,
+        amount: Amount::from_pico(15000000000000),
         confirmations: None,
         double_spend_seen: false,
         fee: transfer_1_data.fee,
         height: TransferHeight::InPool,
         note: "".to_string(),
         payment_id: HashString(PaymentId::zero()),
-        subaddr_index: SubaddressIndex { major: 0, minor: 0 },
+        subaddr_index: Index { major: 0, minor: 0 },
         suggested_confirmations_threshold: 1,
         // this is any date, since it will not be tested against anything
         timestamp: DateTime::<Utc>::from_utc(NaiveDateTime::from_timestamp(0, 0), Utc),
@@ -415,7 +415,7 @@ pub async fn test() {
         transfer_1_data.tx_hash.0,
         transfer_1_data.tx_key.0.clone(),
         wallet_1_address,
-        (0, true, transfer_1_destination[&wallet_1_address].as_pico()),
+        (0, true, transfer_1_destination[&wallet_1_address]),
     )
     .await;
     helpers::wallet::check_tx_key(
@@ -551,8 +551,8 @@ pub async fn test() {
     // wallets, and with the following KeyImageImportResponse:
     let expected_key_image_import_response = KeyImageImportResponse {
         height: height_before_settling_transfer_1,
-        spent: 0,
-        unspent: transfer_1_destination[&wallet_1_address].as_pico(),
+        spent: Amount::from_pico(0),
+        unspent: transfer_1_destination[&wallet_1_address],
     };
 
     // ... first, for wallet_1_full...
@@ -584,9 +584,9 @@ pub async fn test() {
             global_index: 0, // this is any number, since we will not test against it
             key_image: None, // this is different from the key_image in the Inputs for transfer_1_data, so we set it to None and do not test it
             tx_size: None,   // any value, since we will not test againt it
-            amount: transfer_1_destination[&wallet_1_address].as_pico(),
+            amount: transfer_1_destination[&wallet_1_address],
             spent: false,
-            subaddr_index: SubaddressIndex { major: 0, minor: 0 },
+            subaddr_index: Index { major: 0, minor: 0 },
             tx_hash: transfer_1_data.tx_hash.clone(),
         }]),
     };
@@ -654,9 +654,9 @@ pub async fn test() {
         address: wallet_1_address,
         payment_id: HashString(PaymentId::zero()),
         tx_hash: transfer_1_data.tx_hash,
-        amount: transfer_1_destination[&wallet_1_address].as_pico(),
+        amount: transfer_1_destination[&wallet_1_address],
         unlock_time: 0,
-        subaddr_index: SubaddressIndex { major: 0, minor: 0 },
+        subaddr_index: Index { major: 0, minor: 0 },
         block_height: height_before_settling_transfer_1,
     }];
     helpers::wallet::get_payments(&wallet, PaymentId::zero(), expected_payment_ids.clone()).await;
@@ -762,7 +762,9 @@ pub async fn test() {
     .await;
 
     helpers::wallet::open_wallet_with_no_or_empty_password(&wallet, &wallet_2).await;
-    helpers::wallet::refresh(&wallet, Some(0), true).await;
+    // below is commented because it sometimes returns `true`, sometimes returns `false`
+    // helpers::wallet::refresh(&wallet, Some(0), false).await;
+    wallet.refresh(Some(0)).await.unwrap();
     helpers::wallet::sweep_all(
         &wallet,
         SweepAllArgs {
@@ -773,7 +775,7 @@ pub async fn test() {
             mixin: 5,
             ring_size: 10,
             unlock_time: 1,
-            below_amount: Some(100000000000000),
+            below_amount: Some(Amount::from_pico(100000000000000)),
             do_not_relay: Some(false),
             get_tx_keys: None,
             get_tx_metadata: Some(false),

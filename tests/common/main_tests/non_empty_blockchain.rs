@@ -1,5 +1,5 @@
 use chrono::{DateTime, NaiveDateTime, Utc};
-use monero::{Address, Network};
+use monero::{Address, Amount, Network};
 use monero_rpc::{BlockHash, BlockHeaderResponse, GetBlockHeaderSelector};
 
 use crate::common::helpers;
@@ -50,7 +50,7 @@ pub async fn test() {
         num_txes: 0,
         orphan_status: false,
         prev_hash: last_but_one_added_block_hash,
-        reward: 35183734559807,
+        reward: Amount::from_pico(35183734559807),
         // this is not used in the assert, so use any date
         timestamp: DateTime::<Utc>::from_utc(NaiveDateTime::from_timestamp(0, 0), Utc),
     };

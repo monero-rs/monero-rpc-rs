@@ -1,5 +1,5 @@
 use chrono::{DateTime, NaiveDateTime, Utc};
-use monero::{Address, Network};
+use monero::{Address, Amount, Network};
 use monero_rpc::{BlockHash, BlockHeaderResponse, BlockTemplate, HashString};
 
 use crate::common::helpers;
@@ -26,7 +26,7 @@ pub async fn test() {
             // this field is not deterministic, so set it to empty vec
             blocktemplate_blob: HashString(vec![]),
             difficulty: 1,
-            expected_reward: 35184338534400,
+            expected_reward: Amount::from_pico(35184338534400),
             height: 1,
             prev_hash: HashString(genesis_block_hash),
             reserved_offset: 185, // may very, so not used inside the test
@@ -49,7 +49,7 @@ pub async fn test() {
         num_txes: 0,
         orphan_status: false,
         prev_hash: BlockHash::zero(),
-        reward: 17592186044415,
+        reward: Amount::from_pico(17592186044415),
         // this is used in the assert, since it is the genesis block
         timestamp: DateTime::<Utc>::from_utc(NaiveDateTime::from_timestamp(0, 0), Utc),
     };

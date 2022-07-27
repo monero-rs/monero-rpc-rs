@@ -4,19 +4,19 @@ use chrono::{DateTime, NaiveDate, Utc};
 use monero::{Address, Network};
 use monero_rpc::{
     BlockHash, BlockHeaderResponse, BlockTemplate, GenerateBlocksResponse, HashString,
-    RegtestDaemonClient,
+    RegtestDaemonJsonRpcClient,
 };
 use serde::Deserialize;
 
 use crate::common::helpers;
 
-pub async fn get_block_count(regtest: &RegtestDaemonClient, expected_height: u64) {
+pub async fn get_block_count(regtest: &RegtestDaemonJsonRpcClient, expected_height: u64) {
     let count = regtest.get_block_count().await.unwrap();
     assert_eq!(count.get(), expected_height);
 }
 
 pub async fn on_get_block_hash(
-    regtest: &RegtestDaemonClient,
+    regtest: &RegtestDaemonJsonRpcClient,
     height: u64,
     expected_hash: BlockHash,
 ) {
@@ -24,7 +24,10 @@ pub async fn on_get_block_hash(
     assert_eq!(block_hash, expected_hash);
 }
 
-pub async fn on_get_block_hash_error_invalid_height(regtest: &RegtestDaemonClient, height: u64) {
+pub async fn on_get_block_hash_error_invalid_height(
+    regtest: &RegtestDaemonJsonRpcClient,
+    height: u64,
+) {
     let block_hash = regtest.on_get_block_hash(height).await.unwrap_err();
     assert_eq!(
         block_hash.to_string(),
@@ -41,7 +44,7 @@ async fn get_expected_height_returned_by_generate_blocks(
 }
 
 pub async fn generate_blocks(
-    regtest: &RegtestDaemonClient,
+    regtest: &RegtestDaemonJsonRpcClient,
     amount_of_blocks: u64,
     wallet_address: Address,
 ) -> GenerateBlocksResponse {
@@ -64,7 +67,10 @@ pub async fn generate_blocks(
 
 // This is to demonstrate that, if `amount_of_blocks` is zero, then the RPC returns success even if
 // the address is wrong
-pub async fn generate_blocks_zero_blocks(regtest: &RegtestDaemonClient, wallet_address: Address) {
+pub async fn generate_blocks_zero_blocks(
+    regtest: &RegtestDaemonJsonRpcClient,
+    wallet_address: Address,
+) {
     if let Network::Mainnet = wallet_address.network {
         panic!("generate_blocks_zero_blocks only accepts an address that is not in the Mainnet/Regtest format.")
     }
@@ -90,7 +96,7 @@ pub async fn generate_blocks_zero_blocks(regtest: &RegtestDaemonClient, wallet_a
 
 // We are on regtest, but the address used in this function is **not** a regtest address
 pub async fn generate_blocks_error_invalid_address(
-    regtest: &RegtestDaemonClient,
+    regtest: &RegtestDaemonJsonRpcClient,
     wallet_address: Address,
 ) {
     if let Network::Mainnet = wallet_address.network {
@@ -108,7 +114,7 @@ pub async fn generate_blocks_error_invalid_address(
 }
 
 pub async fn generate_blocks_error_subaddress_not_supported(
-    regtest: &RegtestDaemonClient,
+    regtest: &RegtestDaemonJsonRpcClient,
     wallet_address: Address,
 ) {
     let err = regtest
@@ -122,7 +128,7 @@ pub async fn generate_blocks_error_subaddress_not_supported(
 }
 
 pub async fn get_block_template(
-    regtest: &RegtestDaemonClient,
+    regtest: &RegtestDaemonJsonRpcClient,
     address: Address,
     reserve_size: u64,
     expected_block_template: BlockTemplate,
@@ -145,7 +151,7 @@ pub async fn get_block_template(
 }
 
 pub async fn get_block_template_error_invalid_reserve_size(
-    regtest: &RegtestDaemonClient,
+    regtest: &RegtestDaemonJsonRpcClient,
     address: Address,
 ) {
     let res_err = regtest.get_block_template(address, 256).await.unwrap_err();
@@ -155,7 +161,7 @@ pub async fn get_block_template_error_invalid_reserve_size(
     );
 }
 
-pub async fn get_block_template_error_invalid_address(regtest: &RegtestDaemonClient) {
+pub async fn get_block_template_error_invalid_address(regtest: &RegtestDaemonJsonRpcClient) {
     let key_pair_1 = helpers::get_keypair_1();
     let address_testnet = Address::from_keypair(Network::Testnet, &key_pair_1);
     let res_err = regtest
@@ -168,7 +174,10 @@ pub async fn get_block_template_error_invalid_address(regtest: &RegtestDaemonCli
     );
 }
 
-pub async fn submit_block(regtest: &RegtestDaemonClient, block_template_blob: HashString<Vec<u8>>) {
+pub async fn submit_block(
+    regtest: &RegtestDaemonJsonRpcClient,
+    block_template_blob: HashString<Vec<u8>>,
+) {
     let start_block_count = regtest.get_block_count().await.unwrap().get();
     regtest
         .submit_block(block_template_blob.to_string())
@@ -190,7 +199,7 @@ pub async fn submit_block(regtest: &RegtestDaemonClient, block_template_blob: Ha
     );
 }
 
-pub async fn submit_block_error_wrong_block_blob(regtest: &RegtestDaemonClient) {
+pub async fn submit_block_error_wrong_block_blob(regtest: &RegtestDaemonJsonRpcClient) {
     let block_template_blob = "0123456789";
 
     let res_err = regtest
@@ -200,7 +209,7 @@ pub async fn submit_block_error_wrong_block_blob(regtest: &RegtestDaemonClient) 
     assert_eq!(res_err.to_string(), "Server error: Wrong block blob");
 }
 
-pub async fn submit_block_error_block_not_accepted(regtest: &RegtestDaemonClient) {
+pub async fn submit_block_error_block_not_accepted(regtest: &RegtestDaemonJsonRpcClient) {
     let block_template_blob = "0707e6bdfedc053771512f1bc27c62731ae9e8f2443db64ce742f4e57f5cf8d393de28551e441a0000000002fb830a01ffbf830a018cfe88bee283060274c0aae2ef5730e680308d9c00b6da59187ad0352efe3c71d36eeeb28782f29f2501bd56b952c3ddc3e350c2631d3a5086cac172c56893831228b17de296ff4669de020200000000";
     let res_err = regtest
         .submit_block(block_template_blob.to_string())
@@ -247,7 +256,7 @@ async fn test_get_block_header(
 }
 
 pub async fn get_last_block_header(
-    regtest: &RegtestDaemonClient,
+    regtest: &RegtestDaemonJsonRpcClient,
     expected_block_header: BlockHeaderResponse,
 ) {
     let block_header = regtest
@@ -258,7 +267,7 @@ pub async fn get_last_block_header(
 }
 
 pub async fn get_block_header_from_block_hash(
-    regtest: &RegtestDaemonClient,
+    regtest: &RegtestDaemonJsonRpcClient,
     block_hash: BlockHash,
     expected_block_header: BlockHeaderResponse,
 ) {
@@ -270,7 +279,7 @@ pub async fn get_block_header_from_block_hash(
 }
 
 pub async fn get_block_header_from_block_hash_error_not_found(
-    regtest: &RegtestDaemonClient,
+    regtest: &RegtestDaemonJsonRpcClient,
     block_hash: BlockHash,
 ) {
     let block_header_err = regtest
@@ -287,7 +296,7 @@ pub async fn get_block_header_from_block_hash_error_not_found(
 }
 
 pub async fn get_block_header_at_height(
-    regtest: &RegtestDaemonClient,
+    regtest: &RegtestDaemonJsonRpcClient,
     height: u64,
     expected_block_header: BlockHeaderResponse,
 ) {
@@ -299,7 +308,7 @@ pub async fn get_block_header_at_height(
 }
 
 pub async fn get_block_header_at_height_error(
-    regtest: &RegtestDaemonClient,
+    regtest: &RegtestDaemonJsonRpcClient,
     height: u64,
     current_top_block_height: u64,
 ) {
@@ -316,7 +325,7 @@ pub async fn get_block_header_at_height_error(
 }
 
 pub async fn get_block_headers_range(
-    regtest: &RegtestDaemonClient,
+    regtest: &RegtestDaemonJsonRpcClient,
     range: RangeInclusive<u64>,
     expected_block_headers: Vec<BlockHeaderResponse>,
 ) {
@@ -325,7 +334,7 @@ pub async fn get_block_headers_range(
 }
 
 pub async fn get_block_headers_range_error(
-    regtest: &RegtestDaemonClient,
+    regtest: &RegtestDaemonJsonRpcClient,
     range: RangeInclusive<u64>,
 ) {
     let block_headers_err = regtest.get_block_headers_range(range).await.unwrap_err();

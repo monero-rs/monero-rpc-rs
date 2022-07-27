@@ -44,8 +44,8 @@ pub use self::{models::*, util::*};
 use jsonrpc_core::types::{Id, *};
 use monero::{
     cryptonote::{hash::Hash as CryptoNoteHash, subaddress},
-    util::address::PaymentId,
-    Address,
+    util::{address::PaymentId, amount},
+    Address, Amount,
 };
 use serde::{de::IgnoredAny, Deserialize, Deserializer, Serialize, Serializer};
 use serde_json::{json, Value};
@@ -1119,12 +1119,13 @@ impl WalletClient {
         txid: CryptoNoteHash,
         tx_key: Vec<u8>,
         address: Address,
-    ) -> anyhow::Result<(u64, bool, u64)> {
+    ) -> anyhow::Result<(u64, bool, Amount)> {
         #[derive(Deserialize)]
         struct Rsp {
             confirmations: u64,
             in_pool: bool,
-            received: u64,
+            #[serde(with = "amount::serde::as_pico")]
+            received: Amount,
         }
 
         let params = empty()

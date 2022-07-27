@@ -9,7 +9,7 @@ pub mod wallet;
 pub const PWD_1: &str = "pwd_farcaster";
 
 pub fn setup_monero() -> (
-    monero_rpc::RegtestDaemonClient,
+    monero_rpc::RegtestDaemonJsonRpcClient,
     monero_rpc::DaemonRpcClient,
     monero_rpc::WalletClient,
 ) {
