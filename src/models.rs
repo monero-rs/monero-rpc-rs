@@ -139,6 +139,17 @@ pub struct GenerateBlocksResponse {
     pub blocks: Option<Vec<BlockHash>>,
 }
 
+impl From<GenerateBlocksResponseR> for GenerateBlocksResponse {
+    fn from(v: GenerateBlocksResponseR) -> Self {
+        let GenerateBlocksResponseR { height, blocks } = v;
+
+        Self {
+            height,
+            blocks: blocks.map(|vec| vec.into_iter().map(|b| b.0).collect()),
+        }
+    }
+}
+
 /// Return type of daemon RPC `get_transactions`.
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct TransactionsResponse {
