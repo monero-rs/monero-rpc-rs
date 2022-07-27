@@ -436,12 +436,7 @@ impl RegtestDaemonJsonRpcClient {
         &self,
         amount_of_blocks: u64,
         wallet_address: Address,
-    ) -> anyhow::Result<u64> {
-        #[derive(Deserialize)]
-        struct Rsp {
-            height: u64,
-        }
-
+    ) -> anyhow::Result<GenerateBlocksResponse> {
         let params = empty()
             .chain(once((
                 "amount_of_blocks",
@@ -454,10 +449,13 @@ impl RegtestDaemonJsonRpcClient {
 
         Ok(self
             .inner
-            .request::<MoneroResult<Rsp>>("generateblocks", RpcParams::map(params))
+            .request::<MoneroResult<GenerateBlocksResponseR>>(
+                "generateblocks",
+                RpcParams::map(params),
+            )
             .await?
             .into_inner()
-            .height)
+            .into())
     }
 }
 
