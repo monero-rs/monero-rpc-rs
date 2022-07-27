@@ -1025,7 +1025,10 @@ impl WalletClient {
     }
 
     /// Export a signed set of key images.
-    pub async fn export_key_images(&self) -> anyhow::Result<Vec<SignedKeyImage>> {
+    pub async fn export_key_images(
+        &self,
+        all: Option<bool>,
+    ) -> anyhow::Result<Vec<SignedKeyImage>> {
         #[derive(Deserialize)]
         struct R {
             key_image: HashString<Vec<u8>>,
@@ -1055,8 +1058,10 @@ impl WalletClient {
             }
         }
 
+        let params = empty().chain(all.map(|v| ("all", v.into())));
+
         self.inner
-            .request::<Rsp>("export_key_images", RpcParams::None)
+            .request::<Rsp>("export_key_images", RpcParams::map(params))
             .await
             .map(From::from)
     }
