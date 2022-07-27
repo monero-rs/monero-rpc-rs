@@ -1231,4 +1231,33 @@ mod tests {
             ],
         );
     }
+
+    #[test]
+    fn ser_der_for_transfer_priority() {
+        let transfer_priorities = vec![
+            TransferPriority::Default,
+            TransferPriority::Unimportant,
+            TransferPriority::Elevated,
+            TransferPriority::Priority,
+        ];
+        assert_tokens(
+            &transfer_priorities,
+            &[
+                Token::Seq { len: Some(4) },
+                Token::U8(0),
+                Token::U8(1),
+                Token::U8(2),
+                Token::U8(3),
+                Token::SeqEnd,
+            ],
+        );
+    }
+
+    #[test]
+    fn der_for_transfer_priority_error() {
+        assert_de_tokens_error::<TransferPriority>(
+            &[Token::U8(4)],
+            "Invalid variant 4, expected 0-3",
+        );
+    }
 }
