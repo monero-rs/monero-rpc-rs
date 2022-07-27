@@ -1159,3 +1159,57 @@ impl WalletClient {
         Ok((u16::try_from(major)?, u16::try_from(minor)?))
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use serde_test::{assert_de_tokens_error, assert_ser_tokens, assert_tokens, Token};
+
+    #[test]
+    fn rpc_params_array() {
+        let mut array = once(json!(false));
+        let rpc_params_array = RpcParams::array(array.clone());
+
+        if let RpcParams::Array(mut rpc_boxed_array) = rpc_params_array {
+            assert_eq!(rpc_boxed_array.next(), array.next());
+            assert_eq!(rpc_boxed_array.next(), None);
+            assert_eq!(array.next(), None);
+        } else {
+            unreachable!();
+        }
+    }
+
+    #[test]
+    fn rpc_params_map() {
+        let map = once(("it is false", json!(false)));
+        let rpc_params_map = RpcParams::map(map.clone());
+
+        let mut map = map.map(|(k, v)| (k.to_string(), v));
+
+        if let RpcParams::Map(mut boxed_map) = rpc_params_map {
+            assert_eq!(boxed_map.next(), map.next());
+            assert_eq!(boxed_map.next(), None);
+            assert_eq!(map.next(), None);
+        } else {
+            unreachable!();
+        }
+    }
+
+    #[test]
+    fn from_rpc_params_for_params() {
+        let rpc_param_array = RpcParams::array(once(json!(false)));
+        let rpc_param_map = RpcParams::map(once(("it is false", json!(false))));
+        let rpc_param_none = RpcParams::None;
+
+        assert_eq!(Params::from(rpc_param_none), Params::None);
+        assert_eq!(
+            Params::from(rpc_param_array),
+            Params::Array(vec![json!(false)])
+        );
+
+        let mut serde_json_map = serde_json::map::Map::new();
+        serde_json_map.insert("it is false".to_string(), json!(false));
+
+        assert_eq!(Params::from(rpc_param_map), Params::Map(serde_json_map));
+    }
+}
