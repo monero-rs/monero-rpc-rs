@@ -314,13 +314,15 @@ impl DaemonJsonRpcClient {
     }
 
     /// Submit a mined block to the network.
-    pub async fn submit_block(&self, block_blob_data: String) -> anyhow::Result<String> {
+    pub async fn submit_block(&self, block_blob_data: String) -> anyhow::Result<()> {
         self.inner
-            .request(
+            .request::<IgnoredAny>(
                 "submit_block",
                 RpcParams::array(once(block_blob_data.into())),
             )
-            .await
+            .await?;
+
+        Ok(())
     }
 
     /// Retrieve block header information matching selected filter.
