@@ -17,10 +17,10 @@
 //! ## Usage
 //!
 //! Create the base [`RpcClient`] and use the methods [`RpcClient::daemon`],
-//! [`RpcClient::daemon_rpc`], or [`RpcClient::wallet`] to retreive the specialized RPC client.
+//! [`RpcClient::daemon_rpc`], or [`RpcClient::wallet`] to retrieve the specialized RPC client.
 //!
 //! On a [`DaemonJsonRpcClient`] you can call [`DaemonJsonRpcClient::regtest`] to get a [`RegtestDaemonJsonRpcClient`]
-//! instance that enable RPC call specific to regtest such as
+//! instance that enables RPC call specific to regtest such as
 //! [`RegtestDaemonJsonRpcClient::generate_blocks`].
 //!
 //! ```rust
@@ -203,7 +203,7 @@ impl RpcClient {
     }
 
     /// Transform the client into the specialized `DaemonJsonRpcClient` that interacts with JSON RPC
-    /// Methods on daemon.
+    /// methods on daemon.
     pub fn daemon(self) -> DaemonJsonRpcClient {
         let Self { inner } = self;
         DaemonJsonRpcClient { inner }
@@ -989,7 +989,7 @@ impl WalletClient {
             .await
     }
 
-    /// Show information about a transfer to/from this address. **Called `get_transfer_by_txid` in
+    /// Show information about a transfer to/from this address. **Calls `get_transfer_by_txid` in
     /// RPC.**
     pub async fn get_transfer(
         &self,
