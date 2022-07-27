@@ -126,6 +126,12 @@ pub struct BlockHeaderResponse {
     pub timestamp: DateTime<Utc>,
 }
 
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub(crate) struct GenerateBlocksResponseR {
+    pub height: u64,
+    pub blocks: Option<Vec<HashString<BlockHash>>>,
+}
+
 /// Return type of daemon RPC `get_transactions`.
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct TransactionsResponse {
