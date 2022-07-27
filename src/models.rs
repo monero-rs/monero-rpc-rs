@@ -365,6 +365,8 @@ pub struct GenerateFromKeysArgs {
     pub address: Address,
     pub spendkey: Option<monero::PrivateKey>,
     pub viewkey: monero::PrivateKey,
+    // TODO it seems this argument is really optional, although the doc at
+    // `https://www.getmonero.org/resources/developer-guides/wallet-rpc.html#generate_from_keys` does not mention it
     pub password: String,
     pub autosave_current: Option<bool>,
 }
