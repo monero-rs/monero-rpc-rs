@@ -137,7 +137,7 @@ impl RemoteCaller {
         let client = self.http_client.clone();
         let uri = format!("{}/{}", &self.addr, method);
 
-        let json_params: jsonrpc_core::types::params::Params = params.into();
+        let json_params: Params = params.into();
 
         trace!(
             "Sending daemon RPC call: {:?}, with params {:?}",
