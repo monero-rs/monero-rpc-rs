@@ -1212,4 +1212,23 @@ mod tests {
 
         assert_eq!(Params::from(rpc_param_map), Params::Map(serde_json_map));
     }
+
+    #[test]
+    fn serialize_transfer_type() {
+        let transfer_types = vec![
+            TransferType::All,
+            TransferType::Available,
+            TransferType::Unavailable,
+        ];
+        assert_ser_tokens(
+            &transfer_types,
+            &[
+                Token::Seq { len: Some(3) },
+                Token::Str("all"),
+                Token::Str("available"),
+                Token::Str("unavailable"),
+                Token::SeqEnd,
+            ],
+        );
+    }
 }
