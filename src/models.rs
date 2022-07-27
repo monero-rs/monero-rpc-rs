@@ -232,7 +232,7 @@ pub struct TransferData {
     pub fee: Amount,
     pub tx_blob: HashString<Vec<u8>>,
     pub tx_hash: HashString<CryptoNoteHash>,
-    pub tx_key: HashString<CryptoNoteHash>,
+    pub tx_key: HashString<Vec<u8>>,
     pub tx_metadata: HashString<Vec<u8>>,
     pub unsigned_txset: HashString<Vec<u8>>,
 }
