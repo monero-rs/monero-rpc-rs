@@ -1117,14 +1117,14 @@ impl WalletClient {
     pub async fn check_tx_key(
         &self,
         txid: CryptoNoteHash,
-        tx_key: CryptoNoteHash,
+        tx_key: Vec<u8>,
         address: Address,
-    ) -> anyhow::Result<(NonZeroU64, bool, NonZeroU64)> {
+    ) -> anyhow::Result<(u64, bool, u64)> {
         #[derive(Deserialize)]
         struct Rsp {
-            confirmations: NonZeroU64,
+            confirmations: u64,
             in_pool: bool,
-            received: NonZeroU64,
+            received: u64,
         }
 
         let params = empty()
