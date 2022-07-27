@@ -132,6 +132,13 @@ pub(crate) struct GenerateBlocksResponseR {
     pub blocks: Option<Vec<HashString<BlockHash>>>,
 }
 
+/// Return type of regtest daemon RPC `generate_blocks`
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+pub struct GenerateBlocksResponse {
+    pub height: u64,
+    pub blocks: Option<Vec<BlockHash>>,
+}
+
 /// Return type of daemon RPC `get_transactions`.
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct TransactionsResponse {
