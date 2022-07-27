@@ -23,7 +23,7 @@ fn get_random_name() -> String {
 
 pub async fn get_version(wallet: &WalletClient) {
     let version = wallet.get_version().await.unwrap();
-    assert_eq!(version, (1, 24));
+    assert_eq!(version, (1, 25));
 }
 
 async fn create_wallet(

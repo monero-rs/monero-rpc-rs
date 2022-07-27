@@ -634,13 +634,16 @@ pub async fn test() {
         helpers::wallet::sign_transfer(&wallet, transfer_2_data_unsigned.unsigned_txset.0.clone())
             .await;
     helpers::wallet::sign_transfer_error_cannot_load(&wallet, vec![0, 1, 2, 3]).await;
-    let mut invalid_unsigned_txset = transfer_2_data_unsigned.unsigned_txset.0;
+    let mut invalid_unsigned_txset = transfer_2_data_unsigned.unsigned_txset.0.clone();
     for e in invalid_unsigned_txset.iter_mut().take(25 + 1).skip(20) {
         *e = 5;
     }
     helpers::wallet::sign_transfer_error_cannot_load(&wallet, invalid_unsigned_txset.clone()).await;
 
     // ... and submit transfer after that
+    // TODO the change to wallet_1_view_only wasn't necessary in v0.17.3.2; also, in v0.18.0.0, trying to get the
+    // balance of wallet_1_full returns 0, while it returns the correct results for wallet_1_view_only
+    helpers::wallet::open_wallet_with_no_or_empty_password(&wallet, &wallet_1_view_only).await;
     helpers::wallet::submit_transfer(&wallet, transfer_2_data_signed.signed_txset.clone()).await;
     helpers::wallet::submit_transfer_error_parse(&wallet, vec![0, 1, 2, 3]).await;
     let mut invalid_signed_txset = transfer_2_data_signed.signed_txset;
