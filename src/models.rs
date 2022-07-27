@@ -632,4 +632,29 @@ mod tests {
         assert_de_tokens(&confirmed, &[Token::U64(10)]);
         assert_de_tokens(&in_pool, &[Token::U64(0)]);
     }
+
+    #[test]
+    fn generate_blocks_response_from_generate_blocks_response_r() {
+        let gbrr = GenerateBlocksResponseR {
+            height: 10,
+            blocks: None,
+        };
+        let expected_gbr = GenerateBlocksResponse {
+            height: 10,
+            blocks: None,
+        };
+        assert_eq!(GenerateBlocksResponse::from(gbrr), expected_gbr);
+
+        let block_hash = BlockHash::zero();
+
+        let gbrr = GenerateBlocksResponseR {
+            height: 10,
+            blocks: Some(vec![HashString(block_hash)]),
+        };
+        let expected_gbr = GenerateBlocksResponse {
+            height: 10,
+            blocks: Some(vec![block_hash]),
+        };
+        assert_eq!(GenerateBlocksResponse::from(gbrr), expected_gbr);
+    }
 }
