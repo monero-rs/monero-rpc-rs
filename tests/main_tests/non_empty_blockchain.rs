@@ -2,7 +2,7 @@ use chrono::{DateTime, NaiveDateTime, Utc};
 use monero::{Address, Amount, Network};
 use monero_rpc::{BlockHash, BlockHeaderResponse, GetBlockHeaderSelector};
 
-use crate::common::helpers;
+use super::helpers;
 
 pub async fn test() {
     let (regtest, _, _) = helpers::setup_monero();

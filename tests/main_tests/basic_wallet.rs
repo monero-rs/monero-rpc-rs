@@ -4,7 +4,7 @@ use monero::{
 };
 use monero_rpc::{AddressData, GenerateFromKeysArgs, GetAccountsData, GotAccount, SubaddressData};
 
-use crate::common::helpers;
+use super::helpers;
 
 pub async fn test() {
     let (_, _, wallet) = helpers::setup_monero();

@@ -8,8 +8,6 @@ use monero_rpc::{
 };
 use serde::Deserialize;
 
-use crate::common::helpers;
-
 pub async fn get_block_count(regtest: &RegtestDaemonJsonRpcClient, expected_height: u64) {
     let count = regtest.get_block_count().await.unwrap();
     assert_eq!(count.get(), expected_height);
@@ -162,7 +160,7 @@ pub async fn get_block_template_error_invalid_reserve_size(
 }
 
 pub async fn get_block_template_error_invalid_address(regtest: &RegtestDaemonJsonRpcClient) {
-    let key_pair_1 = helpers::get_keypair_1();
+    let key_pair_1 = super::get_keypair_1();
     let address_testnet = Address::from_keypair(Network::Testnet, &key_pair_1);
     let res_err = regtest
         .get_block_template(address_testnet, 10)

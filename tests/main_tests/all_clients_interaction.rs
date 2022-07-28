@@ -14,7 +14,7 @@ use monero_rpc::{
     TransferHeight, TransferOptions, TransferPriority, TransferType,
 };
 
-use crate::common::helpers;
+use super::helpers;
 
 pub async fn test() {
     let (regtest, daemon_rpc, wallet) = helpers::setup_monero();

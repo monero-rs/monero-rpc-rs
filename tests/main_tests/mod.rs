@@ -1,3 +1,5 @@
+pub(crate) mod helpers;
+
 mod all_clients_interaction;
 mod basic_daemon_rpc;
 mod basic_wallet;

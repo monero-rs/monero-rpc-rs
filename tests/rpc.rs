@@ -12,8 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-mod common;
-use common::main_tests;
+mod main_tests;
 
 #[tokio::test]
 async fn main_functional_test() {
