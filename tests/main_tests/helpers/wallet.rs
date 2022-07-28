@@ -21,9 +21,9 @@ fn get_random_name() -> String {
         .collect()
 }
 
-pub async fn get_version(wallet: &WalletClient) {
+pub async fn get_version(wallet: &WalletClient, expected_version: (u16, u16)) {
     let version = wallet.get_version().await.unwrap();
-    assert_eq!(version, (1, 25));
+    assert_eq!(version, expected_version);
 }
 
 async fn create_wallet(
@@ -134,7 +134,7 @@ pub async fn generate_from_keys(
 
     args.filename = filename.clone();
 
-    let expected_info = if let Some(_) = args.spendkey {
+    let expected_info = if args.spendkey.is_some() {
         "Wallet has been generated successfully."
     } else {
         "Watch-only wallet has been generated successfully."

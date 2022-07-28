@@ -33,7 +33,7 @@ pub async fn on_get_block_hash_error_invalid_height(
     );
 }
 
-async fn get_expected_height_returned_by_generate_blocks(
+fn get_expected_height_returned_by_generate_blocks(
     start_block_count: u64,
     amount_of_blocks: u64,
 ) -> u64 {
@@ -53,7 +53,7 @@ pub async fn generate_blocks(
         .await
         .unwrap();
     let expected_height =
-        get_expected_height_returned_by_generate_blocks(start_block_count, amount_of_blocks).await;
+        get_expected_height_returned_by_generate_blocks(start_block_count, amount_of_blocks);
     assert_eq!(res.height, expected_height);
     assert!(res.blocks.is_some());
 
@@ -82,7 +82,7 @@ pub async fn generate_blocks_zero_blocks(
         .unwrap();
 
     let expected_height =
-        get_expected_height_returned_by_generate_blocks(start_block_count, amount_of_blocks).await;
+        get_expected_height_returned_by_generate_blocks(start_block_count, amount_of_blocks);
 
     assert_eq!(res.height, expected_height + 1);
     assert!(res.blocks.is_none());
@@ -216,7 +216,7 @@ pub async fn submit_block_error_block_not_accepted(regtest: &RegtestDaemonJsonRp
     assert_eq!(res_err.to_string(), "Server error: Block not accepted");
 }
 
-async fn test_get_block_header(
+fn test_get_block_header(
     block_header: BlockHeaderResponse,
     expected_block_header: BlockHeaderResponse,
 ) {
@@ -261,7 +261,7 @@ pub async fn get_last_block_header(
         .get_block_header(monero_rpc::GetBlockHeaderSelector::Last)
         .await
         .unwrap();
-    test_get_block_header(block_header, expected_block_header).await;
+    test_get_block_header(block_header, expected_block_header);
 }
 
 pub async fn get_block_header_from_block_hash(
@@ -273,7 +273,7 @@ pub async fn get_block_header_from_block_hash(
         .get_block_header(monero_rpc::GetBlockHeaderSelector::Hash(block_hash))
         .await
         .unwrap();
-    test_get_block_header(block_header, expected_block_header).await;
+    test_get_block_header(block_header, expected_block_header);
 }
 
 pub async fn get_block_header_from_block_hash_error_not_found(
@@ -302,7 +302,7 @@ pub async fn get_block_header_at_height(
         .get_block_header(monero_rpc::GetBlockHeaderSelector::Height(height))
         .await
         .unwrap();
-    test_get_block_header(block_header, expected_block_header).await;
+    test_get_block_header(block_header, expected_block_header);
 }
 
 pub async fn get_block_header_at_height_error(

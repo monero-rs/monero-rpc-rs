@@ -9,7 +9,8 @@ use super::helpers;
 pub async fn test() {
     let (_, _, wallet) = helpers::setup_monero();
 
-    helpers::wallet::get_version(&wallet).await;
+    let expected_wallet_version = (1, 25);
+    helpers::wallet::get_version(&wallet, expected_wallet_version).await;
 
     let (wallet_with_pwd, wallet_with_no_pwd, wallet_with_empty_pwd) = tokio::join!(
         helpers::wallet::create_wallet_with_password(&wallet, helpers::PWD_1),
