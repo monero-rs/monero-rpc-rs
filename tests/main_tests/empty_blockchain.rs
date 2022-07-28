@@ -81,5 +81,12 @@ pub async fn test() {
     helpers::regtest::get_block_headers_range(&regtest, 0..=0, vec![genesis_block_header]).await;
     helpers::regtest::get_block_headers_range_error(&regtest, 0..=4).await;
     helpers::regtest::get_block_headers_range_error(&regtest, 2..=4).await;
+
+    // we deny the next lint because, in this case, it does not make sense; this is because,
+    // when the `RangeInclusive<u64>` gets passed to `get_block_headers_range`, in `src/lib.rs`,
+    // the function will call the `start` and `end` methods on the range, which will return `4` and
+    // `0`, respectively. Such values will then be passed to the RPC call as `start_height` and
+    // `end_height` params, and the RPC should then return an error.
+    #[allow(clippy::reversed_empty_ranges)]
     helpers::regtest::get_block_headers_range_error(&regtest, 4..=0).await;
 }
