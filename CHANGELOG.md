@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.0] - 2022-07-29
+
 ### Added
 
 - Add tests for types implementing `HashType` in `utils.rs` ([#59](https://github.com/monero-ecosystem/monero-rpc-rs/pull/59))
@@ -42,7 +44,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Change any use of `SubAddressIndex` to `SubaddressIndex` ([#55](https://github.com/monero-ecosystem/monero-rpc-rs/pull/55))
 - Change `HashType`'s `from_str` implementation for `Vec<u8>` in order to accept inputs starting with `0x` ([#61](https://github.com/monero-ecosystem/monero-rpc-rs/pull/61))
 - Change `HashType`'s `bytes` implementation by adding `AsRef<[u8]>` as a trait bound and returning the `as_ref` implementation ([#61](https://github.com/monero-ecosystem/monero-rpc-rs/pull/61))
-- Change any use of `SubaddressIndex` to subaddress::Index` ([#62](https://github.com/monero-ecosystem/monero-rpc-rs/pull/62))
+- Change any use of `SubaddressIndex` to subaddress::Index\` ([#62](https://github.com/monero-ecosystem/monero-rpc-rs/pull/62))
 - Change types of `address` and `account` indices to use `u32` instead of u64 ([#62](https://github.com/monero-ecosystem/monero-rpc-rs/pull/62))
 - Change `label_address` to receive an argument named `index` of type `subaddress::Index` instead of receiving the arguments `account_index` and `address_index`, both of type `u64` ([#62](https://github.com/monero-ecosystem/monero-rpc-rs/pull/62))
 - Change `get_address_index` to return `anyhow::Result<subaddress::Index>` instead of `anyhow::Result<(u64, u64)>` ([#62](https://github.com/monero-ecosystem/monero-rpc-rs/pull/62))
@@ -102,5 +104,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Daemon RPC methods:
   - `get_transactions`
 
-[Unreleased]: https://github.com/monero-ecosystem/monero-rpc-rs/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/monero-ecosystem/monero-rpc-rs/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/monero-ecosystem/monero-rpc-rs/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/monero-ecosystem/monero-rpc-rs/compare/363c433023318877e9d397dbe2b50bdf88cdee9d...v0.1.0
