@@ -4,6 +4,19 @@ use super::helpers;
 use monero::cryptonote::hash::Hash;
 use monero_rpc::{HashString, TransactionsResponse};
 
+/*
+* The purpose of this test is to test functions from the `DaemonRpcClient`
+* (i.e, functions from https://www.getmonero.org/resources/developer-guides/daemon-rpc.html#other-daemon-rpc-calls).
+*
+* Currently, there is only one such function: `get_transactions`.
+* The scenarios tested in this test require that **no** transaction between two wallets
+* have been created. Note that coinbase wallets are insignificant for this test.
+*
+* Scenarios that depend on created transactions between two wallets are tested in
+* `all_clients_interaction_test`.
+*
+* The steps in the test are pretty straightforward.
+*/
 pub async fn test() {
     let (_, daemon_rpc, _) = helpers::setup_monero();
 

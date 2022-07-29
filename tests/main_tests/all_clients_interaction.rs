@@ -16,12 +16,28 @@ use monero_rpc::{
 
 use super::helpers;
 
+/*
+* The purpose of this test is to simulate a real blockchain and wallets: transactions
+* being created and modifying the blockchain, blocks being mined and users getting funds, etc.
+*
+* Functions from `WalletClient`, `DaemonRpcClient`, and `DaemonJsonRpcClient` are called and
+* tested.
+*
+* The steps of this test are explained below.
+*/
+
 pub async fn test() {
     let (regtest, daemon_rpc, wallet) = helpers::setup_monero();
 
-    // it is important for this wallet to be non-deterministic instead of being generated from some
-    // keypair from some `helpers::get_keypair_`, so that any transfer this wallet receives won't
+    // STEP 1: like `basic_wallet`, we start by creating some wallets that will be used later.
+
+    // It is important for this wallet to be non-deterministic instead of being generated from some
+    // keypair from `helpers::get_keypair_`, so that any transfer this wallet receives won't
     // be there when tests run again.
+    //
+    // The above scenario could happen if we decide to run **only** the `all_clients_interaction_test` test.
+    // Such scenario would not happen when running **all** integration tests, since for tests such
+    // as `empty_blockchain_test`, a fresh blockchain is needed every time.
     let wallet_1_full = helpers::wallet::create_wallet_with_empty_password(&wallet).await;
     let wallet_1_key_pair = KeyPair {
         view: wallet.query_key(PrivateKeyType::View).await.unwrap(),
@@ -47,23 +63,39 @@ pub async fn test() {
 
     // also important to be non-deterministic, for same reasons as wallet_1
     let wallet_2 = helpers::wallet::create_wallet_with_empty_password(&wallet).await;
-    // when created, `height` returned by wallet.get_height is a bit inconsistent (sometimes
+
+    // STEP 2: we test some basic functions for a wallet, such as `refresh`ing,
+    // getting the height of the block it is currently synced with, etc.
+
+    // NOTE: when created, `height` returned by wallet.get_height is a bit inconsistent (sometimes
     // returns 1, sometimes returns the correct result), so we ignore it
     // helpers::wallet::get_height(&wallet, 1).await;
 
-    // note the order of the following two `refresh` is important
+    // NOTE: the order of the following two `refresh` is **probably** important in v0.17.3.2; this is because
+    // there is some weird thing goin on __sometimes__: when calling `refresh` with `Some(u64::MAX)` right after creating a wallet,
+    // the `get_height` function below would fail. However, this only happens in the tests here,
+    // and it is hard to reproduce.
+    //
+    // when calling the same functions in the same order using `curl` or `httpie`, the `get_height`
+    // RPC call returns the correct result.
+    //
+    // TODO: investigate this issue
+
     // no error for invalid height
     helpers::wallet::refresh(&wallet, Some(u64::MAX), false).await;
+
     // we refresh the wallet to catch up with the network, and make sure get_height returns the
     // correct result
     helpers::wallet::refresh(&wallet, None, false).await;
 
     let block_count = regtest.get_block_count().await.unwrap().get();
     let expected_wallet_height = block_count;
-    // **Note**: the height returned by a fully-synced wallet is equal to the number of blocks.
+
+    // NOTE: the height returned by a fully-synced wallet is equal to the number of blocks.
     // If `wallet_height` is the response of `get_height`, then daemon's `get_block_header_by_height(wallet_height)`
     // returns an error
     helpers::wallet::get_height(&wallet, expected_wallet_height).await;
+
     let current_height = block_count - 1;
     helpers::regtest::get_block_header_at_height_error(
         &regtest,
@@ -83,6 +115,10 @@ pub async fn test() {
         spend: wallet.query_key(PrivateKeyType::Spend).await.unwrap(),
     };
     let wallet_2_address = Address::from_keypair(Network::Mainnet, &wallet_2_key_pair);
+
+    // STEP 3: we test some functions related to a wallet's functionality, such as creating and
+    // getting addresses, mining blocks, getting balances, etc. We also test possible scenarios
+    // that a wallet would encounter.
 
     // create a subaddress for `wallet_2 and mine a block on the main address and on the
     // subaddress; check the balance at the end
@@ -149,7 +185,7 @@ pub async fn test() {
     )
     .await;
 
-    // No error for weird account and address index
+    // no error for weird account and address index
     let wallet_2_subaddress_12345678 = subaddress::get_subaddress(
         &ViewPair::from(&wallet_2_key_pair),
         Index {
@@ -211,6 +247,9 @@ pub async fn test() {
         }],
     };
     helpers::wallet::get_balance(&wallet, 0, None, expected_balance_data_for_wallet_2).await;
+
+    // STEP 4: we test the interaction between wallets by creating transfers between different
+    // wallets, and between different addresses in the same wallet.
 
     // transfers and transactions
     let mut transfer_1_destination: HashMap<Address, Amount> = HashMap::new();
@@ -314,6 +353,12 @@ pub async fn test() {
         transfer_options,
     )
     .await;
+
+    // STEP 5: we test what was generated by transactions. That is, we get
+    // the transactions created in different formats, check getting the transactions
+    // from the blockchain using its hash, check the transaction keys, export and import key
+    // images, test for incoming transfers, etc. We also test possible scenarios, such as
+    // transactions when using a view-only wallet, etc.
 
     // test daemon_rpc
     helpers::daemon_rpc::get_transactions_as_hex_not_pruned(
@@ -609,6 +654,11 @@ pub async fn test() {
     )
     .await;
 
+    // STEP 6: we create another transfer, but this time from a view-only wallet.
+    // Since a view-only wallet cannot sign transactions, we then test signing the transaction
+    // created by it using a spend wallet.
+    // After that, we submit the transfer.
+
     // wallet_1_view_only is read-only, so `transfer` will create an unsigned_txset, which is then used in `sign_transfer`...
     helpers::wallet::open_wallet_with_no_or_empty_password(&wallet, &wallet_1_view_only).await;
     let mut transfer_2_destination: HashMap<Address, Amount> = HashMap::new();
@@ -651,6 +701,9 @@ pub async fn test() {
         *e = 5;
     }
     helpers::wallet::submit_transfer_error_parse(&wallet, invalid_signed_txset).await;
+
+    // STEP 7: we test some functions related to the transfers that were previously
+    // created.
 
     // get_payments and get_bulk_payments
     let expected_payment_ids = vec![Payment {
@@ -743,6 +796,9 @@ pub async fn test() {
         expected_count_per_category.clone(),
     )
     .await;
+
+    // STEP 8: finally, we test transfering all the unlocked balance a wallet has to
+    // another address.
 
     // sweep_all
     helpers::wallet::sweep_all_error_no_unlocked_balance(

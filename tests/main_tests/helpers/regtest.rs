@@ -64,7 +64,7 @@ pub async fn generate_blocks(
 }
 
 // This is to demonstrate that, if `amount_of_blocks` is zero, then the RPC returns success even if
-// the address is wrong
+// the address is wrong.
 pub async fn generate_blocks_zero_blocks(
     regtest: &RegtestDaemonJsonRpcClient,
     wallet_address: Address,
@@ -92,7 +92,7 @@ pub async fn generate_blocks_zero_blocks(
     );
 }
 
-// We are on regtest, but the address used in this function is **not** a regtest address
+// We are on regtest, but the address used in this function is **not** a regtest address.
 pub async fn generate_blocks_error_invalid_address(
     regtest: &RegtestDaemonJsonRpcClient,
     wallet_address: Address,
@@ -221,7 +221,7 @@ fn test_get_block_header(
     expected_block_header: BlockHeaderResponse,
 ) {
     #[derive(Debug, PartialEq, Deserialize)]
-    // block_size not tested because it varies
+    // `block_size` is not tested because it varies
     struct Helper {
         depth: u64,
         difficulty: u64,

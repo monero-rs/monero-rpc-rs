@@ -171,10 +171,19 @@ pub async fn get_address(
     wallet: &WalletClient,
     account: u32,
     addresses: Option<Vec<u32>>,
-    expected_res: AddressData,
+    mut expected_res: AddressData,
 ) {
-    let addresses = wallet.get_address(account, addresses).await.unwrap();
-    assert_eq!(addresses, expected_res);
+    let mut address_data = wallet.get_address(account, addresses).await.unwrap();
+
+    // the `used` field is not tested because it varies, so set all values to false
+    address_data.addresses.iter_mut().for_each(|a| {
+        a.used = false;
+    });
+    expected_res.addresses.iter_mut().for_each(|a| {
+        a.used = false;
+    });
+
+    assert_eq!(address_data, expected_res);
 }
 
 pub async fn get_address_error_no_wallet_file(wallet: &WalletClient) {

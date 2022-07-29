@@ -4,6 +4,15 @@ use monero_rpc::{BlockHash, BlockHeaderResponse, BlockTemplate, HashString};
 
 use super::helpers;
 
+/*
+* The purpose of this test is to test functions from the `DaemonJsonRpcClient`
+* (i.e, functions from https://www.getmonero.org/resources/developer-guides/daemon-rpc.html#json-rpc-methods)
+* ON A FRESH BLOCKCHAIN (i.e. with only the genesis block), and such functions
+* tested must NOT modify the state of the blockchain.
+*
+* The steps in the test are pretty straightforward.
+*/
+
 pub async fn test() {
     let (regtest, _, _) = helpers::setup_monero();
 
@@ -50,7 +59,9 @@ pub async fn test() {
         orphan_status: false,
         prev_hash: BlockHash::zero(),
         reward: Amount::from_pico(17592186044415),
-        // this is used in the assert, since it is the genesis block
+        // this **is** used inside the test functions, since this block header corresponds
+        // to the genesis block;
+        // note that in the `non_empty_blockchain_test`, this field is **not** tested.
         timestamp: DateTime::<Utc>::from_utc(NaiveDateTime::from_timestamp(0, 0), Utc),
     };
 
@@ -83,7 +94,7 @@ pub async fn test() {
     helpers::regtest::get_block_headers_range_error(&regtest, 2..=4).await;
 
     // we deny the next lint because, in this case, it does not make sense; this is because,
-    // when the `RangeInclusive<u64>` gets passed to `get_block_headers_range`, in `src/lib.rs`,
+    // when the `RangeInclusive<u64>` gets passed to the `get_block_headers_range` function in `src/lib.rs`,
     // the function will call the `start` and `end` methods on the range, which will return `4` and
     // `0`, respectively. Such values will then be passed to the RPC call as `start_height` and
     // `end_height` params, and the RPC should then return an error.
