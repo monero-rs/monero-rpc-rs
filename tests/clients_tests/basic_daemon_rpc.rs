@@ -13,11 +13,11 @@ use monero_rpc::{HashString, TransactionsResponse};
 * have been created. Note that coinbase wallets are insignificant for this test.
 *
 * Scenarios that depend on created transactions between two wallets are tested in
-* `all_clients_interaction_test`.
+* `all_clients_interaction`.
 *
 * The steps in the test are pretty straightforward.
 */
-pub async fn test() {
+pub async fn run() {
     let (_, daemon_rpc, _) = helpers::setup_monero();
 
     // empty `txs_hashes`

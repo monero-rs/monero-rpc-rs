@@ -16,7 +16,7 @@ use super::helpers;
 * The steps of the test are described below.
 */
 
-pub async fn test() {
+pub async fn run() {
     let (_, _, wallet) = helpers::setup_monero();
 
     // STEP 1: we test the version of the software running, and then we test

@@ -13,7 +13,7 @@ use super::helpers;
 * The steps of the test are explained below.
 */
 
-pub async fn test() {
+pub async fn run() {
     let (regtest, _, _) = helpers::setup_monero();
 
     let key_pair_1 = helpers::get_keypair_1();

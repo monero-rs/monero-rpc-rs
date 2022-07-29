@@ -26,7 +26,7 @@ use super::helpers;
 * The steps of this test are explained below.
 */
 
-pub async fn test() {
+pub async fn run() {
     let (regtest, daemon_rpc, wallet) = helpers::setup_monero();
 
     // STEP 1: like `basic_wallet`, we start by creating some wallets that will be used later.
@@ -35,9 +35,9 @@ pub async fn test() {
     // keypair from `helpers::get_keypair_`, so that any transfer this wallet receives won't
     // be there when tests run again.
     //
-    // The above scenario could happen if we decide to run **only** the `all_clients_interaction_test` test.
+    // The above scenario could happen if we decide to run **only** the `all_clients_interaction` test.
     // Such scenario would not happen when running **all** integration tests, since for tests such
-    // as `empty_blockchain_test`, a fresh blockchain is needed every time.
+    // as `empty_blockchain`, a fresh blockchain is needed every time.
     let wallet_1_full = helpers::wallet::create_wallet_with_empty_password(&wallet).await;
     let wallet_1_key_pair = KeyPair {
         view: wallet.query_key(PrivateKeyType::View).await.unwrap(),

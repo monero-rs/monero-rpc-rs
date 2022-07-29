@@ -13,7 +13,7 @@ use super::helpers;
 * The steps in the test are pretty straightforward.
 */
 
-pub async fn test() {
+pub async fn run() {
     let (regtest, _, _) = helpers::setup_monero();
 
     let genesis_block_hash = helpers::get_genesis_block_hash();
@@ -61,7 +61,7 @@ pub async fn test() {
         reward: Amount::from_pico(17592186044415),
         // this **is** used inside the test functions, since this block header corresponds
         // to the genesis block;
-        // note that in the `non_empty_blockchain_test`, this field is **not** tested.
+        // note that in the `non_empty_blockchain`, this field is **not** tested.
         timestamp: DateTime::<Utc>::from_utc(NaiveDateTime::from_timestamp(0, 0), Utc),
     };
 
