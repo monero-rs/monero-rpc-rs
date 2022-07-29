@@ -18,14 +18,14 @@ pub async fn run() {
 
     let genesis_block_hash = helpers::get_genesis_block_hash();
 
-    helpers::regtest::get_block_count(&regtest, 1).await;
+    helpers::regtest::get_block_count_assert_height(&regtest, 1).await;
     helpers::regtest::on_get_block_hash_error_invalid_height(&regtest, 10).await;
-    helpers::regtest::on_get_block_hash(&regtest, 0, genesis_block_hash).await;
+    helpers::regtest::on_get_block_hash_assert_hash(&regtest, 0, genesis_block_hash).await;
 
     let key_pair_1 = helpers::get_keypair_1();
     let address_1 = Address::from_keypair(Network::Mainnet, &key_pair_1);
 
-    helpers::regtest::get_block_template(
+    helpers::regtest::get_block_template_assert_block_template(
         &regtest,
         address_1,
         10,
@@ -65,8 +65,12 @@ pub async fn run() {
         timestamp: DateTime::<Utc>::from_utc(NaiveDateTime::from_timestamp(0, 0), Utc),
     };
 
-    helpers::regtest::get_last_block_header(&regtest, genesis_block_header.clone()).await;
-    helpers::regtest::get_block_header_from_block_hash(
+    helpers::regtest::get_last_block_header_assert_block_header(
+        &regtest,
+        genesis_block_header.clone(),
+    )
+    .await;
+    helpers::regtest::get_block_header_from_block_hash_assert_block_header(
         &regtest,
         genesis_block_hash,
         genesis_block_header.clone(),
@@ -85,11 +89,21 @@ pub async fn run() {
     .await;
 
     let current_top_block_height = regtest.get_block_count().await.unwrap().get() - 1;
-    helpers::regtest::get_block_header_at_height(&regtest, 0, genesis_block_header.clone()).await;
+    helpers::regtest::get_block_header_at_height_assert_block_header(
+        &regtest,
+        0,
+        genesis_block_header.clone(),
+    )
+    .await;
     helpers::regtest::get_block_header_at_height_error(&regtest, 10, current_top_block_height)
         .await;
 
-    helpers::regtest::get_block_headers_range(&regtest, 0..=0, vec![genesis_block_header]).await;
+    helpers::regtest::get_block_headers_range_assert_block_headers(
+        &regtest,
+        0..=0,
+        vec![genesis_block_header],
+    )
+    .await;
     helpers::regtest::get_block_headers_range_error(&regtest, 0..=4).await;
     helpers::regtest::get_block_headers_range_error(&regtest, 2..=4).await;
 

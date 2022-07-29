@@ -32,7 +32,7 @@ pub async fn run() {
         txs_as_json: None,
     };
 
-    helpers::daemon_rpc::get_transactions(
+    helpers::daemon_rpc::get_transactions_assert_response(
         &daemon_rpc,
         vec![],
         expected_transactions_response.clone(),
@@ -53,7 +53,7 @@ pub async fn run() {
         txs_as_json: None,
     };
 
-    helpers::daemon_rpc::get_transactions(
+    helpers::daemon_rpc::get_transactions_assert_response(
         &daemon_rpc,
         vec![tx_hash],
         expected_transactions_response,

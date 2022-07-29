@@ -8,12 +8,15 @@ use monero_rpc::{
 };
 use serde::Deserialize;
 
-pub async fn get_block_count(regtest: &RegtestDaemonJsonRpcClient, expected_height: u64) {
+pub async fn get_block_count_assert_height(
+    regtest: &RegtestDaemonJsonRpcClient,
+    expected_height: u64,
+) {
     let count = regtest.get_block_count().await.unwrap();
     assert_eq!(count.get(), expected_height);
 }
 
-pub async fn on_get_block_hash(
+pub async fn on_get_block_hash_assert_hash(
     regtest: &RegtestDaemonJsonRpcClient,
     height: u64,
     expected_hash: BlockHash,
@@ -41,7 +44,7 @@ fn get_expected_height_returned_by_generate_blocks(
     height + amount_of_blocks
 }
 
-pub async fn generate_blocks(
+pub async fn generate_blocks_assert_ok(
     regtest: &RegtestDaemonJsonRpcClient,
     amount_of_blocks: u64,
     wallet_address: Address,
@@ -65,7 +68,7 @@ pub async fn generate_blocks(
 
 // This is to demonstrate that, if `amount_of_blocks` is zero, then the RPC returns success even if
 // the address is wrong.
-pub async fn generate_blocks_zero_blocks(
+pub async fn generate_zero_blocks_assert_ok(
     regtest: &RegtestDaemonJsonRpcClient,
     wallet_address: Address,
 ) {
@@ -125,7 +128,7 @@ pub async fn generate_blocks_error_subaddress_not_supported(
     );
 }
 
-pub async fn get_block_template(
+pub async fn get_block_template_assert_block_template(
     regtest: &RegtestDaemonJsonRpcClient,
     address: Address,
     reserve_size: u64,
@@ -172,7 +175,7 @@ pub async fn get_block_template_error_invalid_address(regtest: &RegtestDaemonJso
     );
 }
 
-pub async fn submit_block(
+pub async fn submit_block_assert_ok(
     regtest: &RegtestDaemonJsonRpcClient,
     block_template_blob: HashString<Vec<u8>>,
 ) {
@@ -216,7 +219,7 @@ pub async fn submit_block_error_block_not_accepted(regtest: &RegtestDaemonJsonRp
     assert_eq!(res_err.to_string(), "Server error: Block not accepted");
 }
 
-fn test_get_block_header(
+fn test_get_block_header_assert_block_header(
     block_header: BlockHeaderResponse,
     expected_block_header: BlockHeaderResponse,
 ) {
@@ -253,7 +256,7 @@ fn test_get_block_header(
     assert_eq!(helper_block_header, helper_expected_block_header);
 }
 
-pub async fn get_last_block_header(
+pub async fn get_last_block_header_assert_block_header(
     regtest: &RegtestDaemonJsonRpcClient,
     expected_block_header: BlockHeaderResponse,
 ) {
@@ -261,10 +264,10 @@ pub async fn get_last_block_header(
         .get_block_header(monero_rpc::GetBlockHeaderSelector::Last)
         .await
         .unwrap();
-    test_get_block_header(block_header, expected_block_header);
+    test_get_block_header_assert_block_header(block_header, expected_block_header);
 }
 
-pub async fn get_block_header_from_block_hash(
+pub async fn get_block_header_from_block_hash_assert_block_header(
     regtest: &RegtestDaemonJsonRpcClient,
     block_hash: BlockHash,
     expected_block_header: BlockHeaderResponse,
@@ -273,7 +276,7 @@ pub async fn get_block_header_from_block_hash(
         .get_block_header(monero_rpc::GetBlockHeaderSelector::Hash(block_hash))
         .await
         .unwrap();
-    test_get_block_header(block_header, expected_block_header);
+    test_get_block_header_assert_block_header(block_header, expected_block_header);
 }
 
 pub async fn get_block_header_from_block_hash_error_not_found(
@@ -293,7 +296,7 @@ pub async fn get_block_header_from_block_hash_error_not_found(
     );
 }
 
-pub async fn get_block_header_at_height(
+pub async fn get_block_header_at_height_assert_block_header(
     regtest: &RegtestDaemonJsonRpcClient,
     height: u64,
     expected_block_header: BlockHeaderResponse,
@@ -302,7 +305,7 @@ pub async fn get_block_header_at_height(
         .get_block_header(monero_rpc::GetBlockHeaderSelector::Height(height))
         .await
         .unwrap();
-    test_get_block_header(block_header, expected_block_header);
+    test_get_block_header_assert_block_header(block_header, expected_block_header);
 }
 
 pub async fn get_block_header_at_height_error(
@@ -322,7 +325,7 @@ pub async fn get_block_header_at_height_error(
     );
 }
 
-pub async fn get_block_headers_range(
+pub async fn get_block_headers_range_assert_block_headers(
     regtest: &RegtestDaemonJsonRpcClient,
     range: RangeInclusive<u64>,
     expected_block_headers: Vec<BlockHeaderResponse>,

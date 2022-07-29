@@ -25,26 +25,33 @@ pub async fn run() {
     // Note that the wallets created in this step are created "from scratch", i.e.
     // they are not created from known spend/view keys.
     let expected_wallet_version = (1, 25);
-    helpers::wallet::get_version(&wallet, expected_wallet_version).await;
+    helpers::wallet::get_version_assert_version(&wallet, expected_wallet_version).await;
 
     let (wallet_with_pwd, wallet_with_no_pwd, wallet_with_empty_pwd) = tokio::join!(
-        helpers::wallet::create_wallet_with_password(&wallet, helpers::PWD_1),
-        helpers::wallet::create_wallet_with_no_password_parameter(&wallet),
-        helpers::wallet::create_wallet_with_empty_password(&wallet),
+        helpers::wallet::create_wallet_with_password_assert_ok(&wallet, helpers::PWD_1),
+        helpers::wallet::create_wallet_with_no_password_parameter_assert_ok(&wallet),
+        helpers::wallet::create_wallet_with_empty_password_assert_ok(&wallet),
     );
     helpers::wallet::create_wallet_error_already_exists(&wallet, &wallet_with_pwd).await;
     helpers::wallet::create_wallet_error_invalid_language(&wallet).await;
 
     // close opened wallet, and then call `close_wallet` again.
-    helpers::wallet::close_wallet(&wallet).await;
+    helpers::wallet::close_wallet_assert_ok(&wallet).await;
     helpers::wallet::close_wallet_error_no_wallet_file(&wallet).await;
 
     // open same wallet twice
-    helpers::wallet::open_wallet_with_password(&wallet, &wallet_with_pwd, helpers::PWD_1).await;
-    helpers::wallet::open_wallet_with_password(&wallet, &wallet_with_pwd, helpers::PWD_1).await;
+    helpers::wallet::open_wallet_with_password_assert_ok(&wallet, &wallet_with_pwd, helpers::PWD_1)
+        .await;
+    helpers::wallet::open_wallet_with_password_assert_ok(&wallet, &wallet_with_pwd, helpers::PWD_1)
+        .await;
 
-    helpers::wallet::open_wallet_with_no_or_empty_password(&wallet, &wallet_with_no_pwd).await;
-    helpers::wallet::open_wallet_with_no_or_empty_password(&wallet, &wallet_with_empty_pwd).await;
+    helpers::wallet::open_wallet_with_no_or_empty_password_assert_ok(&wallet, &wallet_with_no_pwd)
+        .await;
+    helpers::wallet::open_wallet_with_no_or_empty_password_assert_ok(
+        &wallet,
+        &wallet_with_empty_pwd,
+    )
+    .await;
 
     helpers::wallet::open_wallet_error_filename_invalid(&wallet, "troll_wallet").await;
     helpers::wallet::open_wallet_error_wrong_password(&wallet, &wallet_with_pwd, None).await;
@@ -68,13 +75,14 @@ pub async fn run() {
         password: "".to_string(),
         autosave_current: None,
     };
-    let _ = helpers::wallet::generate_from_keys(&wallet, generate_wallet_args_1.clone()).await;
+    let _ = helpers::wallet::generate_from_keys_assert_ok(&wallet, generate_wallet_args_1.clone())
+        .await;
 
     // creating wallet again, but with a different name, causes no error; note
     // that the "different name" is because `generate_from_keys` creates random names
     // for wallets each time it is called.
     let wallet_creation_from_key_pair_1 =
-        helpers::wallet::generate_from_keys(&wallet, generate_wallet_args_1).await;
+        helpers::wallet::generate_from_keys_assert_ok(&wallet, generate_wallet_args_1).await;
 
     let key_pair_2 = helpers::get_keypair_2();
     let generate_wallet_args_2 = GenerateFromKeysArgs {
@@ -87,7 +95,7 @@ pub async fn run() {
         autosave_current: Some(false),
     };
     let wallet_creation_from_key_pair_2 =
-        helpers::wallet::generate_from_keys(&wallet, generate_wallet_args_2).await;
+        helpers::wallet::generate_from_keys_assert_ok(&wallet, generate_wallet_args_2).await;
 
     let key_pair_3 = helpers::get_keypair_3();
     let generate_wallet_args_3 = GenerateFromKeysArgs {
@@ -115,7 +123,7 @@ pub async fn run() {
         password: "".to_string(),
         autosave_current: None,
     };
-    let _ = helpers::wallet::generate_from_keys(&wallet, generate_wallet_args_3).await;
+    let _ = helpers::wallet::generate_from_keys_assert_ok(&wallet, generate_wallet_args_3).await;
 
     // generate wallet from invalid address (we are in `mainnet/regtest`, but address is a `testnet` one).
     let generate_wallet_args_3 = GenerateFromKeysArgs {
@@ -132,10 +140,10 @@ pub async fn run() {
 
     // STEP 3: from here on, we test functions related to a wallet's functionality; for
     // example: creating accounts, (sub)addresses, getting them, etc.
-    helpers::wallet::close_wallet(&wallet).await;
+    helpers::wallet::close_wallet_assert_ok(&wallet).await;
     helpers::wallet::get_address_error_no_wallet_file(&wallet).await;
 
-    helpers::wallet::open_wallet_with_no_or_empty_password(
+    helpers::wallet::open_wallet_with_no_or_empty_password_assert_ok(
         &wallet,
         &wallet_creation_from_key_pair_1.0,
     )
@@ -157,7 +165,7 @@ pub async fn run() {
             expected_get_address_from_key_pair_1_subaddress_data,
         ],
     };
-    helpers::wallet::get_address(
+    helpers::wallet::get_address_assert_address_data(
         &wallet,
         0,
         Some(vec![0, 0, 0]),
@@ -165,7 +173,7 @@ pub async fn run() {
     )
     .await;
 
-    helpers::wallet::get_address_index(
+    helpers::wallet::get_address_index_assert_index(
         &wallet,
         wallet_creation_from_key_pair_1.1.address,
         Index { major: 0, minor: 0 },
@@ -185,7 +193,7 @@ pub async fn run() {
     .await;
 
     // open a different wallet for the next few tests
-    helpers::wallet::open_wallet_with_password(
+    helpers::wallet::open_wallet_with_password_assert_ok(
         &wallet,
         &wallet_creation_from_key_pair_2.0,
         helpers::PWD_1,
@@ -201,7 +209,13 @@ pub async fn run() {
         1,
     );
     let first_new_address_for_wallet_from_key_pair_2 =
-        helpers::wallet::create_address(&wallet, 0, None, expected_first_new_address).await;
+        helpers::wallet::create_address_assert_address_and_address_index(
+            &wallet,
+            0,
+            None,
+            expected_first_new_address,
+        )
+        .await;
 
     let expected_second_new_address = (
         subaddress::get_subaddress(
@@ -211,16 +225,17 @@ pub async fn run() {
         ),
         2,
     );
-    let second_new_address_for_wallet_from_key_pair_2 = helpers::wallet::create_address(
-        &wallet,
-        0,
-        Some("new_label".to_string()),
-        expected_second_new_address,
-    )
-    .await;
+    let second_new_address_for_wallet_from_key_pair_2 =
+        helpers::wallet::create_address_assert_address_and_address_index(
+            &wallet,
+            0,
+            Some("new_label".to_string()),
+            expected_second_new_address,
+        )
+        .await;
     helpers::wallet::create_address_error_invalid_account_index(&wallet, 10).await;
 
-    helpers::wallet::label_address(
+    helpers::wallet::label_address_assert_ok(
         &wallet,
         Index {
             major: 0,
@@ -229,7 +244,7 @@ pub async fn run() {
         "haha label :)".to_string(),
     )
     .await;
-    helpers::wallet::label_address(
+    helpers::wallet::label_address_assert_ok(
         &wallet,
         Index {
             major: 0,
@@ -264,7 +279,7 @@ pub async fn run() {
         tag: Some("".to_string()),
         unlocked_balance: Amount::from_pico(0),
     };
-    helpers::wallet::get_accounts(
+    helpers::wallet::get_accounts_assert_accounts_data(
         &wallet,
         None,
         GetAccountsData {
@@ -280,5 +295,5 @@ pub async fn run() {
     )
     .await;
 
-    helpers::wallet::close_wallet(&wallet).await;
+    helpers::wallet::close_wallet_assert_ok(&wallet).await;
 }

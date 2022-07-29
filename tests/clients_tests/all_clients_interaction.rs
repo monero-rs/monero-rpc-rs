@@ -38,13 +38,13 @@ pub async fn run() {
     // The above scenario could happen if we decide to run **only** the `all_clients_interaction` test.
     // Such scenario would not happen when running **all** integration tests, since for tests such
     // as `empty_blockchain`, a fresh blockchain is needed every time.
-    let wallet_1_full = helpers::wallet::create_wallet_with_empty_password(&wallet).await;
+    let wallet_1_full = helpers::wallet::create_wallet_with_empty_password_assert_ok(&wallet).await;
     let wallet_1_key_pair = KeyPair {
         view: wallet.query_key(PrivateKeyType::View).await.unwrap(),
         spend: wallet.query_key(PrivateKeyType::Spend).await.unwrap(),
     };
     let wallet_1_address = Address::from_keypair(Network::Mainnet, &wallet_1_key_pair);
-    let (wallet_1_view_only, _) = helpers::wallet::generate_from_keys(
+    let (wallet_1_view_only, _) = helpers::wallet::generate_from_keys_assert_ok(
         &wallet,
         monero_rpc::GenerateFromKeysArgs {
             restore_height: Some(0),
@@ -58,11 +58,12 @@ pub async fn run() {
     )
     .await;
 
-    helpers::wallet::query_key(&wallet, PrivateKeyType::View, wallet_1_key_pair.view).await;
+    helpers::wallet::query_key_assert_key(&wallet, PrivateKeyType::View, wallet_1_key_pair.view)
+        .await;
     helpers::wallet::query_key_error_query_spend_key_for_view_only_wallet(&wallet).await;
 
     // also important to be non-deterministic, for same reasons as wallet_1
-    let wallet_2 = helpers::wallet::create_wallet_with_empty_password(&wallet).await;
+    let wallet_2 = helpers::wallet::create_wallet_with_empty_password_assert_ok(&wallet).await;
 
     // STEP 2: we test some basic functions for a wallet, such as `refresh`ing,
     // getting the height of the block it is currently synced with, etc.
@@ -82,11 +83,11 @@ pub async fn run() {
     // TODO: investigate this issue
 
     // no error for invalid height
-    helpers::wallet::refresh(&wallet, Some(u64::MAX), false).await;
+    helpers::wallet::refresh_assert_received_money(&wallet, Some(u64::MAX), false).await;
 
     // we refresh the wallet to catch up with the network, and make sure get_height returns the
     // correct result
-    helpers::wallet::refresh(&wallet, None, false).await;
+    helpers::wallet::refresh_assert_received_money(&wallet, None, false).await;
 
     let block_count = regtest.get_block_count().await.unwrap().get();
     let expected_wallet_height = block_count;
@@ -94,7 +95,7 @@ pub async fn run() {
     // NOTE: the height returned by a fully-synced wallet is equal to the number of blocks.
     // If `wallet_height` is the response of `get_height`, then daemon's `get_block_header_by_height(wallet_height)`
     // returns an error
-    helpers::wallet::get_height(&wallet, expected_wallet_height).await;
+    helpers::wallet::get_height_assert_height(&wallet, expected_wallet_height).await;
 
     let current_height = block_count - 1;
     helpers::regtest::get_block_header_at_height_error(
@@ -105,9 +106,9 @@ pub async fn run() {
     .await;
 
     // close and refresh wallet; then open it again
-    helpers::wallet::close_wallet(&wallet).await;
+    helpers::wallet::close_wallet_assert_ok(&wallet).await;
     helpers::wallet::refresh_error(&wallet).await;
-    helpers::wallet::open_wallet_with_no_or_empty_password(&wallet, &wallet_2).await;
+    helpers::wallet::open_wallet_with_no_or_empty_password_assert_ok(&wallet, &wallet_2).await;
 
     // query keys of `wallet_2` and get its address
     let wallet_2_key_pair = KeyPair {
@@ -128,7 +129,7 @@ pub async fn run() {
         Some(Network::Mainnet),
     );
     let wallet_2_subaddress_1_label = "faaaarcaster".to_string();
-    helpers::wallet::create_address(
+    helpers::wallet::create_address_assert_address_and_address_index(
         &wallet,
         0,
         Some(wallet_2_subaddress_1_label.clone()),
@@ -141,14 +142,14 @@ pub async fn run() {
         .await
         .unwrap()
         .expected_reward;
-    helpers::regtest::generate_blocks(&regtest, 1, wallet_2_address).await;
+    helpers::regtest::generate_blocks_assert_ok(&regtest, 1, wallet_2_address).await;
     helpers::regtest::generate_blocks_error_subaddress_not_supported(
         &regtest,
         wallet_2_subaddress_1,
     )
     .await;
 
-    helpers::wallet::refresh(&wallet, Some(0), true).await;
+    helpers::wallet::refresh_assert_received_money(&wallet, Some(0), true).await;
 
     let expected_balance_data_for_wallet_2 = BalanceData {
         balance: expected_balance,
@@ -163,7 +164,13 @@ pub async fn run() {
             unlocked_balance: Amount::from_pico(0),
         }],
     };
-    helpers::wallet::get_balance(&wallet, 0, None, expected_balance_data_for_wallet_2).await;
+    helpers::wallet::get_balance_assert_balance_data(
+        &wallet,
+        0,
+        None,
+        expected_balance_data_for_wallet_2,
+    )
+    .await;
     let expected_balance_data_for_wallet_2_subaddress_1 = BalanceData {
         balance: expected_balance,
         unlocked_balance: Amount::from_pico(0),
@@ -177,7 +184,7 @@ pub async fn run() {
             unlocked_balance: Amount::from_pico(0),
         }],
     };
-    helpers::wallet::get_balance(
+    helpers::wallet::get_balance_assert_balance_data(
         &wallet,
         0,
         Some(vec![1]),
@@ -207,7 +214,7 @@ pub async fn run() {
             unlocked_balance: Amount::from_pico(0),
         }],
     };
-    helpers::wallet::get_balance(
+    helpers::wallet::get_balance_assert_balance_data(
         &wallet,
         0,
         Some(vec![12345678]),
@@ -221,7 +228,7 @@ pub async fn run() {
         multisig_import_needed: false,
         per_subaddress: vec![],
     };
-    helpers::wallet::get_balance(
+    helpers::wallet::get_balance_assert_balance_data(
         &wallet,
         10000000, // u64::MAX returns error...
         None,
@@ -231,8 +238,8 @@ pub async fn run() {
 
     // mine 59 blocks to another address, so that wallet_2 can have unlocked balance
     let wallet_3_address = Address::from_keypair(Network::Mainnet, &helpers::get_keypair_1());
-    helpers::regtest::generate_blocks(&regtest, 59, wallet_3_address).await;
-    helpers::wallet::refresh(&wallet, None, false).await;
+    helpers::regtest::generate_blocks_assert_ok(&regtest, 59, wallet_3_address).await;
+    helpers::wallet::refresh_assert_received_money(&wallet, None, false).await;
     let expected_balance_data_for_wallet_2 = BalanceData {
         balance: expected_balance,
         unlocked_balance: expected_balance,
@@ -246,7 +253,13 @@ pub async fn run() {
             unlocked_balance: expected_balance,
         }],
     };
-    helpers::wallet::get_balance(&wallet, 0, None, expected_balance_data_for_wallet_2).await;
+    helpers::wallet::get_balance_assert_balance_data(
+        &wallet,
+        0,
+        None,
+        expected_balance_data_for_wallet_2,
+    )
+    .await;
 
     // STEP 4: we test the interaction between wallets by creating transfers between different
     // wallets, and between different addresses in the same wallet.
@@ -314,17 +327,17 @@ pub async fn run() {
 
     // ... restore subaddr_index and send transaction
     transfer_options.subaddr_indices = None;
-    let transfer_1_data = helpers::wallet::transfer(
+    let transfer_1_data = helpers::wallet::transfer_assert_ok(
         &wallet,
         transfer_1_destination.clone(),
         transfer_options,
         TransferPriority::Default,
     )
     .await;
-    helpers::wallet::refresh(&wallet, None, false).await;
+    helpers::wallet::refresh_assert_received_money(&wallet, None, false).await;
 
     // ... try to relay it again...
-    helpers::wallet::relay_tx(
+    helpers::wallet::relay_tx_assert_tx_hash(
         &wallet,
         transfer_1_data.tx_metadata.to_string(),
         transfer_1_data.tx_hash.0.to_string(),
@@ -361,7 +374,7 @@ pub async fn run() {
     // transactions when using a view-only wallet, etc.
 
     // test daemon_rpc
-    helpers::daemon_rpc::get_transactions_as_hex_not_pruned(
+    helpers::daemon_rpc::get_transactions_as_hex_not_pruned_assert_response(
         &daemon_rpc,
         vec![transfer_1_data.tx_hash.0],
         TransactionsResponse {
@@ -385,7 +398,7 @@ pub async fn run() {
         },
     )
     .await;
-    helpers::daemon_rpc::get_transactions_as_hex_pruned(
+    helpers::daemon_rpc::get_transactions_as_hex_pruned_assert_response(
         &daemon_rpc,
         vec![transfer_1_data.tx_hash.0],
         TransactionsResponse {
@@ -410,12 +423,12 @@ pub async fn run() {
     )
     .await;
     // the functions below only test if the _json fields are not none
-    helpers::daemon_rpc::get_transactions_as_json_not_pruned(
+    helpers::daemon_rpc::get_transactions_as_json_not_pruned_assert_response_not_empty(
         &daemon_rpc,
         vec![transfer_1_data.tx_hash.0],
     )
     .await;
-    helpers::daemon_rpc::get_transactions_as_json_pruned(
+    helpers::daemon_rpc::get_transactions_as_json_pruned_assert_response_not_empty(
         &daemon_rpc,
         vec![transfer_1_data.tx_hash.0],
     )
@@ -439,7 +452,7 @@ pub async fn run() {
         transfer_type: GetTransfersCategory::Pending,
         unlock_time: 0,
     });
-    helpers::wallet::get_transfer(
+    helpers::wallet::get_transfer_assert_got_transfer(
         &wallet,
         transfer_1_data.tx_hash.0,
         Some(0),
@@ -455,7 +468,7 @@ pub async fn run() {
     .await;
 
     // check_tx_key
-    helpers::wallet::check_tx_key(
+    helpers::wallet::check_tx_key_assert_confirmations_in_pool_status_received_amount(
         &wallet,
         transfer_1_data.tx_hash.0,
         transfer_1_data.tx_key.0.clone(),
@@ -463,7 +476,7 @@ pub async fn run() {
         (0, true, transfer_1_destination[&wallet_1_address]),
     )
     .await;
-    helpers::wallet::check_tx_key(
+    helpers::wallet::check_tx_key_assert_confirmations_in_pool_status_received_amount(
         &wallet,
         transfer_1_data.tx_hash.0,
         transfer_1_data.tx_key.0.clone(),
@@ -502,36 +515,38 @@ pub async fn run() {
 
     // export_key_images for wallet_2...
     // should be empty
-    helpers::wallet::export_key_images_empty(&wallet).await;
+    helpers::wallet::export_key_images_empty_assert_ok(&wallet).await;
 
     // ... and change to wallet_1_full, refresh and export_key_images of it (it has offset 1, and
     // returns empty vec)...
-    helpers::wallet::close_wallet(&wallet).await;
-    helpers::wallet::open_wallet_with_no_or_empty_password(&wallet, &wallet_1_full).await;
-    helpers::wallet::refresh(&wallet, None, false).await;
-    helpers::wallet::export_key_images_empty(&wallet).await;
+    helpers::wallet::close_wallet_assert_ok(&wallet).await;
+    helpers::wallet::open_wallet_with_no_or_empty_password_assert_ok(&wallet, &wallet_1_full).await;
+    helpers::wallet::refresh_assert_received_money(&wallet, None, false).await;
+    helpers::wallet::export_key_images_empty_assert_ok(&wallet).await;
 
     // ... now change to wallet_1_view_only, refresh, and export_key_images of it...
-    helpers::wallet::close_wallet(&wallet).await;
-    helpers::wallet::open_wallet_with_no_or_empty_password(&wallet, &wallet_1_view_only).await;
-    helpers::wallet::refresh(&wallet, None, false).await;
-    helpers::wallet::export_key_images_empty(&wallet).await;
+    helpers::wallet::close_wallet_assert_ok(&wallet).await;
+    helpers::wallet::open_wallet_with_no_or_empty_password_assert_ok(&wallet, &wallet_1_view_only)
+        .await;
+    helpers::wallet::refresh_assert_received_money(&wallet, None, false).await;
+    helpers::wallet::export_key_images_empty_assert_ok(&wallet).await;
 
     // ... change to wallet with no key images and test what is returned ...
-    let temp_wallet = helpers::wallet::create_wallet_with_empty_password(&wallet).await;
-    helpers::wallet::open_wallet_with_no_or_empty_password(&wallet, &temp_wallet).await;
-    helpers::wallet::refresh(&wallet, None, false).await;
-    helpers::wallet::export_key_images_empty(&wallet).await;
+    let temp_wallet = helpers::wallet::create_wallet_with_empty_password_assert_ok(&wallet).await;
+    helpers::wallet::open_wallet_with_no_or_empty_password_assert_ok(&wallet, &temp_wallet).await;
+    helpers::wallet::refresh_assert_received_money(&wallet, None, false).await;
+    helpers::wallet::export_key_images_empty_assert_ok(&wallet).await;
 
     // ... go back to wallet_2 and import_key_images of wallet_1_full, which is empty
-    helpers::wallet::open_wallet_with_no_or_empty_password(&wallet, &wallet_2).await;
-    helpers::wallet::import_key_images_empty_vec(&wallet).await;
+    helpers::wallet::open_wallet_with_no_or_empty_password_assert_ok(&wallet, &wallet_2).await;
+    helpers::wallet::import_key_images_empty_vec_assert_ok(&wallet).await;
 
     // change to wallet_1_view_only, and test incoming_transfers...
-    helpers::wallet::open_wallet_with_no_or_empty_password(&wallet, &wallet_1_view_only).await;
-    helpers::wallet::refresh(&wallet, None, false).await;
+    helpers::wallet::open_wallet_with_no_or_empty_password_assert_ok(&wallet, &wallet_1_view_only)
+        .await;
+    helpers::wallet::refresh_assert_received_money(&wallet, None, false).await;
     let expected_incoming_transfers = IncomingTransfers { transfers: None };
-    helpers::wallet::incoming_transfers(
+    helpers::wallet::incoming_transfers_assert_incoming_transfers(
         &wallet,
         TransferType::All,
         Some(0),
@@ -541,10 +556,10 @@ pub async fn run() {
     .await;
 
     // ...change to wallet_1_full, and test incoming_transfers
-    helpers::wallet::open_wallet_with_no_or_empty_password(&wallet, &wallet_1_full).await;
-    helpers::wallet::refresh(&wallet, None, false).await;
+    helpers::wallet::open_wallet_with_no_or_empty_password_assert_ok(&wallet, &wallet_1_full).await;
+    helpers::wallet::refresh_assert_received_money(&wallet, None, false).await;
     let expected_incoming_transfers = IncomingTransfers { transfers: None };
-    helpers::wallet::incoming_transfers(
+    helpers::wallet::incoming_transfers_assert_incoming_transfers(
         &wallet,
         TransferType::All,
         Some(0),
@@ -554,7 +569,7 @@ pub async fn run() {
     .await;
 
     // incoming_transfers variations
-    helpers::wallet::incoming_transfers(
+    helpers::wallet::incoming_transfers_assert_incoming_transfers(
         &wallet,
         TransferType::Unavailable,
         None,
@@ -562,7 +577,7 @@ pub async fn run() {
         expected_incoming_transfers.clone(),
     )
     .await;
-    helpers::wallet::incoming_transfers(
+    helpers::wallet::incoming_transfers_assert_incoming_transfers(
         &wallet,
         TransferType::All,
         Some(100),
@@ -570,7 +585,7 @@ pub async fn run() {
         expected_incoming_transfers.clone(),
     )
     .await;
-    helpers::wallet::incoming_transfers(
+    helpers::wallet::incoming_transfers_assert_incoming_transfers(
         &wallet,
         TransferType::All,
         Some(0),
@@ -581,16 +596,17 @@ pub async fn run() {
 
     // mine some blocks to settle transfers...
     let height_before_settling_transfer_1 = wallet.get_height().await.unwrap().get();
-    helpers::regtest::generate_blocks(&regtest, 10, wallet_3_address).await;
-    helpers::wallet::refresh(&wallet, None, true).await;
+    helpers::regtest::generate_blocks_assert_ok(&regtest, 10, wallet_3_address).await;
+    helpers::wallet::refresh_assert_received_money(&wallet, None, true).await;
 
     // ... and test export_key_images, import_key_images, and incoming_transfers for wallet_1_full again ...
 
     // ... starting with export_key_images... note: export_key_images has offset 1 for wallet_1_full and returns empty vec;
     // wallet_1_view_only has no access to the key image, so the solution is to pass the parameter
     // `all=true` for `export_key_images` when in `wallet_1_full`
-    helpers::wallet::export_key_images_empty(&wallet).await;
-    let wallet_1_full_key_images = helpers::wallet::export_key_images(&wallet, Some(true)).await;
+    helpers::wallet::export_key_images_empty_assert_ok(&wallet).await;
+    let wallet_1_full_key_images =
+        helpers::wallet::export_key_images_assert_ok(&wallet, Some(true)).await;
 
     // now, with the key images from `wallet_1_full`, we test the import for the following
     // wallets, and with the following KeyImageImportResponse:
@@ -601,7 +617,7 @@ pub async fn run() {
     };
 
     // ... first, for wallet_1_full...
-    helpers::wallet::import_key_images(
+    helpers::wallet::import_key_images_assert_response(
         &wallet,
         wallet_1_full_key_images.clone(),
         expected_key_image_import_response.clone(),
@@ -609,9 +625,10 @@ pub async fn run() {
     .await;
 
     // ...for wallet_1_view_only...
-    helpers::wallet::open_wallet_with_no_or_empty_password(&wallet, &wallet_1_view_only).await;
+    helpers::wallet::open_wallet_with_no_or_empty_password_assert_ok(&wallet, &wallet_1_view_only)
+        .await;
     wallet.refresh(Some(0)).await.unwrap();
-    helpers::wallet::import_key_images(
+    helpers::wallet::import_key_images_assert_response(
         &wallet,
         wallet_1_full_key_images.clone(),
         expected_key_image_import_response,
@@ -619,7 +636,7 @@ pub async fn run() {
     .await;
 
     // ... and for wallet_2
-    helpers::wallet::open_wallet_with_no_or_empty_password(&wallet, &wallet_2).await;
+    helpers::wallet::open_wallet_with_no_or_empty_password_assert_ok(&wallet, &wallet_2).await;
     helpers::wallet::import_key_images_error_invalid_signature(&wallet, wallet_1_full_key_images)
         .await;
 
@@ -635,8 +652,9 @@ pub async fn run() {
             tx_hash: transfer_1_data.tx_hash.clone(),
         }]),
     };
-    helpers::wallet::open_wallet_with_no_or_empty_password(&wallet, &wallet_1_view_only).await;
-    helpers::wallet::incoming_transfers(
+    helpers::wallet::open_wallet_with_no_or_empty_password_assert_ok(&wallet, &wallet_1_view_only)
+        .await;
+    helpers::wallet::incoming_transfers_assert_incoming_transfers(
         &wallet,
         TransferType::All,
         Some(0),
@@ -644,8 +662,8 @@ pub async fn run() {
         expected_incoming_transfers.clone(),
     )
     .await;
-    helpers::wallet::open_wallet_with_no_or_empty_password(&wallet, &wallet_1_full).await;
-    helpers::wallet::incoming_transfers(
+    helpers::wallet::open_wallet_with_no_or_empty_password_assert_ok(&wallet, &wallet_1_full).await;
+    helpers::wallet::incoming_transfers_assert_incoming_transfers(
         &wallet,
         TransferType::All,
         Some(0),
@@ -660,10 +678,11 @@ pub async fn run() {
     // After that, we submit the transfer.
 
     // wallet_1_view_only is read-only, so `transfer` will create an unsigned_txset, which is then used in `sign_transfer`...
-    helpers::wallet::open_wallet_with_no_or_empty_password(&wallet, &wallet_1_view_only).await;
+    helpers::wallet::open_wallet_with_no_or_empty_password_assert_ok(&wallet, &wallet_1_view_only)
+        .await;
     let mut transfer_2_destination: HashMap<Address, Amount> = HashMap::new();
     transfer_2_destination.insert(wallet_2_address, Amount::from_xmr(0.00001).unwrap());
-    let transfer_2_data_unsigned = helpers::wallet::transfer(
+    let transfer_2_data_unsigned = helpers::wallet::transfer_assert_ok(
         &wallet,
         transfer_2_destination,
         TransferOptions {
@@ -679,10 +698,12 @@ pub async fn run() {
     )
     .await;
     // ... we then go to `wallet_1_full`, so that we can sign the transaction
-    helpers::wallet::open_wallet_with_no_or_empty_password(&wallet, &wallet_1_full).await;
-    let transfer_2_data_signed =
-        helpers::wallet::sign_transfer(&wallet, transfer_2_data_unsigned.unsigned_txset.0.clone())
-            .await;
+    helpers::wallet::open_wallet_with_no_or_empty_password_assert_ok(&wallet, &wallet_1_full).await;
+    let transfer_2_data_signed = helpers::wallet::sign_transfer_assert_ok(
+        &wallet,
+        transfer_2_data_unsigned.unsigned_txset.0.clone(),
+    )
+    .await;
     helpers::wallet::sign_transfer_error_cannot_load(&wallet, vec![0, 1, 2, 3]).await;
     let mut invalid_unsigned_txset = transfer_2_data_unsigned.unsigned_txset.0.clone();
     for e in invalid_unsigned_txset.iter_mut().take(25 + 1).skip(20) {
@@ -693,8 +714,13 @@ pub async fn run() {
     // ... and submit transfer after that
     // TODO the change to wallet_1_view_only wasn't necessary in v0.17.3.2; also, in v0.18.0.0, trying to get the
     // balance of wallet_1_full returns 0, while it returns the correct results for wallet_1_view_only
-    helpers::wallet::open_wallet_with_no_or_empty_password(&wallet, &wallet_1_view_only).await;
-    helpers::wallet::submit_transfer(&wallet, transfer_2_data_signed.signed_txset.clone()).await;
+    helpers::wallet::open_wallet_with_no_or_empty_password_assert_ok(&wallet, &wallet_1_view_only)
+        .await;
+    helpers::wallet::submit_transfer_assert_ok(
+        &wallet,
+        transfer_2_data_signed.signed_txset.clone(),
+    )
+    .await;
     helpers::wallet::submit_transfer_error_parse(&wallet, vec![0, 1, 2, 3]).await;
     let mut invalid_signed_txset = transfer_2_data_signed.signed_txset;
     for e in invalid_signed_txset.iter_mut().take(25 + 1).skip(20) {
@@ -715,16 +741,22 @@ pub async fn run() {
         subaddr_index: Index { major: 0, minor: 0 },
         block_height: height_before_settling_transfer_1,
     }];
-    helpers::wallet::get_payments(&wallet, PaymentId::zero(), expected_payment_ids.clone()).await;
-    helpers::wallet::get_payments(&wallet, PaymentId::repeat_byte(10), vec![]).await;
-    helpers::wallet::get_bulk_payments(
+    helpers::wallet::get_payments_assert_payment_ids(
+        &wallet,
+        PaymentId::zero(),
+        expected_payment_ids.clone(),
+    )
+    .await;
+    helpers::wallet::get_payments_assert_payment_ids(&wallet, PaymentId::repeat_byte(10), vec![])
+        .await;
+    helpers::wallet::get_bulk_payments_assert_payments_ids(
         &wallet,
         vec![PaymentId::zero(), PaymentId::repeat_byte(10)],
         0,
         expected_payment_ids,
     )
     .await;
-    helpers::wallet::get_bulk_payments(
+    helpers::wallet::get_bulk_payments_assert_payments_ids(
         &wallet,
         vec![PaymentId::zero(), PaymentId::repeat_byte(10)],
         u64::MAX - 100000,
@@ -751,7 +783,7 @@ pub async fn run() {
     };
     expected_count_per_category.insert(GetTransfersCategory::In, 1);
     expected_count_per_category.insert(GetTransfersCategory::Pending, 1);
-    helpers::wallet::get_transfers(
+    helpers::wallet::get_transfers_assert_count_per_category(
         &wallet,
         selector.clone(),
         expected_count_per_category.clone(),
@@ -763,7 +795,7 @@ pub async fn run() {
         max_height: Some(10),
     });
     expected_count_per_category.remove(&GetTransfersCategory::In);
-    helpers::wallet::get_transfers(
+    helpers::wallet::get_transfers_assert_count_per_category(
         &wallet,
         selector.clone(),
         expected_count_per_category.clone(),
@@ -774,7 +806,7 @@ pub async fn run() {
         min_height: Some(10),
         max_height: Some(2),
     });
-    helpers::wallet::get_transfers(
+    helpers::wallet::get_transfers_assert_count_per_category(
         &wallet,
         selector.clone(),
         expected_count_per_category.clone(),
@@ -790,7 +822,7 @@ pub async fn run() {
         .entry(GetTransfersCategory::Pending)
         .and_modify(|c| *c = false);
     expected_count_per_category.remove(&GetTransfersCategory::Pending);
-    helpers::wallet::get_transfers(
+    helpers::wallet::get_transfers_assert_count_per_category(
         &wallet,
         selector.clone(),
         expected_count_per_category.clone(),
@@ -820,11 +852,11 @@ pub async fn run() {
     )
     .await;
 
-    helpers::wallet::open_wallet_with_no_or_empty_password(&wallet, &wallet_2).await;
+    helpers::wallet::open_wallet_with_no_or_empty_password_assert_ok(&wallet, &wallet_2).await;
     // below is commented because it sometimes returns `true`, sometimes returns `false`
     // helpers::wallet::refresh(&wallet, Some(0), false).await;
     wallet.refresh(Some(0)).await.unwrap();
-    helpers::wallet::sweep_all(
+    helpers::wallet::sweep_all_assert_ok(
         &wallet,
         SweepAllArgs {
             address: wallet_1_address,

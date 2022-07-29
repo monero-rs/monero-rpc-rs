@@ -27,14 +27,15 @@ pub async fn run() {
     // is zero, then passing a `testnet` address does not throw an error.
     let address_testnet = Address::from_keypair(Network::Testnet, &key_pair_1);
     helpers::regtest::generate_blocks_error_invalid_address(&regtest, address_testnet).await;
-    helpers::regtest::generate_blocks_zero_blocks(&regtest, address_testnet).await;
+    helpers::regtest::generate_zero_blocks_assert_ok(&regtest, address_testnet).await;
 
     // STEP 2: we generate blocks and give the coins to a `mainnet/regtest` address.
     // We then test the blockchain state after the blocks are created, and we get
     // the last two blocks created and call functions on the RPC using their hashes, test
     // their heights, etc.
     let address_1 = Address::from_keypair(Network::Mainnet, &key_pair_1);
-    let generate_blocks_res = helpers::regtest::generate_blocks(&regtest, 60, address_1).await;
+    let generate_blocks_res =
+        helpers::regtest::generate_blocks_assert_ok(&regtest, 60, address_1).await;
 
     let last_two_added_blocks: Vec<BlockHash> = generate_blocks_res
         .blocks
@@ -51,7 +52,7 @@ pub async fn run() {
         generate_blocks_res.height + 1,
     )
     .await;
-    helpers::regtest::on_get_block_hash(
+    helpers::regtest::on_get_block_hash_assert_hash(
         &regtest,
         generate_blocks_res.height,
         last_added_block_hash,
@@ -76,8 +77,12 @@ pub async fn run() {
         // test was run, so use any date in this field since it is insignificant for testing.
         timestamp: DateTime::<Utc>::from_utc(NaiveDateTime::from_timestamp(0, 0), Utc),
     };
-    helpers::regtest::get_last_block_header(&regtest, last_added_block_header.clone()).await;
-    helpers::regtest::get_block_header_from_block_hash(
+    helpers::regtest::get_last_block_header_assert_block_header(
+        &regtest,
+        last_added_block_header.clone(),
+    )
+    .await;
+    helpers::regtest::get_block_header_from_block_hash_assert_block_header(
         &regtest,
         last_added_block_hash,
         last_added_block_header.clone(),
@@ -86,7 +91,12 @@ pub async fn run() {
 
     let current_top_block_height = regtest.get_block_count().await.unwrap().get() - 1;
 
-    helpers::regtest::get_block_header_at_height(&regtest, 60, last_added_block_header).await;
+    helpers::regtest::get_block_header_at_height_assert_block_header(
+        &regtest,
+        60,
+        last_added_block_header,
+    )
+    .await;
     helpers::regtest::get_block_header_at_height_error(
         &regtest,
         u64::MAX,
@@ -102,7 +112,7 @@ pub async fn run() {
         .get_block_header(GetBlockHeaderSelector::Height(current_top_block_height - 1))
         .await
         .unwrap();
-    helpers::regtest::get_block_headers_range(
+    helpers::regtest::get_block_headers_range_assert_block_headers(
         &regtest,
         59..=60,
         vec![last_but_one_block_header, last_block_header],
@@ -113,7 +123,7 @@ pub async fn run() {
     // In order for it to work, we just get a block template on which to mine. Since the difficulty
     // of the network is `1`, any correct block template should be accepted by `submit_block`.
     let block_template = regtest.get_block_template(address_1, 0).await.unwrap();
-    helpers::regtest::submit_block(&regtest, block_template.blocktemplate_blob).await;
+    helpers::regtest::submit_block_assert_ok(&regtest, block_template.blocktemplate_blob).await;
     helpers::regtest::submit_block_error_wrong_block_blob(&regtest).await;
     helpers::regtest::submit_block_error_block_not_accepted(&regtest).await;
 }

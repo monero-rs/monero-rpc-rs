@@ -21,7 +21,7 @@ fn get_random_name() -> String {
         .collect()
 }
 
-pub async fn get_version(wallet: &WalletClient, expected_version: (u16, u16)) {
+pub async fn get_version_assert_version(wallet: &WalletClient, expected_version: (u16, u16)) {
     let version = wallet.get_version().await.unwrap();
     assert_eq!(version, expected_version);
 }
@@ -39,19 +39,22 @@ async fn create_wallet(
         .map(|_| wallet_name)
 }
 
-pub async fn create_wallet_with_password(wallet: &WalletClient, password: &str) -> String {
+pub async fn create_wallet_with_password_assert_ok(
+    wallet: &WalletClient,
+    password: &str,
+) -> String {
     create_wallet(wallet, Some(password.to_string()), "English".to_string())
         .await
         .unwrap()
 }
 
-pub async fn create_wallet_with_no_password_parameter(wallet: &WalletClient) -> String {
+pub async fn create_wallet_with_no_password_parameter_assert_ok(wallet: &WalletClient) -> String {
     create_wallet(wallet, None, "English".to_string())
         .await
         .unwrap()
 }
 
-pub async fn create_wallet_with_empty_password(wallet: &WalletClient) -> String {
+pub async fn create_wallet_with_empty_password_assert_ok(wallet: &WalletClient) -> String {
     create_wallet(wallet, Some("".to_string()), "English".to_string())
         .await
         .unwrap()
@@ -78,7 +81,7 @@ pub async fn create_wallet_error_invalid_language(wallet: &WalletClient) {
     );
 }
 
-pub async fn close_wallet(wallet: &WalletClient) {
+pub async fn close_wallet_assert_ok(wallet: &WalletClient) {
     wallet.close_wallet().await.unwrap();
 }
 
@@ -87,14 +90,21 @@ pub async fn close_wallet_error_no_wallet_file(wallet: &WalletClient) {
     assert_eq!(err.to_string(), "Server error: No wallet file");
 }
 
-pub async fn open_wallet_with_password(wallet: &WalletClient, filename: &str, password: &str) {
+pub async fn open_wallet_with_password_assert_ok(
+    wallet: &WalletClient,
+    filename: &str,
+    password: &str,
+) {
     wallet
         .open_wallet(filename.to_string(), Some(password.to_string()))
         .await
         .unwrap();
 }
 
-pub async fn open_wallet_with_no_or_empty_password(wallet: &WalletClient, filename: &str) {
+pub async fn open_wallet_with_no_or_empty_password_assert_ok(
+    wallet: &WalletClient,
+    filename: &str,
+) {
     // if wallet has no password, both calls should work
     wallet
         .open_wallet(filename.to_string(), Some("".to_string()))
@@ -126,7 +136,7 @@ pub async fn open_wallet_error_wrong_password(
     assert_eq!(err.to_string(), "Server error: Failed to open wallet");
 }
 
-pub async fn generate_from_keys(
+pub async fn generate_from_keys_assert_ok(
     wallet: &WalletClient,
     mut args: GenerateFromKeysArgs,
 ) -> (String, WalletCreation) {
@@ -167,7 +177,7 @@ pub async fn generate_from_keys_error_invalid_address(
     );
 }
 
-pub async fn get_address(
+pub async fn get_address_assert_address_data(
     wallet: &WalletClient,
     account: u32,
     addresses: Option<Vec<u32>>,
@@ -211,7 +221,11 @@ pub async fn get_address_error_invalid_address_index(
     );
 }
 
-pub async fn get_address_index(wallet: &WalletClient, address: Address, expected_index: Index) {
+pub async fn get_address_index_assert_index(
+    wallet: &WalletClient,
+    address: Address,
+    expected_index: Index,
+) {
     let index = wallet.get_address_index(address).await.unwrap();
     assert_eq!(index, expected_index);
 }
@@ -232,7 +246,7 @@ pub async fn get_address_index_error_invalid_address(wallet: &WalletClient, addr
     assert_eq!(index_err.to_string(), "Server error: Invalid address");
 }
 
-pub async fn create_address(
+pub async fn create_address_assert_address_and_address_index(
     wallet: &WalletClient,
     account_index: u32,
     label: Option<String>,
@@ -254,7 +268,7 @@ pub async fn create_address_error_invalid_account_index(wallet: &WalletClient, a
     );
 }
 
-pub async fn label_address(wallet: &WalletClient, index: Index, label: String) {
+pub async fn label_address_assert_ok(wallet: &WalletClient, index: Index, label: String) {
     wallet.label_address(index, label).await.unwrap()
 }
 
@@ -280,7 +294,7 @@ pub async fn label_address_error_invalid_address_index(wallet: &WalletClient, in
     );
 }
 
-pub async fn get_accounts(
+pub async fn get_accounts_assert_accounts_data(
     wallet: &WalletClient,
     tag: Option<String>,
     expected_accounts_data: GetAccountsData,
@@ -297,12 +311,12 @@ pub async fn get_accounts_error_unregistered_tag(wallet: &WalletClient, tag: Str
     );
 }
 
-pub async fn get_height(wallet: &WalletClient, expected_height: u64) {
+pub async fn get_height_assert_height(wallet: &WalletClient, expected_height: u64) {
     let height = wallet.get_height().await.unwrap();
     assert_eq!(height.get(), expected_height);
 }
 
-pub async fn refresh(
+pub async fn refresh_assert_received_money(
     wallet: &WalletClient,
     start_height: Option<u64>,
     expected_received_money: bool,
@@ -316,7 +330,11 @@ pub async fn refresh_error(wallet: &WalletClient) {
     assert_eq!(err.to_string(), "Server error: No wallet file");
 }
 
-pub async fn query_key(wallet: &WalletClient, key_type: PrivateKeyType, expected_key: PrivateKey) {
+pub async fn query_key_assert_key(
+    wallet: &WalletClient,
+    key_type: PrivateKeyType,
+    expected_key: PrivateKey,
+) {
     let key = wallet.query_key(key_type).await.unwrap();
     assert_eq!(key, expected_key);
 }
@@ -329,7 +347,7 @@ pub async fn query_key_error_query_spend_key_for_view_only_wallet(wallet: &Walle
     );
 }
 
-pub async fn get_balance(
+pub async fn get_balance_assert_balance_data(
     wallet: &WalletClient,
     account_index: u32,
     address_indices: Option<Vec<u32>>,
@@ -343,7 +361,7 @@ pub async fn get_balance(
     balance_data
 }
 
-pub async fn transfer(
+pub async fn transfer_assert_ok(
     wallet: &WalletClient,
     destinations: HashMap<Address, Amount>,
     options: TransferOptions,
@@ -401,7 +419,11 @@ pub async fn transfer_error_payment_id_obsolete(
     assert_eq!(err.to_string(), "Server error: Standalone payment IDs are obsolete. Use subaddresses or integrated addresses instead");
 }
 
-pub async fn relay_tx(wallet: &WalletClient, tx_metadata_hex: String, expected_tx_hash: String) {
+pub async fn relay_tx_assert_tx_hash(
+    wallet: &WalletClient,
+    tx_metadata_hex: String,
+    expected_tx_hash: String,
+) {
     let res = wallet.relay_tx(tx_metadata_hex).await.unwrap();
     assert_eq!(res.to_string(), expected_tx_hash);
 }
@@ -419,7 +441,7 @@ pub async fn relay_tx_error_invalid_tx_metadata(wallet: &WalletClient, tx_metada
     );
 }
 
-pub async fn get_transfer(
+pub async fn get_transfer_assert_got_transfer(
     wallet: &WalletClient,
     txid: Hash,
     account_index: Option<u32>,
@@ -451,7 +473,7 @@ pub async fn get_transfer_error_invalid_account_index(
     );
 }
 
-pub async fn check_tx_key(
+pub async fn check_tx_key_assert_confirmations_in_pool_status_received_amount(
     wallet: &WalletClient,
     txid: Hash,
     tx_key: Vec<u8>,
@@ -507,19 +529,22 @@ pub async fn check_tx_key_error_invalid_address(
     assert_eq!(err.to_string(), "Server error: Invalid address");
 }
 
-pub async fn export_key_images(wallet: &WalletClient, all: Option<bool>) -> Vec<SignedKeyImage> {
+pub async fn export_key_images_assert_ok(
+    wallet: &WalletClient,
+    all: Option<bool>,
+) -> Vec<SignedKeyImage> {
     // signed_key_images varies, so nothing to test here but that it is not throwing any error
     let signed_key_images = wallet.export_key_images(all).await.unwrap();
     assert!(!signed_key_images.is_empty());
     signed_key_images
 }
 
-pub async fn export_key_images_empty(wallet: &WalletClient) {
+pub async fn export_key_images_empty_assert_ok(wallet: &WalletClient) {
     let signed_key_images = wallet.export_key_images(None).await.unwrap();
     assert_eq!(signed_key_images, vec![]);
 }
 
-pub async fn import_key_images(
+pub async fn import_key_images_assert_response(
     wallet: &WalletClient,
     signed_key_images: Vec<SignedKeyImage>,
     expected_import_response: KeyImageImportResponse,
@@ -528,7 +553,7 @@ pub async fn import_key_images(
     assert_eq!(res, expected_import_response);
 }
 
-pub async fn import_key_images_empty_vec(wallet: &WalletClient) {
+pub async fn import_key_images_empty_vec_assert_ok(wallet: &WalletClient) {
     let res = wallet.import_key_images(vec![]).await.unwrap();
     let expected_key_import_response = KeyImageImportResponse {
         height: 0,
@@ -551,7 +576,7 @@ pub async fn import_key_images_error_invalid_signature(
         .starts_with("Server error: Signature check failed 0/1"));
 }
 
-pub async fn incoming_transfers(
+pub async fn incoming_transfers_assert_incoming_transfers(
     wallet: &WalletClient,
     transfer_type: TransferType,
     account_index: Option<u32>,
@@ -582,7 +607,10 @@ pub async fn incoming_transfers(
     assert_eq!(incoming_transfers, expected_incoming_transfers);
 }
 
-pub async fn sign_transfer(wallet: &WalletClient, unsigned_txset: Vec<u8>) -> SignedTransferOutput {
+pub async fn sign_transfer_assert_ok(
+    wallet: &WalletClient,
+    unsigned_txset: Vec<u8>,
+) -> SignedTransferOutput {
     let res = wallet.sign_transfer(unsigned_txset).await.unwrap();
     assert!(!res.signed_txset.is_empty());
     assert!(!res.tx_hash_list.is_empty());
@@ -595,7 +623,7 @@ pub async fn sign_transfer_error_cannot_load(wallet: &WalletClient, unsigned_txs
     assert_eq!(err.to_string(), "Server error: cannot load unsigned_txset");
 }
 
-pub async fn submit_transfer(wallet: &WalletClient, tx_data_hex: Vec<u8>) {
+pub async fn submit_transfer_assert_ok(wallet: &WalletClient, tx_data_hex: Vec<u8>) {
     let res = wallet.submit_transfer(tx_data_hex).await.unwrap();
     assert!(!res.is_empty());
 }
@@ -608,7 +636,7 @@ pub async fn submit_transfer_error_parse(wallet: &WalletClient, tx_data_hex: Vec
     );
 }
 
-pub async fn get_payments(
+pub async fn get_payments_assert_payment_ids(
     wallet: &WalletClient,
     payment_id: PaymentId,
     expected_payment_ids: Vec<Payment>,
@@ -617,7 +645,7 @@ pub async fn get_payments(
     assert_eq!(payment_ids, expected_payment_ids);
 }
 
-pub async fn get_bulk_payments(
+pub async fn get_bulk_payments_assert_payments_ids(
     wallet: &WalletClient,
     payment_ids: Vec<PaymentId>,
     min_block_height: u64,
@@ -630,7 +658,7 @@ pub async fn get_bulk_payments(
     assert_eq!(payment_ids, expected_payment_ids);
 }
 
-pub async fn get_transfers(
+pub async fn get_transfers_assert_count_per_category(
     wallet: &WalletClient,
     selector: GetTransfersSelector,
     expected_count_per_category: HashMap<GetTransfersCategory, u64>,
@@ -662,7 +690,7 @@ pub async fn get_transfers(
     }
 }
 
-pub async fn sweep_all(wallet: &WalletClient, args: SweepAllArgs) {
+pub async fn sweep_all_assert_ok(wallet: &WalletClient, args: SweepAllArgs) {
     let res = wallet.sweep_all(args.clone()).await.unwrap();
     assert!(!res.tx_hash_list.is_empty());
     assert!(!res.amount_list.is_empty());
