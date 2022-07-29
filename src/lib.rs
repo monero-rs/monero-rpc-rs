@@ -17,10 +17,10 @@
 //! ## Usage
 //!
 //! Create the base [`RpcClient`] and use the methods [`RpcClient::daemon`],
-//! [`RpcClient::daemon_rpc`], or [`RpcClient::wallet`] to retreive the specialized RPC client.
+//! [`RpcClient::daemon_rpc`], or [`RpcClient::wallet`] to retrieve the specialized RPC client.
 //!
 //! On a [`DaemonJsonRpcClient`] you can call [`DaemonJsonRpcClient::regtest`] to get a [`RegtestDaemonJsonRpcClient`]
-//! instance that enable RPC call specific to regtest such as
+//! instance that enables RPC call specific to regtest such as
 //! [`RegtestDaemonJsonRpcClient::generate_blocks`].
 //!
 //! ```rust
@@ -44,8 +44,8 @@ pub use self::{models::*, util::*};
 use jsonrpc_core::types::{Id, *};
 use monero::{
     cryptonote::{hash::Hash as CryptoNoteHash, subaddress},
-    util::address::PaymentId,
-    Address,
+    util::{address::PaymentId, amount},
+    Address, Amount,
 };
 use serde::{de::IgnoredAny, Deserialize, Deserializer, Serialize, Serializer};
 use serde_json::{json, Value};
@@ -137,7 +137,7 @@ impl RemoteCaller {
         let client = self.http_client.clone();
         let uri = format!("{}/{}", &self.addr, method);
 
-        let json_params: jsonrpc_core::types::params::Params = params.into();
+        let json_params: Params = params.into();
 
         trace!(
             "Sending daemon RPC call: {:?}, with params {:?}",
@@ -203,7 +203,7 @@ impl RpcClient {
     }
 
     /// Transform the client into the specialized `DaemonJsonRpcClient` that interacts with JSON RPC
-    /// Methods on daemon.
+    /// methods on daemon.
     pub fn daemon(self) -> DaemonJsonRpcClient {
         let Self { inner } = self;
         DaemonJsonRpcClient { inner }
@@ -281,13 +281,24 @@ impl DaemonJsonRpcClient {
 
     /// Look up a block's hash by its height.
     pub async fn on_get_block_hash(&self, height: u64) -> anyhow::Result<BlockHash> {
-        self.inner
+        let res = self
+            .inner
             .request::<HashString<BlockHash>>(
                 "on_get_block_hash",
                 RpcParams::array(once(height.into())),
             )
             .await
-            .map(|v| v.0)
+            .map(|v| v.0)?;
+
+        // see https://github.com/monero-ecosystem/monero-rpc-rs/issues/58 for rationality
+        if res == BlockHash::from_slice(&[0; 32]) {
+            Err(anyhow::Error::msg(format!(
+                "Invalid height {} supplied.",
+                height
+            )))
+        } else {
+            Ok(res)
+        }
     }
 
     /// Get a block template on which mining a new block.
@@ -314,13 +325,15 @@ impl DaemonJsonRpcClient {
     }
 
     /// Submit a mined block to the network.
-    pub async fn submit_block(&self, block_blob_data: String) -> anyhow::Result<String> {
+    pub async fn submit_block(&self, block_blob_data: String) -> anyhow::Result<()> {
         self.inner
-            .request(
+            .request::<IgnoredAny>(
                 "submit_block",
                 RpcParams::array(once(block_blob_data.into())),
             )
-            .await
+            .await?;
+
+        Ok(())
     }
 
     /// Retrieve block header information matching selected filter.
@@ -436,12 +449,7 @@ impl RegtestDaemonJsonRpcClient {
         &self,
         amount_of_blocks: u64,
         wallet_address: Address,
-    ) -> anyhow::Result<u64> {
-        #[derive(Deserialize)]
-        struct Rsp {
-            height: u64,
-        }
-
+    ) -> anyhow::Result<GenerateBlocksResponse> {
         let params = empty()
             .chain(once((
                 "amount_of_blocks",
@@ -454,10 +462,13 @@ impl RegtestDaemonJsonRpcClient {
 
         Ok(self
             .inner
-            .request::<MoneroResult<Rsp>>("generateblocks", RpcParams::map(params))
+            .request::<MoneroResult<GenerateBlocksResponseR>>(
+                "generateblocks",
+                RpcParams::map(params),
+            )
             .await?
             .into_inner()
-            .height)
+            .into())
     }
 }
 
@@ -599,7 +610,7 @@ impl WalletClient {
             .chain(once(("account_index", account_index.into())))
             .chain(address_indices.map(|v| {
                 (
-                    "adress_indices",
+                    "address_indices",
                     v.into_iter().map(Value::from).collect::<Vec<_>>().into(),
                 )
             }));
@@ -709,14 +720,21 @@ impl WalletClient {
 
     /// Get a list of incoming payments using a given payment id.
     pub async fn get_payments(&self, payment_id: PaymentId) -> anyhow::Result<Vec<Payment>> {
+        #[derive(Deserialize)]
+        struct Rsp {
+            #[serde(default)]
+            payments: Vec<Payment>,
+        }
+
         let params = empty().chain(once((
             "payment_id",
             HashString(payment_id).to_string().into(),
         )));
 
         self.inner
-            .request("get_payments", RpcParams::map(params))
+            .request::<Rsp>("get_payments", RpcParams::map(params))
             .await
+            .map(|rsp| rsp.payments)
     }
 
     /// Get a list of incoming payments using a given payment id, or a list of payments ids, from a
@@ -726,6 +744,7 @@ impl WalletClient {
     pub async fn get_bulk_payments(
         &self,
         payment_ids: Vec<PaymentId>,
+        // It seems that the `min_block_height` argument is really optional, but the docs on the Monero website do not mention it
         min_block_height: u64,
     ) -> anyhow::Result<Vec<Payment>> {
         #[derive(Deserialize)]
@@ -989,7 +1008,7 @@ impl WalletClient {
             .await
     }
 
-    /// Show information about a transfer to/from this address. **Called `get_transfer_by_txid` in
+    /// Show information about a transfer to/from this address. **Calls `get_transfer_by_txid` in
     /// RPC.**
     pub async fn get_transfer(
         &self,
@@ -1025,7 +1044,10 @@ impl WalletClient {
     }
 
     /// Export a signed set of key images.
-    pub async fn export_key_images(&self) -> anyhow::Result<Vec<SignedKeyImage>> {
+    pub async fn export_key_images(
+        &self,
+        all: Option<bool>,
+    ) -> anyhow::Result<Vec<SignedKeyImage>> {
         #[derive(Deserialize)]
         struct R {
             key_image: HashString<Vec<u8>>,
@@ -1055,8 +1077,10 @@ impl WalletClient {
             }
         }
 
+        let params = empty().chain(all.map(|v| ("all", v.into())));
+
         self.inner
-            .request::<Rsp>("export_key_images", RpcParams::None)
+            .request::<Rsp>("export_key_images", RpcParams::map(params))
             .await
             .map(From::from)
     }
@@ -1094,14 +1118,15 @@ impl WalletClient {
     pub async fn check_tx_key(
         &self,
         txid: CryptoNoteHash,
-        tx_key: CryptoNoteHash,
+        tx_key: Vec<u8>,
         address: Address,
-    ) -> anyhow::Result<(NonZeroU64, bool, NonZeroU64)> {
+    ) -> anyhow::Result<(u64, bool, Amount)> {
         #[derive(Deserialize)]
         struct Rsp {
-            confirmations: NonZeroU64,
+            confirmations: u64,
             in_pool: bool,
-            received: NonZeroU64,
+            #[serde(with = "amount::serde::as_pico")]
+            received: Amount,
         }
 
         let params = empty()
@@ -1134,5 +1159,107 @@ impl WalletClient {
         let minor = version.version - (major << 16);
 
         Ok((u16::try_from(major)?, u16::try_from(minor)?))
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use serde_test::{assert_de_tokens_error, assert_ser_tokens, assert_tokens, Token};
+
+    #[test]
+    fn rpc_params_array() {
+        let mut array = once(json!(false));
+        let rpc_params_array = RpcParams::array(array.clone());
+
+        if let RpcParams::Array(mut rpc_boxed_array) = rpc_params_array {
+            assert_eq!(rpc_boxed_array.next(), array.next());
+            assert_eq!(rpc_boxed_array.next(), None);
+            assert_eq!(array.next(), None);
+        } else {
+            unreachable!();
+        }
+    }
+
+    #[test]
+    fn rpc_params_map() {
+        let map = once(("it is false", json!(false)));
+        let rpc_params_map = RpcParams::map(map.clone());
+
+        let mut map = map.map(|(k, v)| (k.to_string(), v));
+
+        if let RpcParams::Map(mut boxed_map) = rpc_params_map {
+            assert_eq!(boxed_map.next(), map.next());
+            assert_eq!(boxed_map.next(), None);
+            assert_eq!(map.next(), None);
+        } else {
+            unreachable!();
+        }
+    }
+
+    #[test]
+    fn from_rpc_params_for_params() {
+        let rpc_param_array = RpcParams::array(once(json!(false)));
+        let rpc_param_map = RpcParams::map(once(("it is false", json!(false))));
+        let rpc_param_none = RpcParams::None;
+
+        assert_eq!(Params::from(rpc_param_none), Params::None);
+        assert_eq!(
+            Params::from(rpc_param_array),
+            Params::Array(vec![json!(false)])
+        );
+
+        let mut serde_json_map = serde_json::map::Map::new();
+        serde_json_map.insert("it is false".to_string(), json!(false));
+
+        assert_eq!(Params::from(rpc_param_map), Params::Map(serde_json_map));
+    }
+
+    #[test]
+    fn serialize_transfer_type() {
+        let transfer_types = vec![
+            TransferType::All,
+            TransferType::Available,
+            TransferType::Unavailable,
+        ];
+        assert_ser_tokens(
+            &transfer_types,
+            &[
+                Token::Seq { len: Some(3) },
+                Token::Str("all"),
+                Token::Str("available"),
+                Token::Str("unavailable"),
+                Token::SeqEnd,
+            ],
+        );
+    }
+
+    #[test]
+    fn ser_der_for_transfer_priority() {
+        let transfer_priorities = vec![
+            TransferPriority::Default,
+            TransferPriority::Unimportant,
+            TransferPriority::Elevated,
+            TransferPriority::Priority,
+        ];
+        assert_tokens(
+            &transfer_priorities,
+            &[
+                Token::Seq { len: Some(4) },
+                Token::U8(0),
+                Token::U8(1),
+                Token::U8(2),
+                Token::U8(3),
+                Token::SeqEnd,
+            ],
+        );
+    }
+
+    #[test]
+    fn der_for_transfer_priority_error() {
+        assert_de_tokens_error::<TransferPriority>(
+            &[Token::U8(4)],
+            "Invalid variant 4, expected 0-3",
+        );
     }
 }

@@ -12,6 +12,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add tests for types implementing `HashType` in `utils.rs` ([#59](https://github.com/monero-ecosystem/monero-rpc-rs/pull/59))
 - Add tests for `HashString`'s implementation of the traits `Debug`, `Serialize`, and `Deserialize`, in `utils.rs` ([#59](https://github.com/monero-ecosystem/monero-rpc-rs/pull/59))
 - Add tests for `models.rs` ([#63](https://github.com/monero-ecosystem/monero-rpc-rs/pull/63))
+- Add `PartialEq` trait for the following types in `src/models.rs` ([#65](https://github.com/monero-ecosystem/monero-rpc-rs/pull/65/)):
+  - BlockTemplate
+  - Transaction
+  - SubaddressBalanceData
+  - BalanceData
+  - TransferPriority
+  - SubaddressData
+  - SubaddressIndex
+  - Payment
+  - AddressData
+  - IncomingTransfers
+  - GotAccount
+  - GetAccountsData
+  - GotTransfer
+  - SignedKeyImage
+  - KeyImageImportResponse
+- Add `GenerateBlocksResponse` struct ([#65](https://github.com/monero-ecosystem/monero-rpc-rs/pull/65/))
+- Add `all` paremeter, of type `Option<bool>` to the `export_key_images` method, and pass it to the RPC ([#65](https://github.com/monero-ecosystem/monero-rpc-rs/pull/65/))
+- Add an error for `on_get_block_hash` on invalid height, instead of returning success with an incorrect hash ([#65](https://github.com/monero-ecosystem/monero-rpc-rs/pull/65/))
 
 ### Removed
 
@@ -29,6 +48,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Change `get_address_index` to return `anyhow::Result<subaddress::Index>` instead of `anyhow::Result<(u64, u64)>` ([#62](https://github.com/monero-ecosystem/monero-rpc-rs/pull/62))
 - Use `Amount` type from `monero-rs` where possible ([#68](https://github.com/monero-ecosystem/monero-rpc-rs/pull/68))
 - Rename `DaemonClient` to `DaemonJsonRpcClient`, and `RegtestDaemonClient` to `RegtestDaemonJsonRpcClient` ([70](https://github.com/monero-ecosystem/monero-rpc-rs/pull/70))
+- Change `TransferData`'s `tx_key` field from `HashString<CryptoNoteHash>` to `HashString<Vec<u8>>` ([#65](https://github.com/monero-ecosystem/monero-rpc-rs/pull/65/))
+- `get_balance` method now passes the correct parameter name to the RPC ([#65](https://github.com/monero-ecosystem/monero-rpc-rs/pull/65/))
+- Change `generate_blocks` to return `anyhow::Result<GenerateBlocksResponse>` instead of `anyhow::Result<u64>` ([#65](https://github.com/monero-ecosystem/monero-rpc-rs/pull/65/))
+- `submit_block` method now works correctly and had its return type changed to `anyhow::Result<()>` ([#65](https://github.com/monero-ecosystem/monero-rpc-rs/pull/65/))
+- Change `get_payments` to actually return a vector of `Payments` ([#65](https://github.com/monero-ecosystem/monero-rpc-rs/pull/65/))
+- Change `check_tx_key`'s `tx_key` parameter to type `Vec<u8>` ([#65](https://github.com/monero-ecosystem/monero-rpc-rs/pull/65/))
+- Change `check_tx_key`'s return type from `anyhow::Result<(NonZeroU64, bool, NonZeroU64)>` to `anyhow::Result<(u64, bool, Amount)>`, since the first element can be `0`, and the last element depicts an amount ([#65](https://github.com/monero-ecosystem/monero-rpc-rs/pull/65/))
 
 ## [0.1.0] - 2022-06-29
 

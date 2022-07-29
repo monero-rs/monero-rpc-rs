@@ -19,11 +19,11 @@ use monero_rpc::{RpcClient, JsonTransaction};
 #[tokio::test]
 async fn monero_daemon_transactions_test() {
     let tx_id = "7c50844eced8ab78a8f26a126fbc1f731134e0ae3e6f9ba0f205f98c1426ff60".to_string();
-    let daemon_client = RpcClient::new("http://node.monerooutreach.org:18081".to_string());
-    let daemon = daemon_client.daemon_rpc();
+    let rpc_client = monero_rpc::RpcClient::new("http://node.monerooutreach.org:18081".to_string());
+    let daemon_rpc_client = rpc_client.daemon_rpc();
     let mut fixed_hash: [u8; 32] = [0; 32];
     hex::decode_to_slice(tx_id, &mut fixed_hash).unwrap();
-    let tx = daemon
+    let tx = daemon_rpc_client
         .get_transactions(vec![fixed_hash.into()], Some(true), Some(true))
         .await;
     println!("tx {:?}", tx);
@@ -36,13 +36,15 @@ async fn monero_daemon_transactions_test() {
 
 ## Testing
 
-First, you'll need `docker` and `docker-compose` to run the RPC integration tests in case you don't want to run `monerod` and `monero-wallet-rpc` on your own.
+First, you'll need `docker` and `docker-compose` to run the RPC integration tests, which are in `tests/`, in case you don't want to run `monerod` and `monero-wallet-rpc` on your own.
 
 If you have the docker stack installed, go to the `tests` folder and run `docker-compose up`. Note that the daemon will run on port `18081` and `monero-wallet-rpc` will run on port `18083`.
 
 After that, just run `cargo test` as you normally would.
 
 Also, you can run `docker-compose down` to stop and remove the two containers started by `docker-compose up`.
+
+**Important**: the blockchain must be empty when running the `main_functional_test` test on `tests/rpc.rs`, i.e. it must have only the genesis block. In `regtest`, the blockchain restarts when `monerod` restarts (as a side note, if you want to keep the blockchain in `regtest` between restarts, you should pass the `--keep-fakechain` flag when starting `monerod`).
 
 ## Releases and Changelog
 
