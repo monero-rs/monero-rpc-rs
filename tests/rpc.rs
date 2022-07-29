@@ -36,7 +36,7 @@ async fn main_functional_test() {
      *    modifies the blockchain by adding blocks to it.
      *
      *    Finally, `all_clients_interaction` runs at the end because it modifies the blockchain
-     *    in ways the other tests do not (for example, it creates transacions), aand it also creates
+     *    in ways the other tests do not (for example, it creates transacions), and it also creates
      *    blocks, so the other tests would not work if running at the same time
      *    `all_clients_interaction` runs. Also, it makes sense `all_clients_interaction` to
      *    run last because the other tests test each client individually, but `all_clients_interaction`
