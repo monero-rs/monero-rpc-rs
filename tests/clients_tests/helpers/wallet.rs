@@ -171,7 +171,7 @@ pub async fn get_address(
     wallet: &WalletClient,
     account: u32,
     addresses: Option<Vec<u32>>,
-    mut expected_res: AddressData,
+    mut expected_address_data: AddressData,
 ) {
     let mut address_data = wallet.get_address(account, addresses).await.unwrap();
 
@@ -179,11 +179,11 @@ pub async fn get_address(
     address_data.addresses.iter_mut().for_each(|a| {
         a.used = false;
     });
-    expected_res.addresses.iter_mut().for_each(|a| {
+    expected_address_data.addresses.iter_mut().for_each(|a| {
         a.used = false;
     });
 
-    assert_eq!(address_data, expected_res);
+    assert_eq!(address_data, expected_address_data);
 }
 
 pub async fn get_address_error_no_wallet_file(wallet: &WalletClient) {
@@ -236,10 +236,10 @@ pub async fn create_address(
     wallet: &WalletClient,
     account_index: u32,
     label: Option<String>,
-    expected_res: (Address, u32),
+    expected_address_and_address_index: (Address, u32),
 ) -> (Address, u32) {
     let address_created = wallet.create_address(account_index, label).await.unwrap();
-    assert_eq!(address_created, expected_res);
+    assert_eq!(address_created, expected_address_and_address_index);
     address_created
 }
 
@@ -456,10 +456,13 @@ pub async fn check_tx_key(
     txid: Hash,
     tx_key: Vec<u8>,
     address: Address,
-    expected_res: (u64, bool, Amount),
+    expected_confirmations_and_in_pool_status_and_received_amount: (u64, bool, Amount),
 ) {
     let res = wallet.check_tx_key(txid, tx_key, address).await.unwrap();
-    assert_eq!(res, expected_res);
+    assert_eq!(
+        res,
+        expected_confirmations_and_in_pool_status_and_received_amount
+    );
 }
 
 pub async fn check_tx_key_error_invalid_txid(
@@ -527,12 +530,12 @@ pub async fn import_key_images(
 
 pub async fn import_key_images_empty_vec(wallet: &WalletClient) {
     let res = wallet.import_key_images(vec![]).await.unwrap();
-    let expected_res = KeyImageImportResponse {
+    let expected_key_import_response = KeyImageImportResponse {
         height: 0,
         spent: Amount::from_pico(0),
         unspent: Amount::from_pico(0),
     };
-    assert_eq!(res, expected_res);
+    assert_eq!(res, expected_key_import_response);
 }
 
 pub async fn import_key_images_error_invalid_signature(
