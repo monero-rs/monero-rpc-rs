@@ -66,6 +66,7 @@ pub async fn run() {
         difficulty: 1,
         hash: last_added_block_hash,
         height: regtest.get_block_count().await.unwrap().get() - 1,
+        // `*_version` are not tested inside the test functions below because they varies
         major_version: 16,
         minor_version: 16,
         nonce: 0,

@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use std::ops::Range;
 
 use monero::{
     cryptonote::subaddress::Index, util::address::PaymentId, Address, Amount, Hash, PrivateKey,
@@ -21,9 +22,13 @@ fn get_random_name() -> String {
         .collect()
 }
 
-pub async fn get_version_assert_version(wallet: &WalletClient, expected_version: (u16, u16)) {
+pub async fn get_version_assert_version(
+    wallet: &WalletClient,
+    expected_version: (u16, Range<u16>),
+) {
     let version = wallet.get_version().await.unwrap();
-    assert_eq!(version, expected_version);
+    assert_eq!(version.0, expected_version.0);
+    assert!(expected_version.1.contains(&version.1));
 }
 
 async fn create_wallet(

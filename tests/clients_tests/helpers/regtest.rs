@@ -230,8 +230,6 @@ fn test_get_block_header_assert_block_header(
         difficulty: u64,
         hash: BlockHash,
         height: u64,
-        major_version: u64,
-        minor_version: u64,
         nonce: u32,
         num_txes: u64,
         orphan_status: bool,

@@ -24,7 +24,7 @@ pub async fn run() {
     // where errors could happen.
     // Note that the wallets created in this step are created "from scratch", i.e.
     // they are not created from known spend/view keys.
-    let expected_wallet_version = (1, 25);
+    let expected_wallet_version = (1, 22..26);
     helpers::wallet::get_version_assert_version(&wallet, expected_wallet_version).await;
 
     let (wallet_with_pwd, wallet_with_no_pwd, wallet_with_empty_pwd) = tokio::join!(
