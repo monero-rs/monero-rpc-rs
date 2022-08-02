@@ -8,6 +8,7 @@ services:
       DIFFICULTY: 1
     ports:
       - 18081:18081
+
   monero-wallet-rpc:
     image: ghcr.io/farcaster-project/containers/monero-wallet-rpc:0.18.0.0
     environment:
