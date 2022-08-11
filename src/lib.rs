@@ -30,6 +30,14 @@
 //! let daemon = client.daemon();
 //! let regtest_daemon = daemon.regtest();
 //! ```
+//!
+//! The client can be initialized with a proxy, for example a socks5 proxy to enable Tor:
+//!
+//! ```rust
+//! use monero_rpc::RpcClient;
+//!
+//! let client = RpcClient::with("http://node.monerooutreach.org:18081".to_string(), "socks5://127.0.0.1:9050".to_string());
+//! ```
 
 #![forbid(unsafe_code)]
 
@@ -197,6 +205,19 @@ impl RpcClient {
         Self {
             inner: CallerWrapper(Arc::new(RemoteCaller {
                 http_client: reqwest::ClientBuilder::new().build().unwrap(),
+                addr,
+            })),
+        }
+    }
+
+    /// Create a new generic RPC client with a proxy
+    pub fn with(addr: String, proxy_address: String) -> Self {
+        Self {
+            inner: CallerWrapper(Arc::new(RemoteCaller {
+                http_client: reqwest::Client::builder()
+                    .proxy(reqwest::Proxy::all(proxy_address).unwrap())
+                    .build()
+                    .unwrap(),
                 addr,
             })),
         }
