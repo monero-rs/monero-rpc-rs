@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Disable chrono default features by @silverpill ([#87](https://github.com/monero-ecosystem/monero-rpc-rs/pull/87))
 
+### Changed
+
+- Add a new initialization of an RpcClient with ::with(...) to include a proxy argument. This allows the usage of e.g. a Tor socks proxy. This argument has to be a string pointing to the the address of the proxy and its protocol prefix, .e.g. "socks5://127.0.0.1:9050" for using a socks5 proxy.
+
 ## [0.2.0] - 2022-07-29
 
 ### Added
