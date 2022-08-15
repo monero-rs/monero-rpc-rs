@@ -55,7 +55,7 @@ impl<T> MoneroResult<T> {
 }
 
 /// Return type of daemon `get_block_template`.
-#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
 pub struct BlockTemplate {
     pub blockhashing_blob: HashString<Vec<u8>>,
     pub blocktemplate_blob: HashString<Vec<u8>>,
@@ -108,7 +108,7 @@ impl From<BlockHeaderResponseR> for BlockHeaderResponse {
 }
 
 /// Return type of daemon `get_block_header` and `get_block_headers_range`.
-#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
 pub struct BlockHeaderResponse {
     pub block_size: u64,
     pub depth: u64,
@@ -133,7 +133,7 @@ pub(crate) struct GenerateBlocksResponseR {
 }
 
 /// Return type of regtest daemon RPC `generate_blocks`
-#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
 pub struct GenerateBlocksResponse {
     pub height: u64,
     pub blocks: Option<Vec<BlockHash>>,
@@ -151,7 +151,7 @@ impl From<GenerateBlocksResponseR> for GenerateBlocksResponse {
 }
 
 /// Return type of daemon RPC `get_transactions`.
-#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
 pub struct TransactionsResponse {
     pub credits: u64,
     pub top_hash: String,
@@ -164,7 +164,7 @@ pub struct TransactionsResponse {
 }
 
 /// Sub-type of [`TransactionsResponse`]'s return type of daemon RPC `get_transactions`.
-#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
 pub struct Transaction {
     pub as_hex: String,
     pub as_json: Option<String>, // needs to be parsed as JsonTransaction, but is received as a string
@@ -186,7 +186,7 @@ pub struct JsonTransaction {
 }
 
 /// Sub-type of [`BalanceData`]'s return type of wallet `get_balance`.
-#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
 pub struct SubaddressBalanceData {
     pub address: Address,
     pub address_index: u32,
@@ -199,7 +199,7 @@ pub struct SubaddressBalanceData {
 }
 
 /// Return type of wallet `get_balance`.
-#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
 pub struct BalanceData {
     /// Balance amount of account queried.
     #[serde(with = "amount::serde::as_pico")]
@@ -215,7 +215,7 @@ pub struct BalanceData {
 }
 
 /// Argument type of wallet `transfer`.
-#[derive(Copy, Clone, Debug, PartialEq)]
+#[derive(Copy, Clone, Debug, Eq, PartialEq)]
 pub enum TransferPriority {
     Default,
     Unimportant,
@@ -238,7 +238,7 @@ pub struct TransferData {
 }
 
 /// Sub-type of [`AddressData`]'s return type of wallet `get_address`.
-#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
 pub struct SubaddressData {
     pub address: Address,
     pub address_index: u32,
@@ -247,7 +247,7 @@ pub struct SubaddressData {
 }
 
 /// Return type of wallet `get_payments`.
-#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
 pub struct Payment {
     pub payment_id: HashString<PaymentId>,
     pub tx_hash: HashString<CryptoNoteHash>,
@@ -269,7 +269,7 @@ pub struct WalletCreation {
 }
 
 /// Return type of wallet `get_address`.
-#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
 pub struct AddressData {
     /// Address of the account queried.
     pub address: Address,
@@ -286,13 +286,13 @@ pub enum TransferType {
 }
 
 /// Return type of wallet `incoming_transfers`.
-#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
 pub struct IncomingTransfers {
     pub transfers: Option<Vec<IncomingTransfer>>,
 }
 
 /// Sub-type of [`IncomingTransfers`]. Represent one incoming transfer.
-#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
 pub struct IncomingTransfer {
     #[serde(with = "amount::serde::as_pico")]
     pub amount: Amount,
@@ -372,7 +372,7 @@ pub struct GenerateFromKeysArgs {
 }
 
 /// Return sub-type of wallet `get_accounts`.
-#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
 pub struct GotAccount {
     pub account_index: u32,
     #[serde(with = "amount::serde::as_pico")]
@@ -392,7 +392,7 @@ pub struct RefreshData {
 }
 
 /// Return type of wallet `get_accounts`.
-#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
 pub struct GetAccountsData {
     pub subaddress_accounts: Vec<GotAccount>,
     #[serde(with = "amount::serde::as_pico")]
@@ -466,7 +466,7 @@ pub struct BlockHeightFilter {
 }
 
 /// Sub-type of [`GotTransfer`].
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, Eq, PartialEq)]
 pub enum TransferHeight {
     Confirmed(NonZeroU64),
     InPool,
@@ -490,7 +490,7 @@ impl<'de> Deserialize<'de> for TransferHeight {
 }
 
 /// Return type of wallet `get_transfer` and `get_transfers`.
-#[derive(Clone, Debug, PartialEq, Deserialize)]
+#[derive(Clone, Debug, Eq, PartialEq, Deserialize)]
 pub struct GotTransfer {
     /// Public address of the transfer.
     pub address: Address,
@@ -536,7 +536,7 @@ pub struct SignedTransferOutput {
 
 /// Used to export and import signed key images. Return type of wallet `export_key_images` and
 /// argument type of wallet `import_key_images`.
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, Eq, PartialEq)]
 pub struct SignedKeyImage {
     /// The key image.
     pub key_image: Vec<u8>,
@@ -545,7 +545,7 @@ pub struct SignedKeyImage {
 }
 
 /// Return type of wallet `import_key_images`.
-#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
 pub struct KeyImageImportResponse {
     pub height: u64,
     /// Amount spent from key images.

@@ -49,7 +49,7 @@ impl HashType for Vec<u8> {
 }
 
 /// Wrapper type to help serializating types through string.
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, Eq, PartialEq)]
 pub struct HashString<T>(pub T);
 
 impl<T> Display for HashString<T>
