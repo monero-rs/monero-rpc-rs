@@ -15,15 +15,15 @@ pub fn setup_monero() -> (
 ) {
     let dhost = env::var("MONERO_DAEMON_HOST").unwrap_or_else(|_| "localhost".into());
 
-    let rpc_client = RpcClient::new(format!("http://{}:18081", dhost));
+    let rpc_client = RpcClient::new(format!("http://{}:18081", dhost), None);
     let daemon = rpc_client.daemon();
     let regtest = daemon.regtest();
 
-    let rpc_client = RpcClient::new(format!("http://{}:18081", dhost));
+    let rpc_client = RpcClient::new(format!("http://{}:18081", dhost), None);
     let daemon_rpc = rpc_client.daemon_rpc();
 
     let whost = env::var("MONERO_WALLET_HOST_1").unwrap_or_else(|_| "localhost".into());
-    let rpc_client = RpcClient::new(format!("http://{}:18083", whost));
+    let rpc_client = RpcClient::new(format!("http://{}:18083", whost), None);
     let wallet = rpc_client.wallet();
 
     (regtest, daemon_rpc, wallet)
