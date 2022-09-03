@@ -15,6 +15,80 @@ services:
       MONERO_DAEMON_ADDRESS: monerod:18081
       WALLET_RPC_PORT: 18083
     depends_on:
-      - "monerod"
+      - monerod
     ports:
       - 18083:18083
+
+  monerod-1-tls:
+    image: ghcr.io/farcaster-project/containers/monerod:0.18.0.0
+    volumes:
+      - ./certificates:/certificates
+    ports:
+      - 18090:18081
+    command: >
+      monerod --regtest
+              --rpc-bind-ip 0.0.0.0
+              --rpc-bind-port 18081
+              --confirm-external-bind
+              --offline
+              --fixed-difficulty 1
+              --non-interactive
+              --rpc-ssl enabled
+              --rpc-ssl-private-key /certificates/monero_gen_server.key
+              --rpc-ssl-certificate /certificates/monero_gen_server.crt
+  monerod-2-tls:
+    image: ghcr.io/farcaster-project/containers/monerod:0.18.0.0
+    volumes:
+      - ./certificates:/certificates
+    ports:
+      - 18091:18081
+    command: >
+      monerod --regtest
+              --rpc-bind-ip 0.0.0.0
+              --rpc-bind-port 18081
+              --confirm-external-bind
+              --offline
+              --fixed-difficulty 1
+              --non-interactive
+              --rpc-ssl enabled
+              --rpc-ssl-private-key /certificates/monero_openssl_no_cn_server.key
+              --rpc-ssl-certificate /certificates/monero_openssl_no_cn_server.crt
+  monerod-3-tls:
+    image: ghcr.io/farcaster-project/containers/monerod:0.18.0.0
+    volumes:
+      - ./certificates:/certificates
+    ports:
+      - 18092:18081
+    command: >
+      monerod --regtest
+              --rpc-bind-ip 0.0.0.0
+              --rpc-bind-port 18081
+              --confirm-external-bind
+              --offline
+              --fixed-difficulty 1
+              --non-interactive
+              --rpc-ssl enabled
+              --rpc-ssl-private-key /certificates/monero_openssl_with_cn_server.key
+              --rpc-ssl-certificate /certificates/monero_openssl_with_cn_server.crt
+  monerod-4-tls:
+    image: ghcr.io/farcaster-project/containers/monerod:0.18.0.0
+    volumes:
+      - ./certificates:/certificates
+    ports:
+      - 18093:18081
+    # see ./certificates/README.md to know how the fingerprint was calculated
+    command: >
+      monerod --regtest
+              --rpc-bind-ip 0.0.0.0
+              --rpc-bind-port 18081
+              --confirm-external-bind
+              --offline
+              --fixed-difficulty 1
+              --non-interactive
+              --rpc-ssl enabled
+              --rpc-ssl-private-key /certificates/monero_gen_server.key
+              --rpc-ssl-certificate /certificates/monero_gen_server.crt
+              --rpc-ssl-allowed-fingerprints "93:55:53:02:55:1C:AA:DB:88:14:8E:39:AC:E1:DF:41:53:21:3D:F4:5B:B7:06:1A:91:04:D1:B2:19:E2:7A:87"
+
+volumes:
+  certificates:
