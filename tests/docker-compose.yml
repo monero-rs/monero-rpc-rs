@@ -89,6 +89,3 @@ services:
               --rpc-ssl-private-key /certificates/monero_gen_server.key
               --rpc-ssl-certificate /certificates/monero_gen_server.crt
               --rpc-ssl-allowed-fingerprints "93:55:53:02:55:1C:AA:DB:88:14:8E:39:AC:E1:DF:41:53:21:3D:F4:5B:B7:06:1A:91:04:D1:B2:19:E2:7A:87"
-
-volumes:
-  certificates:
