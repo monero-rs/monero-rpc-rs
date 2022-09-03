@@ -48,13 +48,16 @@ Also, you can run `docker-compose down` to stop and remove the two containers st
 
 **WARNING**: the TLS tests will NOT work in a Mac! Will you have to either run Docker inside Docker or use a VM.
 So, if you are using Mac, run the following commands:
+
 - First, build `Mac.Dockerfile` with `docker build -f ./Mac.Dockerfile -t tls-test .`
 - Second, run `docker run --privileged -v (pwd):/code --name monero-rpc-tls-test -d tls-test`
 - Third, run the following commands, in two tabs:
+
 ```sh
 docker exec -it monero-rpc-tls-test /bin/ash
 source $HOME/.cargo/env
 ```
+
 - Fourth, in one tab, go to `/code/tests` and run `docker compose up`
 - Finally, on the other tab, go to `/code` and run `cargo test`
 
