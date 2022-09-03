@@ -12,6 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+use std::{env, path::PathBuf};
+
+use monero_rpc::{RpcClient, TlsClientConfig, TlsConfig, TlsServerConfig};
+
 mod clients_tests;
 
 #[tokio::test]
@@ -57,4 +61,221 @@ async fn main_functional_test() {
     res.unwrap();
 
     clients_tests::all_clients_interaction::run().await;
+}
+
+#[tokio::test]
+async fn tls_config_test() {
+    let dhost = env::var("MONERO_DAEMON_HOST").unwrap_or_else(|_| "localhost".into());
+
+    // this monerod daemon uses a SSL certificate created with `monero-gen-ssl-cert`
+    let monerod_1_tls_url = format!("https://{}:18090", dhost);
+
+    // with all `TlsConfig` fields None, but servers returns a non-trusted certificate
+    let monero_1_tls_config_all_none_invalid_cert = TlsConfig {
+        server: None,
+        client: None,
+    };
+    let rpc_client = RpcClient::new(
+        monerod_1_tls_url.clone(),
+        Some(monero_1_tls_config_all_none_invalid_cert),
+    )
+    .daemon()
+    .regtest();
+    assert!(rpc_client.get_block_count().await.is_err());
+
+    // with `TlsConfig` field 'server`, but has incorrect `root_certificates` and
+    // we try to skip hostname verification
+    let monero_1_tls_config_server_incorrect_cert = TlsConfig {
+        server: Some(TlsServerConfig {
+            // the certificate below has nothing to do with `monerod-1-tls`
+            root_certificates_path: PathBuf::from(
+                "./tests/certificates/monero_openssl_no_cn_server.crt",
+            ),
+            danger_skip_hostname_verification: true,
+        }),
+        client: None,
+    };
+    let rpc_client = RpcClient::new(
+        monerod_1_tls_url.clone(),
+        Some(monero_1_tls_config_server_incorrect_cert),
+    )
+    .daemon()
+    .regtest();
+    assert!(rpc_client.get_block_count().await.is_err());
+
+    // with `TlsConfig` field 'server`, but certificate has no
+    // hostname and we do not skip hostname verification
+    let monero_1_tls_config_server_valid_cert_with_hostname_verification = TlsConfig {
+        server: Some(TlsServerConfig {
+            root_certificates_path: PathBuf::from("./tests/certificates/monero_gen_server.crt"),
+            danger_skip_hostname_verification: false,
+        }),
+        client: None,
+    };
+    let rpc_client = RpcClient::new(
+        monerod_1_tls_url.clone(),
+        Some(monero_1_tls_config_server_valid_cert_with_hostname_verification),
+    )
+    .daemon()
+    .regtest();
+    assert!(rpc_client.get_block_count().await.is_err());
+
+    // with `TlsConfig` field 'server`, certificate is valid and we skip hostname verification
+    let monero_1_tls_config_server_valid_cert_without_hostname_verification = TlsConfig {
+        server: Some(TlsServerConfig {
+            root_certificates_path: PathBuf::from("./tests/certificates/monero_gen_server.crt"),
+            danger_skip_hostname_verification: true,
+        }),
+        client: None,
+    };
+    let rpc_client = RpcClient::new(
+        monerod_1_tls_url.clone(),
+        Some(monero_1_tls_config_server_valid_cert_without_hostname_verification),
+    )
+    .daemon()
+    .regtest();
+    assert!(rpc_client.get_block_count().await.is_ok());
+
+    // this monerod daemon uses a SSL certificate created by calling `openssl` from
+    // the command line; note that the certificate **has no** CN
+    let monerod_2_tls_url = format!("https://{}:18091", dhost);
+
+    // with `TlsConfig` field 'server`, but certificate has no
+    // hostname and we do not skip hostname verification
+    let monero_2_tls_config_server_valid_cert_with_hostname_verification = TlsConfig {
+        server: Some(TlsServerConfig {
+            root_certificates_path: PathBuf::from(
+                "./tests/certificates/monero_openssl_no_cn_server.crt",
+            ),
+            danger_skip_hostname_verification: false,
+        }),
+        client: None,
+    };
+    let rpc_client = RpcClient::new(
+        monerod_2_tls_url.clone(),
+        Some(monero_2_tls_config_server_valid_cert_with_hostname_verification),
+    )
+    .daemon()
+    .regtest();
+    assert!(rpc_client.get_block_count().await.is_err());
+
+    // with `TlsConfig` field 'server`, certificate is valid and we skip hostname verification
+    let monero_2_tls_config_server_valid_cert_without_hostname_verification = TlsConfig {
+        server: Some(TlsServerConfig {
+            root_certificates_path: PathBuf::from(
+                "./tests/certificates/monero_openssl_no_cn_server.crt",
+            ),
+            danger_skip_hostname_verification: true,
+        }),
+        client: None,
+    };
+    let rpc_client = RpcClient::new(
+        monerod_2_tls_url.clone(),
+        Some(monero_2_tls_config_server_valid_cert_without_hostname_verification),
+    )
+    .daemon()
+    .regtest();
+    assert!(rpc_client.get_block_count().await.is_ok());
+
+    // this monerod daemon uses a SSL certificate created by calling `openssl` from
+    // the command line; note that the certificate **does have** a CN
+    let monerod_3_tls_url = format!("https://{}:18092", dhost);
+
+    // with `TlsConfig` field 'server`, but has incorrect `root_certificates` and
+    // we try to skip hostname verification
+    let monero_3_tls_config_server_incorrect_cert = TlsConfig {
+        server: Some(TlsServerConfig {
+            // the certificate below has nothing to do with `monerod-3-tls`
+            root_certificates_path: PathBuf::from("./tests/certificates/monero_gen_server.crt"),
+            danger_skip_hostname_verification: true,
+        }),
+        client: None,
+    };
+    let rpc_client = RpcClient::new(
+        monerod_3_tls_url.clone(),
+        Some(monero_3_tls_config_server_incorrect_cert),
+    )
+    .daemon()
+    .regtest();
+    assert!(rpc_client.get_block_count().await.is_err());
+
+    // with `TlsConfig` field 'server`, certificate is valid and we **do not** skip hostname verification
+    let monero_3_tls_config_server_valid_cert_without_hostname_verification = TlsConfig {
+        server: Some(TlsServerConfig {
+            root_certificates_path: PathBuf::from(
+                "./tests/certificates/monero_openssl_with_cn_server.crt",
+            ),
+            danger_skip_hostname_verification: false,
+        }),
+        client: None,
+    };
+    let rpc_client = RpcClient::new(
+        monerod_3_tls_url.clone(),
+        Some(monero_3_tls_config_server_valid_cert_without_hostname_verification),
+    )
+    .daemon()
+    .regtest();
+    assert!(rpc_client.get_block_count().await.is_ok());
+
+    // this monerod daemon uses the SSL certificate that is generated by `monero-gen-ssl-cert`;
+    // but what we are interested in this case is that this monerod daemon only accepts
+    // clients that possess allowed certificates/identities
+    let monerod_4_tls_url = format!("https://{}:18093", dhost);
+    let monerod_4_server_config = Some(TlsServerConfig {
+        root_certificates_path: PathBuf::from("./tests/certificates/monero_gen_server.crt"),
+        danger_skip_hostname_verification: true,
+    });
+
+    // with `TlsConfig` field `client`, with correct `client.identity_path`, and
+    // correct `client.password`
+    let monerod_4_client_config_correct_identity_and_password = TlsClientConfig {
+        identity_path: PathBuf::from("./tests/certificates/monero_client.pfx"),
+        password: None,
+    };
+    let rpc_client = RpcClient::new(
+        monerod_4_tls_url.clone(),
+        Some(TlsConfig {
+            server: monerod_4_server_config.clone(),
+            client: Some(monerod_4_client_config_correct_identity_and_password),
+        }),
+    )
+    .daemon()
+    .regtest();
+    assert!(rpc_client.get_block_count().await.is_ok());
+
+    // with `TlsConfig` field `client`, with correct `client.identity_path`, and
+    // incorrect `client.password`
+    let monerod_4_client_config_correct_identity_and_incorrect_password = TlsClientConfig {
+        identity_path: PathBuf::from("./tests/certificates/monero_client.pfx"),
+        password: Some("wrong :)".to_string()),
+    };
+    let rpc_client_should_err = std::panic::catch_unwind(|| {
+        RpcClient::new(
+            monerod_4_tls_url.clone(),
+            Some(TlsConfig {
+                server: monerod_4_server_config.clone(),
+                client: Some(monerod_4_client_config_correct_identity_and_incorrect_password),
+            }),
+        )
+        .daemon()
+        .regtest();
+    });
+    assert!(rpc_client_should_err.is_err());
+
+    // with `TlsConfig` field `client`, with uncorrelated `client.identity_path`
+    // with correct `client.password` of the `client.identity_path` passed
+    let monerod_4_client_config_incorrect_identity_and_correct_password = TlsClientConfig {
+        identity_path: PathBuf::from("./tests/certificates/monero_gen_server.pfx"),
+        password: None,
+    };
+    let rpc_client = RpcClient::new(
+        monerod_4_tls_url.clone(),
+        Some(TlsConfig {
+            server: monerod_4_server_config.clone(),
+            client: Some(monerod_4_client_config_incorrect_identity_and_correct_password),
+        }),
+    )
+    .daemon()
+    .regtest();
+    assert!(rpc_client.get_block_count().await.is_err());
 }
