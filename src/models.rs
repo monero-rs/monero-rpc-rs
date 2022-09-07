@@ -22,7 +22,7 @@ use monero::{
     },
     Address,
 };
-use serde::{Deserialize, Deserializer, Serialize};
+use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use std::{collections::HashMap, num::NonZeroU64};
 
 macro_rules! hash_type {
@@ -223,6 +223,41 @@ pub enum TransferPriority {
     Priority,
 }
 
+impl Serialize for TransferPriority {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        serializer.serialize_u8(match self {
+            TransferPriority::Default => 0,
+            TransferPriority::Unimportant => 1,
+            TransferPriority::Elevated => 2,
+            TransferPriority::Priority => 3,
+        })
+    }
+}
+
+impl<'de> Deserialize<'de> for TransferPriority {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        let v = u8::deserialize(deserializer)?;
+        Ok(match v {
+            0 => TransferPriority::Default,
+            1 => TransferPriority::Unimportant,
+            2 => TransferPriority::Elevated,
+            3 => TransferPriority::Priority,
+            other => {
+                return Err(serde::de::Error::custom(format!(
+                    "Invalid variant {}, expected 0-3",
+                    other
+                )))
+            }
+        })
+    }
+}
+
 /// Return type of wallet `transfer`.
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct TransferData {
@@ -283,6 +318,19 @@ pub enum TransferType {
     All,
     Available,
     Unavailable,
+}
+
+impl Serialize for TransferType {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        serializer.serialize_str(match self {
+            TransferType::All => "all",
+            TransferType::Available => "available",
+            TransferType::Unavailable => "unavailable",
+        })
+    }
 }
 
 /// Return type of wallet `incoming_transfers`.
