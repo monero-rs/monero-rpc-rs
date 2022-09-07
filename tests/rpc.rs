@@ -12,8 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#[cfg(feature = "client")]
 mod clients_tests;
 
+#[cfg(feature = "client")]
 #[tokio::test]
 async fn main_functional_test() {
     /* FAQ:
