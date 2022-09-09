@@ -53,9 +53,12 @@ use std::{
     collections::HashMap,
     convert::TryFrom,
     fmt::Debug,
+    fs::File,
+    io::Read,
     iter::{empty, once},
     num::NonZeroU64,
     ops::{Deref, RangeInclusive},
+    path::PathBuf,
     sync::Arc,
 };
 use tracing::*;
@@ -91,6 +94,144 @@ impl From<RpcParams> for Params {
             RpcParams::None => Params::None,
         }
     }
+}
+
+/// TLS configuration to pass to `RpcClient`.
+#[derive(Debug, Clone)]
+pub struct TlsConfig {
+    /// Field releated to what is returned by the server you are connecting to, for example
+    /// trusting self-signed certificates.
+    pub server: Option<TlsServerConfig>,
+
+    /// Field related to client authentication using TLS certificates.
+    pub client: Option<TlsClientConfig>,
+}
+
+impl From<TlsConfig> for reqwest::ClientBuilder {
+    fn from(tls_config: TlsConfig) -> Self {
+        let base_builder = reqwest::ClientBuilder::new();
+
+        let from_server_tls_config = if let Some(server_config) = tls_config.server {
+            server_config.to_http_client_builder(base_builder)
+        } else {
+            base_builder
+        };
+
+        if let Some(client_config) = tls_config.client {
+            client_config.to_http_client_builder(from_server_tls_config)
+        } else {
+            from_server_tls_config
+        }
+    }
+}
+
+/// Configuration related to TLS information returned by the server when connecting to it.
+#[derive(Debug, Clone)]
+pub struct TlsServerConfig {
+    /// Path to a PEM encoded certificate to add as a custom root.
+    /// Useful to connect to a daemon that has a self-signed certificate.
+    pub root_certificates_path: PathBuf,
+
+    /// Skip the verification that checks if the `CN` field of the certificate matches
+    /// with the URL you are connecting to.
+    ///
+    /// # Note
+    ///
+    /// Certificates created by `monerod` and `monero-gen-ssl-cert` have an empty
+    /// `subjects` field, so there is no `CN` set. Thus, skipping hostname verification
+    /// may make sense in this case.
+    ///
+    /// # Warning
+    ///
+    /// Read the warning at [https://docs.rs/reqwest/latest/reqwest/struct.ClientBuilder.html#method.danger_accept_invalid_hostnames](https://docs.rs/reqwest/latest/reqwest/struct.ClientBuilder.html#method.danger_accept_invalid_hostnames)
+    /// to know if it really makes sense to use this option, since it introduces attack vectors.
+    pub danger_skip_hostname_verification: bool,
+}
+
+/// Configuration related to client authentication to a server.
+/// Use this if the server you are connecting to requires you to prove your identity by
+/// using a certificate.
+#[derive(Debug, Clone)]
+pub struct TlsClientConfig {
+    /// Path to a DER formatted PKCS 12 identity archive file.
+    pub identity_path: PathBuf,
+    /// Password to decrypt the key of the identity archive file.
+    pub password: Option<String>,
+}
+
+trait ToHttpClientBuilder {
+    fn to_http_client_builder(
+        &self,
+        base_http_client_builder: reqwest::ClientBuilder,
+    ) -> reqwest::ClientBuilder;
+}
+
+impl ToHttpClientBuilder for TlsServerConfig {
+    fn to_http_client_builder(
+        &self,
+        base_http_client_builder: reqwest::ClientBuilder,
+    ) -> reqwest::ClientBuilder {
+        let TlsServerConfig {
+            root_certificates_path,
+            danger_skip_hostname_verification,
+        } = self;
+
+        let root_certificates_path_str = root_certificates_path.to_string_lossy();
+
+        let mut buf = Vec::new();
+        read_file_to_buf(root_certificates_path, &mut buf);
+
+        let cert = reqwest::Certificate::from_pem(&buf).unwrap_or_else(|_| {
+            panic!(
+                "Couldn't create Certificate from file {}",
+                root_certificates_path_str,
+            )
+        });
+
+        base_http_client_builder
+            .add_root_certificate(cert)
+            .danger_accept_invalid_hostnames(*danger_skip_hostname_verification)
+    }
+}
+
+impl ToHttpClientBuilder for TlsClientConfig {
+    fn to_http_client_builder(
+        &self,
+        base_http_client_builder: reqwest::ClientBuilder,
+    ) -> reqwest::ClientBuilder {
+        let TlsClientConfig {
+            identity_path,
+            password,
+        } = self;
+
+        let password = password.as_deref().unwrap_or("");
+
+        let mut buf = Vec::new();
+
+        read_file_to_buf(identity_path, &mut buf);
+
+        let identity =
+            reqwest::Identity::from_pkcs12_der(&buf, password).expect("Couldn't create Identity");
+        base_http_client_builder.identity(identity)
+    }
+}
+
+fn read_file_to_buf(path: &PathBuf, buf: &mut Vec<u8>) {
+    let path_str = path.to_string_lossy();
+    let mut file = File::open(path).unwrap_or_else(|_| panic!("Couldn't open file {}", path_str));
+
+    file.read_to_end(buf)
+        .unwrap_or_else(|_| panic!("Couldn't read file {}", path_str));
+}
+
+fn create_http_client(tls_config: Option<TlsConfig>) -> reqwest::Result<reqwest::Client> {
+    let final_client_builder = if let Some(tls_config) = tls_config {
+        reqwest::ClientBuilder::from(tls_config)
+    } else {
+        reqwest::ClientBuilder::new()
+    };
+
+    final_client_builder.build()
 }
 
 #[derive(Clone, Debug)]
@@ -193,10 +334,12 @@ pub struct RpcClient {
 
 impl RpcClient {
     /// Create a new generic RPC client that can be transformed into specialized client.
-    pub fn new(addr: String) -> Self {
+    pub fn new(addr: String, tls_config: Option<TlsConfig>) -> Self {
+        let http_client = create_http_client(tls_config);
+
         Self {
             inner: CallerWrapper(Arc::new(RemoteCaller {
-                http_client: reqwest::ClientBuilder::new().build().unwrap(),
+                http_client: http_client.unwrap(),
                 addr,
             })),
         }
