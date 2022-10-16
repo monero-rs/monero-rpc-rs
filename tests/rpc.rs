@@ -12,6 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+use std::env;
+use monero_rpc::{RpcAuthentication, RpcClient, WalletClient};
+
 mod clients_tests;
 
 #[tokio::test]
@@ -57,4 +60,34 @@ async fn main_functional_test() {
     res.unwrap();
 
     clients_tests::all_clients_interaction::run().await;
+}
+
+
+fn setup_rpc_auth_client(username: &str, password: &str) -> WalletClient {
+    let whost = env::var("MONERO_WALLET_HOST_1").unwrap_or_else(|_| "localhost".into());
+    let rpc_credentials = RpcAuthentication::Credentials {
+        username: username.into(),
+        password: password.into()
+    };
+    let rpc_client = RpcClient::with_authentication(
+        format!("http://{}:18084", whost),
+        rpc_credentials).wallet();
+
+    rpc_client
+}
+
+#[tokio::test]
+async fn test_rpc_auth() {
+    let rpc_client = setup_rpc_auth_client("foo", "bar");
+    assert!(rpc_client.get_version().await.is_ok());
+
+    let version = rpc_client.get_version().await.unwrap();
+    assert!(version.0 > 0);
+}
+
+#[tokio::test]
+async fn test_rpc_auth_fail() {
+    let rpc_client = setup_rpc_auth_client("invalid", "auth");
+
+    assert!(rpc_client.get_version().await.is_err());
 }
