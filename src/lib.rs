@@ -69,9 +69,18 @@ use std::{
 use tracing::*;
 use uuid::Uuid;
 
+use diqwest::WithDigestAuth;
+use crate::RpcAuthentication::Credentials;
+
 enum RpcParams {
     Array(Box<dyn Iterator<Item = Value> + Send + 'static>),
     Map(Box<dyn Iterator<Item = (String, Value)> + Send + 'static>),
+    None,
+}
+
+#[derive(Clone, Debug)]
+pub enum RpcAuthentication {
+    Credentials{username: String, password: String},
     None,
 }
 
@@ -105,6 +114,7 @@ impl From<RpcParams> for Params {
 struct RemoteCaller {
     http_client: reqwest::Client,
     addr: String,
+    rpc_auth: RpcAuthentication
 }
 
 impl RemoteCaller {
@@ -125,13 +135,19 @@ impl RemoteCaller {
 
         trace!("Sending JSON-RPC method call: {:?}", method_call);
 
-        let rsp = client
+        let req = client
             .post(&uri)
-            .json(&method_call)
-            .send()
-            .await?
-            .json::<response::Output>()
-            .await?;
+            .json(&method_call);
+
+        let rsp = if let Credentials{username, password} = &self.rpc_auth {
+            req.send_with_digest_auth(username, password).await?
+                .json::<response::Output>()
+                .await?
+        } else{
+            req.send().await?
+                .json::<response::Output>()
+                .await?
+        };
 
         trace!("Received JSON-RPC response: {:?}", rsp);
         let v = jsonrpc_core::Result::<Value>::from(rsp);
@@ -206,6 +222,17 @@ impl RpcClient {
             inner: CallerWrapper(Arc::new(RemoteCaller {
                 http_client: reqwest::ClientBuilder::new().build().unwrap(),
                 addr,
+                rpc_auth: RpcAuthentication::None
+            })),
+        }
+    }
+
+    pub fn with_authentication(addr: String, rpc_auth: RpcAuthentication) -> Self {
+        Self {
+            inner: CallerWrapper(Arc::new(RemoteCaller {
+                http_client: reqwest::ClientBuilder::new().build().unwrap(),
+                addr,
+                rpc_auth
             })),
         }
     }
