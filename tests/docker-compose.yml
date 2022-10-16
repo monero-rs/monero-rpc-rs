@@ -18,3 +18,18 @@ services:
       - "monerod"
     ports:
       - 18083:18083
+
+  monero-wallet-rpc-authentication:
+    image: ghcr.io/farcaster-project/containers/monero-wallet-rpc:0.18.0.0
+    depends_on:
+      - "monerod"
+    ports:
+      - 18084:18084
+    command: >
+      monero-wallet-rpc --rpc-login foo:bar 
+                        --wallet-dir wallets 
+                        --daemon-address monerod:18081 
+                        --rpc-bind-ip 0.0.0.0 
+                        --rpc-bind-port 18084
+                        --confirm-external-bind 
+                        --trusted-daemon
