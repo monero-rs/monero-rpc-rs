@@ -13,7 +13,8 @@
 // limitations under the License.
 
 use std::env;
-use monero_rpc::{RpcAuthentication, RpcClient, WalletClient};
+use monero::Hash;
+use monero_rpc::{RpcAuthentication, RpcClient};
 
 mod clients_tests;
 
@@ -63,22 +64,47 @@ async fn main_functional_test() {
 }
 
 
-fn setup_rpc_auth_client(username: &str, password: &str) -> WalletClient {
+fn setup_rpc_auth_client(username: &str, password: &str, port: u32) -> RpcClient {
     let whost = env::var("MONERO_WALLET_HOST_1").unwrap_or_else(|_| "localhost".into());
     let rpc_credentials = RpcAuthentication::Credentials {
         username: username.into(),
         password: password.into()
     };
     let rpc_client = RpcClient::with_authentication(
-        format!("http://{}:18084", whost),
-        rpc_credentials).wallet();
+        format!("http://{}:{}", whost, port),
+        rpc_credentials);
 
     rpc_client
 }
 
 #[tokio::test]
+async fn test_daemon_rpc_auth() {
+    let rpc_client = setup_rpc_auth_client("foo", "bar", 18085).daemon();
+    let daemon_transactions = rpc_client.get_block_count().await;
+
+    assert!(daemon_transactions.is_ok());
+}
+
+#[tokio::test]
+async fn test_daemon_rpc_auth_fail() {
+    let rpc_client = setup_rpc_auth_client("invalid", "bar", 18085).daemon();
+    let daemon_transactions = rpc_client.get_block_count().await;
+
+    assert!(daemon_transactions.is_err());
+}
+
+#[tokio::test]
+async fn test_daemon_rpc_rpc_auth() {
+    let rpc_client = setup_rpc_auth_client("foo", "bar", 18085).daemon_rpc();
+    let transactions = vec![Hash::from_low_u64_be(1)];
+    let daemon_transactions = rpc_client.get_transactions(transactions, Some(true), Some(true)).await;
+
+    assert!(daemon_transactions.is_ok());
+}
+
+#[tokio::test]
 async fn test_rpc_auth() {
-    let rpc_client = setup_rpc_auth_client("foo", "bar");
+    let rpc_client = setup_rpc_auth_client("foo", "bar", 18084).wallet();
     assert!(rpc_client.get_version().await.is_ok());
 
     let version = rpc_client.get_version().await.unwrap();
@@ -87,7 +113,7 @@ async fn test_rpc_auth() {
 
 #[tokio::test]
 async fn test_rpc_auth_fail() {
-    let rpc_client = setup_rpc_auth_client("invalid", "auth");
+    let rpc_client = setup_rpc_auth_client("invalid", "auth", 18084).wallet();
 
     assert!(rpc_client.get_version().await.is_err());
 }
