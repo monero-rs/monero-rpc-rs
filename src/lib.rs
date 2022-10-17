@@ -132,11 +132,13 @@ impl RemoteCaller {
             .json(&method_call);
 
         let rsp = if let Credentials{username, password} = &self.rpc_auth {
-            req.send_with_digest_auth(username, password).await?
+            req.send_with_digest_auth(username, password)
+                .await?
                 .json::<response::Output>()
                 .await?
         } else{
-            req.send().await?
+            req.send()
+                .await?
                 .json::<response::Output>()
                 .await?
         };
@@ -161,13 +163,21 @@ impl RemoteCaller {
             json_params
         );
 
-        let rsp = client
+        let req = client
             .post(uri)
-            .json(&json_params)
-            .send()
-            .await?
-            .json::<T>()
-            .await?;
+            .json(&json_params);
+
+        let rsp = if let Credentials{username, password} = &self.rpc_auth {
+            req.send_with_digest_auth(username, password)
+                .await?
+                .json::<T>()
+                .await?
+        } else{
+            req.send()
+                .await?
+                .json::<T>()
+                .await?
+        };
 
         trace!("Received daemon RPC response: {:?}", rsp);
 
