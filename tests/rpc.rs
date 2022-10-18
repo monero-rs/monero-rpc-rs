@@ -12,9 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use std::env;
 use monero::Hash;
 use monero_rpc::{RpcAuthentication, RpcClient};
+use std::env;
 
 mod clients_tests;
 
@@ -63,16 +63,14 @@ async fn main_functional_test() {
     clients_tests::all_clients_interaction::run().await;
 }
 
-
 fn setup_rpc_auth_client(username: &str, password: &str, port: u32) -> RpcClient {
     let whost = env::var("MONERO_WALLET_HOST_1").unwrap_or_else(|_| "localhost".into());
     let rpc_credentials = RpcAuthentication::Credentials {
         username: username.into(),
-        password: password.into()
+        password: password.into(),
     };
-    let rpc_client = RpcClient::with_authentication(
-        format!("http://{}:{}", whost, port),
-        rpc_credentials);
+    let rpc_client =
+        RpcClient::with_authentication(format!("http://{}:{}", whost, port), rpc_credentials);
 
     rpc_client
 }
@@ -97,7 +95,9 @@ async fn test_daemon_rpc_auth_fail() {
 async fn test_daemon_rpc_rpc_auth() {
     let rpc_client = setup_rpc_auth_client("foo", "bar", 18085).daemon_rpc();
     let transactions = vec![Hash::from_low_u64_be(1)];
-    let daemon_transactions = rpc_client.get_transactions(transactions, Some(true), Some(true)).await;
+    let daemon_transactions = rpc_client
+        .get_transactions(transactions, Some(true), Some(true))
+        .await;
 
     assert!(daemon_transactions.is_ok());
 }

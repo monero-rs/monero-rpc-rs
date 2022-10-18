@@ -12,29 +12,13 @@ jobs:
       matrix:
         monero: [ 0.17.3.0, 0.17.3.2, 0.18.0.0 ]
 
-    services:
-      monerod:
-        image: ghcr.io/farcaster-project/containers/monerod:${{ matrix.monero }}
-        env:
-          NETWORK: regtest
-          MONEROD_RPC_PORT: 18081
-          MONEROD_ZMQ_PORT: 18082
-          OFFLINE: --offline
-          DIFFICULTY: 1
-        ports:
-        - 18081:18081
-        - 18082:18082
-      monero-wallet-rpc:
-        image: ghcr.io/farcaster-project/containers/monero-wallet-rpc:${{ matrix.monero }}
-        env:
-          MONERO_DAEMON_ADDRESS: monerod:18081
-          MONERO_DAEMON_HOST: monerod:18081
-          WALLET_RPC_PORT: 18083
-        ports:
-        - 18083:18083
-
     steps:
       - uses: actions/checkout@v3
+
+      - name: Spin up containers
+        run: docker-compose -f tests/docker-compose.yml up -d
+        env:
+          MONERO_VERSION: ${{ matrix.monero }}
 
       - name: Install Rust Stable
         uses: actions-rs/toolchain@v1
