@@ -69,8 +69,8 @@ use std::{
 use tracing::*;
 use uuid::Uuid;
 
-use diqwest::WithDigestAuth;
 use crate::RpcAuthentication::Credentials;
+use diqwest::WithDigestAuth;
 
 enum RpcParams {
     Array(Box<dyn Iterator<Item = Value> + Send + 'static>),
@@ -80,7 +80,7 @@ enum RpcParams {
 
 #[derive(Clone, Debug)]
 pub enum RpcAuthentication {
-    Credentials{username: String, password: String},
+    Credentials { username: String, password: String },
     None,
 }
 
@@ -114,7 +114,7 @@ impl From<RpcParams> for Params {
 struct RemoteCaller {
     http_client: reqwest::Client,
     addr: String,
-    rpc_auth: RpcAuthentication
+    rpc_auth: RpcAuthentication,
 }
 
 impl RemoteCaller {
@@ -135,20 +135,15 @@ impl RemoteCaller {
 
         trace!("Sending JSON-RPC method call: {:?}", method_call);
 
-        let req = client
-            .post(&uri)
-            .json(&method_call);
+        let req = client.post(&uri).json(&method_call);
 
-        let rsp = if let Credentials{username, password} = &self.rpc_auth {
+        let rsp = if let Credentials { username, password } = &self.rpc_auth {
             req.send_with_digest_auth(username, password)
                 .await?
                 .json::<response::Output>()
                 .await?
-        } else{
-            req.send()
-                .await?
-                .json::<response::Output>()
-                .await?
+        } else {
+            req.send().await?.json::<response::Output>().await?
         };
 
         trace!("Received JSON-RPC response: {:?}", rsp);
@@ -171,20 +166,15 @@ impl RemoteCaller {
             json_params
         );
 
-        let req = client
-            .post(uri)
-            .json(&json_params);
+        let req = client.post(uri).json(&json_params);
 
-        let rsp = if let Credentials{username, password} = &self.rpc_auth {
+        let rsp = if let Credentials { username, password } = &self.rpc_auth {
             req.send_with_digest_auth(username, password)
                 .await?
                 .json::<T>()
                 .await?
-        } else{
-            req.send()
-                .await?
-                .json::<T>()
-                .await?
+        } else {
+            req.send().await?.json::<T>().await?
         };
 
         trace!("Received daemon RPC response: {:?}", rsp);
@@ -232,7 +222,7 @@ impl RpcClient {
             inner: CallerWrapper(Arc::new(RemoteCaller {
                 http_client: reqwest::ClientBuilder::new().build().unwrap(),
                 addr,
-                rpc_auth: RpcAuthentication::None
+                rpc_auth: RpcAuthentication::None,
             })),
         }
     }
@@ -242,7 +232,7 @@ impl RpcClient {
             inner: CallerWrapper(Arc::new(RemoteCaller {
                 http_client: reqwest::ClientBuilder::new().build().unwrap(),
                 addr,
-                rpc_auth
+                rpc_auth,
             })),
         }
     }

@@ -4,6 +4,8 @@ services:
     image: ghcr.io/farcaster-project/containers/monerod:0.18.1.2
     environment:
       NETWORK: regtest
+      MONEROD_RPC_PORT: 18081
+      MONEROD_ZMQ_PORT: 18082
       OFFLINE: --offline
       DIFFICULTY: 1
     ports:
@@ -13,6 +15,7 @@ services:
     image: ghcr.io/farcaster-project/containers/monero-wallet-rpc:0.18.1.2
     environment:
       MONERO_DAEMON_ADDRESS: monerod:18081
+      MONERO_DAEMON_HOST: monerod:18081
       WALLET_RPC_PORT: 18083
     depends_on:
       - "monerod"
@@ -20,7 +23,7 @@ services:
       - 18083:18083
 
   monerod-rpc-authentication:
-    image: ghcr.io/farcaster-project/containers/monerod:0.18.0.0
+    image: ghcr.io/farcaster-project/containers/monerod:${MONERO_VERSION:-0.18.1.2}
     depends_on:
       - "monerod"
     ports:
@@ -36,7 +39,7 @@ services:
               --fixed-difficulty 1
 
   monero-wallet-rpc-authentication:
-    image: ghcr.io/farcaster-project/containers/monero-wallet-rpc:0.18.0.0
+    image: ghcr.io/farcaster-project/containers/monero-wallet-rpc:${MONERO_VERSION:-0.18.1.2}
     depends_on:
       - "monerod"
     ports:
