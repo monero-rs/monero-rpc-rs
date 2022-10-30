@@ -61,7 +61,10 @@ mod models;
 
 pub use self::{models::*, util::*};
 
+use derive_more::From;
 use jsonrpc_core::types::{Id, *};
+pub use jsonrpsee::core::RpcResult;
+use jsonrpsee::proc_macros::rpc;
 use monero::{
     cryptonote::{hash::Hash as CryptoNoteHash, subaddress},
     util::{address::PaymentId, amount},
@@ -69,10 +72,11 @@ use monero::{
 };
 use serde::{de::IgnoredAny, Deserialize, Deserializer, Serialize, Serializer};
 use serde_json::{json, Value};
+use serde_with::*;
 use std::{
     collections::HashMap,
     convert::TryFrom,
-    fmt::Debug,
+    fmt::{Debug, Display},
     iter::{empty, once},
     num::NonZeroU64,
     ops::{Deref, RangeInclusive},
@@ -83,6 +87,135 @@ use uuid::Uuid;
 
 #[cfg(feature = "rpc_authentication")]
 use diqwest::WithDigestAuth;
+
+#[derive(Clone, Debug, From, PartialEq, Eq, Default)]
+/// Wrapper over bytes::Bytes that implements serde::Serialize and serde::Deserialize.
+pub struct Bytes(pub bytes::Bytes);
+
+impl From<Bytes> for bytes::Bytes {
+    fn from(v: Bytes) -> Self {
+        v.0
+    }
+}
+
+impl Display for Bytes {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", hex::encode(&self.0))
+    }
+}
+
+impl Serialize for Bytes {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        serializer.serialize_str(&self.to_string())
+    }
+}
+
+impl<'de> Deserialize<'de> for Bytes {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        let s = String::deserialize(deserializer)?;
+        Ok(Self::from(bytes::Bytes::from(
+            hex::decode(s.strip_prefix("0x").unwrap_or(&s)).map_err(serde::de::Error::custom)?,
+        )))
+    }
+}
+
+#[serde_as]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+pub struct PaidResponse<T> {
+    #[serde(flatten)]
+    pub inner: T,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub credits: Option<u64>,
+    #[serde_as(as = "NoneAsEmptyString")]
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub top_hash: Option<BlockHash>,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct BlockResponse {
+    pub block_data: monero::Block,
+    pub untrusted: bool,
+}
+
+#[derive(Serialize, Deserialize)]
+struct BlockResponseRaw {
+    blob: Bytes,
+    untrusted: bool,
+}
+
+impl Serialize for BlockResponse {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        BlockResponseRaw {
+            blob: bytes::Bytes::from(monero::consensus::encode::serialize(&self.block_data)).into(),
+            untrusted: self.untrusted,
+        }
+        .serialize(serializer)
+    }
+}
+
+impl<'de> Deserialize<'de> for BlockResponse {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        let raw = BlockResponseRaw::deserialize(deserializer)?;
+
+        Ok(Self {
+            block_data: monero::consensus::deserialize(&raw.blob.0[..])
+                .map_err(|e| serde::de::Error::custom(format!("failed to decode block: {e}")))?,
+            untrusted: raw.untrusted,
+        })
+    }
+}
+
+#[rpc(server, client)]
+pub trait DaemonApi {
+    #[method(name = "get_block_count")]
+    async fn get_block_count(&self) -> RpcResult<NonZeroU64>;
+    #[method(name = "on_get_block_hash")]
+    async fn on_get_block_hash(&self, height: u64) -> RpcResult<BlockHash>;
+    #[method(name = "get_block_template", param_kind = map)]
+    async fn get_block_template(
+        &self,
+        wallet_address: Address,
+        reserve_size: u64,
+    ) -> RpcResult<BlockTemplate>;
+    #[method(name = "submit_block")]
+    async fn submit_block(&self, block_blob_data: Bytes) -> RpcResult<()>;
+    #[method(name = "get_last_block_header")]
+    async fn get_last_block_header(&self) -> RpcResult<PaidResponse<BlockHeaderResponseOuter>>;
+    #[method(name = "get_block_header_by_height")]
+    async fn get_block_header_by_height(
+        &self,
+        height: u64,
+    ) -> RpcResult<PaidResponse<BlockHeaderResponseOuter>>;
+    #[method(name = "get_block_header_by_hash")]
+    async fn get_block_header_by_hash(
+        &self,
+        hash: HashString<BlockHash>,
+    ) -> RpcResult<PaidResponse<BlockHeaderResponseOuter>>;
+    #[method(name = "get_block_headers_range", param_kind=map)]
+    async fn get_block_headers_range(
+        &self,
+        start_height: usize,
+        end_height: usize,
+    ) -> RpcResult<PaidResponse<Vec<BlockHeaderResponse>>>;
+    #[method(name = "get_block", param_kind = map)]
+    async fn get_block(
+        &self,
+        height: Option<u64>,
+        hash: Option<HashString<BlockHash>>,
+    ) -> RpcResult<PaidResponse<BlockResponse>>;
+}
 
 enum RpcParams {
     Array(Box<dyn Iterator<Item = Value> + Send + 'static>),

@@ -68,8 +68,8 @@ pub struct BlockTemplate {
     pub untrusted: bool,
 }
 
-#[derive(Deserialize)]
-pub(crate) struct BlockHeaderResponseR {
+#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
+pub struct BlockHeaderResponseR {
     pub block_size: u64,
     pub depth: u64,
     pub difficulty: u64,
@@ -105,6 +105,11 @@ impl From<BlockHeaderResponseR> for BlockHeaderResponse {
             timestamp: value.timestamp,
         }
     }
+}
+
+#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
+pub struct BlockHeaderResponseOuter {
+    pub block_header: BlockHeaderResponseR,
 }
 
 /// Return type of daemon `get_block_header` and `get_block_headers_range`.
