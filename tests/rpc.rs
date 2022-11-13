@@ -63,6 +63,7 @@ async fn main_functional_test() {
     clients_tests::all_clients_interaction::run().await;
 }
 
+#[cfg(feature = "rpc_authentication")]
 fn setup_rpc_auth_client(username: &str, password: &str, port: u32) -> RpcClient {
     let whost = env::var("MONERO_WALLET_HOST_1").unwrap_or_else(|_| "localhost".into());
     let rpc_credentials = RpcAuthentication::Credentials {
@@ -76,6 +77,7 @@ fn setup_rpc_auth_client(username: &str, password: &str, port: u32) -> RpcClient
 }
 
 #[tokio::test]
+#[cfg(feature = "rpc_authentication")]
 async fn test_daemon_rpc_auth() {
     let rpc_client = setup_rpc_auth_client("foo", "bar", 18085).daemon();
     let daemon_transactions = rpc_client.get_block_count().await;
@@ -84,6 +86,7 @@ async fn test_daemon_rpc_auth() {
 }
 
 #[tokio::test]
+#[cfg(feature = "rpc_authentication")]
 async fn test_daemon_rpc_auth_fail() {
     let rpc_client = setup_rpc_auth_client("invalid", "bar", 18085).daemon();
     let daemon_transactions = rpc_client.get_block_count().await;
@@ -92,6 +95,7 @@ async fn test_daemon_rpc_auth_fail() {
 }
 
 #[tokio::test]
+#[cfg(feature = "rpc_authentication")]
 async fn test_daemon_rpc_rpc_auth() {
     let rpc_client = setup_rpc_auth_client("foo", "bar", 18085).daemon_rpc();
     let transactions = vec![Hash::from_low_u64_be(1)];
@@ -103,6 +107,7 @@ async fn test_daemon_rpc_rpc_auth() {
 }
 
 #[tokio::test]
+#[cfg(feature = "rpc_authentication")]
 async fn test_rpc_auth() {
     let rpc_client = setup_rpc_auth_client("foo", "bar", 18084).wallet();
     assert!(rpc_client.get_version().await.is_ok());
@@ -112,6 +117,7 @@ async fn test_rpc_auth() {
 }
 
 #[tokio::test]
+#[cfg(feature = "rpc_authentication")]
 async fn test_rpc_auth_fail() {
     let rpc_client = setup_rpc_auth_client("invalid", "auth", 18084).wallet();
 

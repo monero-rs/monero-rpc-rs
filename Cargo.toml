@@ -13,8 +13,8 @@ description = "RPC client for Monero daemon and wallet"
 [dependencies]
 anyhow = "1"
 chrono = { version = "0.4", features = ["serde"] }
-diqwest = "1.1"
-fixed-hash = "0.7"
+diqwest = { version = "1.1", optional = true }
+fixed-hash = "0.8"
 hex = "0.4"
 http = "0.2"
 jsonrpc-core = "18"
@@ -31,3 +31,6 @@ rand = "0.8.4"
 rustc-hex = "2.1"
 serde_test = "1.0"
 tokio = { version = "1.12.0", features = ["full"] }
+
+[features]
+rpc_authentication = ["dep:diqwest"]
