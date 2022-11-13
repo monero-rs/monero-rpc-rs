@@ -69,7 +69,9 @@ use std::{
 use tracing::*;
 use uuid::Uuid;
 
+#[cfg(feature = "rpc_authentication")]
 use crate::RpcAuthentication::Credentials;
+#[cfg(feature = "rpc_authentication")]
 use diqwest::WithDigestAuth;
 
 enum RpcParams {
@@ -114,6 +116,7 @@ impl From<RpcParams> for Params {
 struct RemoteCaller {
     http_client: reqwest::Client,
     addr: String,
+    #[allow(dead_code)]
     rpc_auth: RpcAuthentication,
 }
 
@@ -137,6 +140,10 @@ impl RemoteCaller {
 
         let req = client.post(&uri).json(&method_call);
 
+        #[cfg(not(feature = "rpc_authentication"))]
+        let rsp = req.send().await?.json::<response::Output>().await?;
+
+        #[cfg(feature = "rpc_authentication")]
         let rsp = if let Credentials { username, password } = &self.rpc_auth {
             req.send_with_digest_auth(username, password)
                 .await?
@@ -168,6 +175,10 @@ impl RemoteCaller {
 
         let req = client.post(uri).json(&json_params);
 
+        #[cfg(not(feature = "rpc_authentication"))]
+        let rsp = req.send().await?.json::<T>().await?;
+
+        #[cfg(feature = "rpc_authentication")]
         let rsp = if let Credentials { username, password } = &self.rpc_auth {
             req.send_with_digest_auth(username, password)
                 .await?

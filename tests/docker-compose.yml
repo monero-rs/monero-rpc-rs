@@ -23,7 +23,7 @@ services:
       - 18083:18083
 
   monerod-rpc-authentication:
-    image: ghcr.io/farcaster-project/containers/monerod:${MONERO_VERSION:-0.18.1.2}
+    image: ghcr.io/farcaster-project/containers/monero-wallet-rpc:0.18.1.2
     depends_on:
       - "monerod"
     ports:
@@ -39,7 +39,7 @@ services:
               --fixed-difficulty 1
 
   monero-wallet-rpc-authentication:
-    image: ghcr.io/farcaster-project/containers/monero-wallet-rpc:${MONERO_VERSION:-0.18.1.2}
+    image: ghcr.io/farcaster-project/containers/monero-wallet-rpc:0.18.1.2
     depends_on:
       - "monerod"
     ports:
