@@ -12,8 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#[cfg(feature = "rpc_authentication")]
 use monero::Hash;
-use monero_rpc::{RpcAuthentication, RpcClient};
+#[cfg(feature = "rpc_authentication")]
+use monero_rpc::RpcAuthentication;
+#[cfg(feature = "rpc_authentication")]
+use monero_rpc::RpcClient;
+#[cfg(feature = "rpc_authentication")]
+use monero_rpc::RpcClientBuilder;
+#[cfg(feature = "rpc_authentication")]
 use std::env;
 
 mod clients_tests;
@@ -63,6 +70,8 @@ async fn main_functional_test() {
     clients_tests::all_clients_interaction::run().await;
 }
 
+// Authentication tests need to run against a monero daemon and wallet rpc with
+// the correct username and password configure ("foo" "bar").
 #[cfg(feature = "rpc_authentication")]
 fn setup_rpc_auth_client(username: &str, password: &str, port: u32) -> RpcClient {
     let whost = env::var("MONERO_WALLET_HOST_1").unwrap_or_else(|_| "localhost".into());
@@ -70,9 +79,10 @@ fn setup_rpc_auth_client(username: &str, password: &str, port: u32) -> RpcClient
         username: username.into(),
         password: password.into(),
     };
-    let rpc_client =
-        RpcClient::with_authentication(format!("http://{}:{}", whost, port), rpc_credentials);
-
+    let rpc_client = RpcClientBuilder::new()
+        .rpc_authentication(rpc_credentials)
+        .build(format!("http://{}:{}", whost, port))
+        .unwrap();
     rpc_client
 }
 

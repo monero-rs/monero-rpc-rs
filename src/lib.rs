@@ -26,7 +26,7 @@
 //! ```rust
 //! use monero_rpc::RpcClient;
 //!
-//! let client = RpcClient::new("http://node.monerooutreach.org:18081".to_string());
+//! let client = RpcClient::new("http://node.monerooutreach.org:18081".to_string()).unwrap();
 //! let daemon = client.daemon();
 //! let regtest_daemon = daemon.regtest();
 //! ```
@@ -34,9 +34,11 @@
 //! The client can be initialized with a proxy, for example a socks5 proxy to enable Tor:
 //!
 //! ```rust
-//! use monero_rpc::RpcClient;
+//! use monero_rpc::RpcClientBuilder;
 //!
-//! let client = RpcClient::with("http://node.monerooutreach.org:18081".to_string(), "socks5://127.0.0.1:9050".to_string());
+//! let client = RpcClientBuilder::new()
+//!     .proxy_address("socks5://127.0.0.1:9050".to_string())
+//!     .build("http://node.monerooutreach.org:18081".to_string());
 //! ```
 
 #![forbid(unsafe_code)]
@@ -70,8 +72,6 @@ use tracing::*;
 use uuid::Uuid;
 
 #[cfg(feature = "rpc_authentication")]
-use crate::RpcAuthentication::Credentials;
-#[cfg(feature = "rpc_authentication")]
 use diqwest::WithDigestAuth;
 
 enum RpcParams {
@@ -80,6 +80,7 @@ enum RpcParams {
     None,
 }
 
+#[cfg(feature = "rpc_authentication")]
 #[derive(Clone, Debug)]
 pub enum RpcAuthentication {
     Credentials { username: String, password: String },
@@ -116,7 +117,7 @@ impl From<RpcParams> for Params {
 struct RemoteCaller {
     http_client: reqwest::Client,
     addr: String,
-    #[allow(dead_code)]
+    #[cfg(feature = "rpc_authentication")]
     rpc_auth: RpcAuthentication,
 }
 
@@ -144,7 +145,7 @@ impl RemoteCaller {
         let rsp = req.send().await?.json::<response::Output>().await?;
 
         #[cfg(feature = "rpc_authentication")]
-        let rsp = if let Credentials { username, password } = &self.rpc_auth {
+        let rsp = if let RpcAuthentication::Credentials { username, password } = &self.rpc_auth {
             req.send_with_digest_auth(username, password)
                 .await?
                 .json::<response::Output>()
@@ -179,7 +180,7 @@ impl RemoteCaller {
         let rsp = req.send().await?.json::<T>().await?;
 
         #[cfg(feature = "rpc_authentication")]
-        let rsp = if let Credentials { username, password } = &self.rpc_auth {
+        let rsp = if let RpcAuthentication::Credentials { username, password } = &self.rpc_auth {
             req.send_with_digest_auth(username, password)
                 .await?
                 .json::<T>()
@@ -226,39 +227,71 @@ pub struct RpcClient {
     inner: CallerWrapper,
 }
 
+#[derive(Clone, Debug)]
+pub struct RpcClientConfig {
+    #[cfg(feature = "rpc_authentication")]
+    rpc_auth: RpcAuthentication,
+    proxy_address: Option<String>,
+}
+
+#[derive(Clone, Debug)]
+pub struct RpcClientBuilder {
+    config: RpcClientConfig,
+}
+
+impl Default for RpcClientBuilder {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl RpcClientBuilder {
+    pub fn new() -> RpcClientBuilder {
+        RpcClientBuilder {
+            config: RpcClientConfig {
+                #[cfg(feature = "rpc_authentication")]
+                rpc_auth: RpcAuthentication::None,
+                proxy_address: None,
+            },
+        }
+    }
+
+    #[cfg(feature = "rpc_authentication")]
+    pub fn rpc_authentication(mut self, auth: RpcAuthentication) -> Self {
+        self.config.rpc_auth = auth;
+        self
+    }
+
+    pub fn proxy_address(mut self, proxy: String) -> Self {
+        self.config.proxy_address = Some(proxy);
+        self
+    }
+
+    pub fn build(self, addr: String) -> anyhow::Result<RpcClient> {
+        let config = self.config;
+        let http_client_builder = reqwest::ClientBuilder::new();
+        let http_client = if let Some(proxy_address) = config.proxy_address {
+            http_client_builder
+                .proxy(reqwest::Proxy::all(proxy_address)?)
+                .build()?
+        } else {
+            http_client_builder.build()?
+        };
+        Ok(RpcClient {
+            inner: CallerWrapper(Arc::new(RemoteCaller {
+                http_client,
+                addr,
+                #[cfg(feature = "rpc_authentication")]
+                rpc_auth: config.rpc_auth,
+            })),
+        })
+    }
+}
+
 impl RpcClient {
     /// Create a new generic RPC client that can be transformed into specialized client.
-    pub fn new(addr: String) -> Self {
-        Self {
-            inner: CallerWrapper(Arc::new(RemoteCaller {
-                http_client: reqwest::ClientBuilder::new().build().unwrap(),
-                addr,
-                rpc_auth: RpcAuthentication::None,
-            })),
-        }
-    }
-
-    pub fn with_authentication(addr: String, rpc_auth: RpcAuthentication) -> Self {
-        Self {
-            inner: CallerWrapper(Arc::new(RemoteCaller {
-                http_client: reqwest::ClientBuilder::new().build().unwrap(),
-                addr,
-                rpc_auth,
-            })),
-        }
-    }
-
-    /// Create a new generic RPC client with a proxy
-    pub fn with(addr: String, proxy_address: String) -> Self {
-        Self {
-            inner: CallerWrapper(Arc::new(RemoteCaller {
-                http_client: reqwest::Client::builder()
-                    .proxy(reqwest::Proxy::all(proxy_address).unwrap())
-                    .build()
-                    .unwrap(),
-                addr,
-            })),
-        }
+    pub fn new(addr: String) -> anyhow::Result<Self> {
+        RpcClientBuilder::new().build(addr)
     }
 
     /// Transform the client into the specialized `DaemonJsonRpcClient` that interacts with JSON RPC
@@ -291,7 +324,7 @@ impl RpcClient {
 /// ```rust
 /// use monero_rpc::RpcClient;
 ///
-/// let client = RpcClient::new("http://node.monerooutreach.org:18081".to_string());
+/// let client = RpcClient::new("http://node.monerooutreach.org:18081".to_string()).unwrap();
 /// let daemon = client.daemon();
 /// let regtest_daemon = daemon.regtest();
 /// ```
@@ -469,7 +502,7 @@ impl DaemonJsonRpcClient {
 /// ```rust
 /// use monero_rpc::RpcClient;
 ///
-/// let client = RpcClient::new("http://node.monerooutreach.org:18081".to_string());
+/// let client = RpcClient::new("http://node.monerooutreach.org:18081".to_string()).unwrap();
 /// let daemon = client.daemon_rpc();
 /// ```
 #[derive(Clone, Debug)]
@@ -584,7 +617,7 @@ impl<'de> Deserialize<'de> for TransferPriority {
 /// ```rust
 /// use monero_rpc::RpcClient;
 ///
-/// let client = RpcClient::new("http://127.0.0.1:18083".to_string());
+/// let client = RpcClient::new("http://127.0.0.1:18083".to_string()).unwrap();
 /// let daemon = client.wallet();
 /// ```
 #[derive(Clone, Debug)]
