@@ -581,7 +581,10 @@ mod tests {
             orphan_status: true,
             prev_hash: HashString(BlockHash::repeat_byte(12)),
             reward: Amount::from_pico(12),
-            timestamp: DateTime::<Utc>::from_utc(NaiveDateTime::from_timestamp(61, 0), Utc),
+            timestamp: DateTime::<Utc>::from_utc(
+                NaiveDateTime::from_timestamp_opt(61, 0).unwrap(),
+                Utc,
+            ),
         };
 
         let expected_bhr = BlockHeaderResponse {
@@ -597,7 +600,10 @@ mod tests {
             orphan_status: true,
             prev_hash: BlockHash::repeat_byte(12),
             reward: Amount::from_pico(12),
-            timestamp: DateTime::<Utc>::from_utc(NaiveDateTime::from_timestamp(61, 0), Utc),
+            timestamp: DateTime::<Utc>::from_utc(
+                NaiveDateTime::from_timestamp_opt(61, 0).unwrap(),
+                Utc,
+            ),
         };
 
         assert_eq!(BlockHeaderResponse::from(bhrr), expected_bhr);
