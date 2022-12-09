@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Removed
+
+- Disable chrono default features by @silverpill ([#87](https://github.com/monero-ecosystem/monero-rpc-rs/pull/87))
+
 ## [0.2.0] - 2022-07-29
 
 ### Added
