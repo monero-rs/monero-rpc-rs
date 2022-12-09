@@ -447,7 +447,7 @@ pub async fn run() {
         subaddr_index: Index { major: 0, minor: 0 },
         suggested_confirmations_threshold: 1,
         // this is any date, since it will not be tested against anything
-        timestamp: DateTime::<Utc>::from_utc(NaiveDateTime::from_timestamp(0, 0), Utc),
+        timestamp: DateTime::<Utc>::from_utc(NaiveDateTime::from_timestamp_opt(0, 0).unwrap(), Utc),
         txid: HashString(transfer_1_data.tx_hash.0.as_ref().to_vec()),
         transfer_type: GetTransfersCategory::Pending,
         unlock_time: 0,

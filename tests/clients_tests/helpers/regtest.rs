@@ -240,7 +240,10 @@ fn test_get_block_header_assert_block_header(
     if block_header.height == 0 {
         assert_eq!(block_header.timestamp, expected_block_header.timestamp);
     } else {
-        let start_2022_date = NaiveDate::from_ymd(2022, 1, 1).and_hms(0, 0, 0);
+        let start_2022_date = NaiveDate::from_ymd_opt(2022, 1, 1)
+            .unwrap()
+            .and_hms_opt(0, 0, 0)
+            .unwrap();
         let start_2022_date = DateTime::<Utc>::from_utc(start_2022_date, Utc);
         assert!(block_header.timestamp >= start_2022_date);
     }

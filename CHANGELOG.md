@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Implement `Eq` on more structs ([#78](https://github.com/monero-ecosystem/monero-rpc-rs/pull/78))
+- Running tests against the latest Monero RPC versions ([#75](https://github.com/monero-ecosystem/monero-rpc-rs/pull/75), [#90](https://github.com/monero-ecosystem/monero-rpc-rs/pull/90))
+
+### Changed
+
+- Monero library bumped to version `0.18` ([#83](https://github.com/monero-ecosystem/monero-rpc-rs/pull/83))
+- Update fixed-hash requirement from 0.7 to 0.8 ([#85](https://github.com/monero-ecosystem/monero-rpc-rs/pull/85))
+
 ### Removed
 
 - Disable chrono default features by @silverpill ([#87](https://github.com/monero-ecosystem/monero-rpc-rs/pull/87))
