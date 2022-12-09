@@ -24,10 +24,10 @@ fn get_random_name() -> String {
 
 pub async fn get_version_assert_version(
     wallet: &WalletClient,
-    expected_version: (u16, Range<u16>),
+    expected_version: (Range<u16>, Range<u16>),
 ) {
     let version = wallet.get_version().await.unwrap();
-    assert_eq!(version.0, expected_version.0);
+    assert!(expected_version.0.contains(&version.0));
     assert!(expected_version.1.contains(&version.1));
 }
 
