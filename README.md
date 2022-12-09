@@ -36,13 +36,13 @@ async fn monero_daemon_transactions_test() {
 
 ## Testing
 
-First, you'll need `docker` and `docker-compose` to run the RPC integration tests, which are in `tests/`, in case you don't want to run `monerod` and `monero-wallet-rpc` on your own.
+First, you'll need `docker` and `docker compose` to run the RPC integration tests, which are in `tests/`, in case you don't want to run `monerod` and `monero-wallet-rpc` on your own.
 
-If you have the docker stack installed, go to the `tests` folder and run `docker-compose up`. Note that the daemon will run on port `18081` and `monero-wallet-rpc` will run on port `18083`.
+If you have the docker stack installed, go to the `tests` folder and run `docker compose up`. Note that the daemon will run on port `18081` and `monero-wallet-rpc` will run on port `18083`.
 
 After that, just run `cargo test` as you normally would.
 
-Also, you can run `docker-compose down` to stop and remove the two containers started by `docker-compose up`.
+Also, you can run `docker compose down` to stop and remove the two containers started by `docker compose up`.
 
 **Important**: the blockchain must be empty when running the `main_functional_test` test on `tests/rpc.rs`, i.e. it must have only the genesis block. In `regtest`, the blockchain restarts when `monerod` restarts (as a side note, if you want to keep the blockchain in `regtest` between restarts, you should pass the `--keep-fakechain` flag when starting `monerod`).
 
