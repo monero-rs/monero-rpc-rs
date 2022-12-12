@@ -25,22 +25,28 @@
 //! [`RegtestDaemonJsonRpcClient::generate_blocks`].
 //!
 //! ```rust
+//! # fn main() -> anyhow::Result<()> {
 //! use monero_rpc::RpcClientBuilder;
 //!
 //! let client = RpcClientBuilder::new()
-//!     .build("http://node.monerooutreach.org:18081").unwrap();
+//!     .build("http://node.monerooutreach.org:18081")?;
 //! let daemon = client.daemon();
 //! let regtest_daemon = daemon.regtest();
+//! # Ok(())
+//! # }
 //! ```
 //!
 //! The client can be initialized with a proxy, for example a socks5 proxy to enable Tor:
 //!
 //! ```rust
+//! # fn main() -> anyhow::Result<()> {
 //! use monero_rpc::RpcClientBuilder;
 //!
 //! let client = RpcClientBuilder::new()
 //!     .proxy_address("socks5://127.0.0.1:9050")
-//!     .build("http://node.monerooutreach.org:18081");
+//!     .build("http://node.monerooutreach.org:18081")?;
+//! # Ok(())
+//! # }
 //! ```
 
 #![cfg_attr(docsrs, feature(doc_cfg))]
@@ -341,12 +347,15 @@ impl RpcClient {
 /// of information. These methods all follow a similar structure.
 ///
 /// ```rust
+/// # fn main() -> anyhow::Result<()> {
 /// use monero_rpc::RpcClientBuilder;
 ///
 /// let client = RpcClientBuilder::new()
-///     .build("http://node.monerooutreach.org:18081").unwrap();
+///     .build("http://node.monerooutreach.org:18081")?;
 /// let daemon = client.daemon();
 /// let regtest_daemon = daemon.regtest();
+/// # Ok(())
+/// # }
 /// ```
 #[derive(Clone, Debug)]
 pub struct DaemonJsonRpcClient {
@@ -520,11 +529,14 @@ impl DaemonJsonRpcClient {
 /// specifying a method, these methods are called at their own extensions.
 ///
 /// ```rust
+/// # fn main() -> anyhow::Result<()> {
 /// use monero_rpc::RpcClientBuilder;
 ///
 /// let client = RpcClientBuilder::new()
-///     .build("http://node.monerooutreach.org:18081").unwrap();
+///     .build("http://node.monerooutreach.org:18081")?;
 /// let daemon = client.daemon_rpc();
+/// # Ok(())
+/// # }
 /// ```
 #[derive(Clone, Debug)]
 pub struct DaemonRpcClient {
@@ -636,11 +648,14 @@ impl<'de> Deserialize<'de> for TransferPriority {
 /// Result of [`RpcClient::wallet`] to interact with a Monero wallet RPC daemon.
 ///
 /// ```rust
+/// # fn main() -> anyhow::Result<()> {
 /// use monero_rpc::RpcClientBuilder;
 ///
 /// let client = RpcClientBuilder::new()
-///     .build("http://127.0.0.1:18083").unwrap();
+///     .build("http://127.0.0.1:18083")?;
 /// let daemon = client.wallet();
+/// # Ok(())
+/// # }
 /// ```
 #[derive(Clone, Debug)]
 pub struct WalletClient {
