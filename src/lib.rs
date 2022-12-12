@@ -411,7 +411,7 @@ impl DaemonJsonRpcClient {
             .await
             .map(|v| v.0)?;
 
-        // see https://github.com/monero-ecosystem/monero-rpc-rs/issues/58 for rationality
+        // see https://github.com/monero-rs/monero-rpc-rs/issues/58 for rationality
         if res == BlockHash::from_slice(&[0; 32]) {
             Err(anyhow::Error::msg(format!(
                 "Invalid height {} supplied.",
