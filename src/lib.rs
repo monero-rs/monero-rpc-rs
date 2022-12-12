@@ -237,7 +237,7 @@ pub struct RpcClient {
 }
 
 #[derive(Clone, Debug)]
-pub struct RpcClientConfig {
+struct RpcClientConfig {
     #[cfg(feature = "rpc_authentication")]
     #[cfg_attr(docsrs, doc(cfg(feature = "rpc_authentication")))]
     rpc_auth: RpcAuthentication,
