@@ -34,3 +34,7 @@ tokio = { version = "1.12.0", features = ["full"] }
 
 [features]
 rpc_authentication = ["diqwest"]
+
+[package.metadata.docs.rs]
+all-features = true
+rustdoc-args = ["--cfg", "docsrs"]

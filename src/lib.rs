@@ -41,6 +41,8 @@
 //!     .build("http://node.monerooutreach.org:18081".to_string());
 //! ```
 
+#![cfg_attr(docsrs, feature(doc_cfg))]
+// Coding conventions
 #![forbid(unsafe_code)]
 
 pub use monero;
@@ -81,6 +83,7 @@ enum RpcParams {
 }
 
 #[cfg(feature = "rpc_authentication")]
+#[cfg_attr(docsrs, doc(cfg(feature = "rpc_authentication")))]
 #[derive(Clone, Debug)]
 pub enum RpcAuthentication {
     Credentials { username: String, password: String },
@@ -118,6 +121,7 @@ struct RemoteCaller {
     http_client: reqwest::Client,
     addr: String,
     #[cfg(feature = "rpc_authentication")]
+    #[cfg_attr(docsrs, doc(cfg(feature = "rpc_authentication")))]
     rpc_auth: RpcAuthentication,
 }
 
@@ -230,6 +234,7 @@ pub struct RpcClient {
 #[derive(Clone, Debug)]
 pub struct RpcClientConfig {
     #[cfg(feature = "rpc_authentication")]
+    #[cfg_attr(docsrs, doc(cfg(feature = "rpc_authentication")))]
     rpc_auth: RpcAuthentication,
     proxy_address: Option<String>,
 }
@@ -257,6 +262,7 @@ impl RpcClientBuilder {
     }
 
     #[cfg(feature = "rpc_authentication")]
+    #[cfg_attr(docsrs, doc(cfg(feature = "rpc_authentication")))]
     pub fn rpc_authentication(mut self, auth: RpcAuthentication) -> Self {
         self.config.rpc_auth = auth;
         self
