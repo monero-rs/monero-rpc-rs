@@ -84,11 +84,14 @@ enum RpcParams {
     None,
 }
 
+/// Method of authentication to be used when connecting to an RPC endpoint.
 #[cfg(feature = "rpc_authentication")]
 #[cfg_attr(docsrs, doc(cfg(feature = "rpc_authentication")))]
 #[derive(Clone, Debug)]
 pub enum RpcAuthentication {
+    /// Connects with a username and password.
     Credentials { username: String, password: String },
+    /// Do not authenticate when connecting to the RPC.
     None,
 }
 
@@ -241,6 +244,7 @@ pub struct RpcClientConfig {
     proxy_address: Option<String>,
 }
 
+/// Builder for generating a configured [`RpcClient`].
 #[derive(Clone, Debug)]
 pub struct RpcClientBuilder {
     config: RpcClientConfig,
@@ -253,6 +257,7 @@ impl Default for RpcClientBuilder {
 }
 
 impl RpcClientBuilder {
+    /// Creates a new builder with no configuration.
     pub fn new() -> RpcClientBuilder {
         RpcClientBuilder {
             config: RpcClientConfig {
@@ -263,6 +268,7 @@ impl RpcClientBuilder {
         }
     }
 
+    /// Configures the authentication to use when connecting to RPC.
     #[cfg(feature = "rpc_authentication")]
     #[cfg_attr(docsrs, doc(cfg(feature = "rpc_authentication")))]
     pub fn rpc_authentication(mut self, auth: RpcAuthentication) -> Self {
@@ -270,11 +276,13 @@ impl RpcClientBuilder {
         self
     }
 
+    /// Adds a proxy to the generated client.
     pub fn proxy_address(mut self, proxy: String) -> Self {
         self.config.proxy_address = Some(proxy);
         self
     }
 
+    /// Build and return the fully configured RPC client.
     pub fn build(self, addr: String) -> anyhow::Result<RpcClient> {
         let config = self.config;
         let http_client_builder = reqwest::ClientBuilder::new();
@@ -298,7 +306,9 @@ impl RpcClientBuilder {
 
 impl RpcClient {
     /// Create a new generic RPC client that can be transformed into specialized client.
-    #[deprecated(note = "Use should prefer RpcClientBuilder instead!")]
+    ///
+    /// **You should prefer using the [`RpcClientBuilder`] instead.**
+    #[deprecated(note = "Use should prefer using the builder interface instead!")]
     pub fn new(addr: String) -> anyhow::Result<Self> {
         RpcClientBuilder::new().build(addr)
     }
