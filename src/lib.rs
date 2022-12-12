@@ -16,17 +16,19 @@
 //!
 //! ## Usage
 //!
-//! Create the base [`RpcClient`] and use the methods [`RpcClient::daemon`],
-//! [`RpcClient::daemon_rpc`], or [`RpcClient::wallet`] to retrieve the specialized RPC client.
+//! Generate the base [`RpcClient`] with [`RpcClientBuilder`] and use the methods
+//! [`RpcClient::daemon`], [`RpcClient::daemon_rpc`], or [`RpcClient::wallet`] to retrieve the
+//! specialized RPC client.
 //!
-//! On a [`DaemonJsonRpcClient`] you can call [`DaemonJsonRpcClient::regtest`] to get a [`RegtestDaemonJsonRpcClient`]
-//! instance that enables RPC call specific to regtest such as
+//! On a [`DaemonJsonRpcClient`] you can call [`DaemonJsonRpcClient::regtest`] to get a
+//! [`RegtestDaemonJsonRpcClient`] instance that enables RPC call specific to regtest such as
 //! [`RegtestDaemonJsonRpcClient::generate_blocks`].
 //!
 //! ```rust
-//! use monero_rpc::RpcClient;
+//! use monero_rpc::RpcClientBuilder;
 //!
-//! let client = RpcClient::new("http://node.monerooutreach.org:18081".to_string()).unwrap();
+//! let client = RpcClientBuilder::new()
+//!     .build("http://node.monerooutreach.org:18081".to_string()).unwrap();
 //! let daemon = client.daemon();
 //! let regtest_daemon = daemon.regtest();
 //! ```
@@ -296,6 +298,7 @@ impl RpcClientBuilder {
 
 impl RpcClient {
     /// Create a new generic RPC client that can be transformed into specialized client.
+    #[deprecated(note = "Use should prefer RpcClientBuilder instead!")]
     pub fn new(addr: String) -> anyhow::Result<Self> {
         RpcClientBuilder::new().build(addr)
     }
@@ -328,9 +331,10 @@ impl RpcClient {
 /// of information. These methods all follow a similar structure.
 ///
 /// ```rust
-/// use monero_rpc::RpcClient;
+/// use monero_rpc::RpcClientBuilder;
 ///
-/// let client = RpcClient::new("http://node.monerooutreach.org:18081".to_string()).unwrap();
+/// let client = RpcClientBuilder::new()
+///     .build("http://node.monerooutreach.org:18081".to_string()).unwrap();
 /// let daemon = client.daemon();
 /// let regtest_daemon = daemon.regtest();
 /// ```
@@ -506,9 +510,10 @@ impl DaemonJsonRpcClient {
 /// specifying a method, these methods are called at their own extensions.
 ///
 /// ```rust
-/// use monero_rpc::RpcClient;
+/// use monero_rpc::RpcClientBuilder;
 ///
-/// let client = RpcClient::new("http://node.monerooutreach.org:18081".to_string()).unwrap();
+/// let client = RpcClientBuilder::new()
+///     .build("http://node.monerooutreach.org:18081".to_string()).unwrap();
 /// let daemon = client.daemon_rpc();
 /// ```
 #[derive(Clone, Debug)]
@@ -621,9 +626,10 @@ impl<'de> Deserialize<'de> for TransferPriority {
 /// Result of [`RpcClient::wallet`] to interact with a Monero wallet RPC daemon.
 ///
 /// ```rust
-/// use monero_rpc::RpcClient;
+/// use monero_rpc::RpcClientBuilder;
 ///
-/// let client = RpcClient::new("http://127.0.0.1:18083".to_string()).unwrap();
+/// let client = RpcClientBuilder::new()
+///     .build("http://127.0.0.1:18083".to_string()).unwrap();
 /// let daemon = client.wallet();
 /// ```
 #[derive(Clone, Debug)]

@@ -1,5 +1,5 @@
 use monero::{KeyPair, PrivateKey};
-use monero_rpc::{BlockHash, RpcClient};
+use monero_rpc::{BlockHash, RpcClientBuilder};
 use std::{env, str::FromStr};
 
 pub mod daemon_rpc;
@@ -15,15 +15,21 @@ pub fn setup_monero() -> (
 ) {
     let dhost = env::var("MONERO_DAEMON_HOST").unwrap_or_else(|_| "localhost".into());
 
-    let rpc_client = RpcClient::new(format!("http://{}:18081", dhost)).unwrap();
+    let rpc_client = RpcClientBuilder::new()
+        .build(format!("http://{}:18081", dhost))
+        .unwrap();
     let daemon = rpc_client.daemon();
     let regtest = daemon.regtest();
 
-    let rpc_client = RpcClient::new(format!("http://{}:18081", dhost)).unwrap();
+    let rpc_client = RpcClientBuilder::new()
+        .build(format!("http://{}:18081", dhost))
+        .unwrap();
     let daemon_rpc = rpc_client.daemon_rpc();
 
     let whost = env::var("MONERO_WALLET_HOST_1").unwrap_or_else(|_| "localhost".into());
-    let rpc_client = RpcClient::new(format!("http://{}:18083", whost)).unwrap();
+    let rpc_client = RpcClientBuilder::new()
+        .build(format!("http://{}:18083", whost))
+        .unwrap();
     let wallet = rpc_client.wallet();
 
     (regtest, daemon_rpc, wallet)
