@@ -13,4 +13,4 @@ jobs:
     uses: monero-rs/workflows/.github/workflows/draft-new-release.yml@v2.0.2
     with:
       version: ${{ github.event.inputs.version }}
-      base_branch: 'master'
+      base_branch: 'main'
