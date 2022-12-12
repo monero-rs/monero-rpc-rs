@@ -28,7 +28,7 @@
 //! use monero_rpc::RpcClientBuilder;
 //!
 //! let client = RpcClientBuilder::new()
-//!     .build("http://node.monerooutreach.org:18081".to_string()).unwrap();
+//!     .build("http://node.monerooutreach.org:18081").unwrap();
 //! let daemon = client.daemon();
 //! let regtest_daemon = daemon.regtest();
 //! ```
@@ -39,8 +39,8 @@
 //! use monero_rpc::RpcClientBuilder;
 //!
 //! let client = RpcClientBuilder::new()
-//!     .proxy_address("socks5://127.0.0.1:9050".to_string())
-//!     .build("http://node.monerooutreach.org:18081".to_string());
+//!     .proxy_address("socks5://127.0.0.1:9050")
+//!     .build("http://node.monerooutreach.org:18081");
 //! ```
 
 #![cfg_attr(docsrs, feature(doc_cfg))]
@@ -277,13 +277,13 @@ impl RpcClientBuilder {
     }
 
     /// Adds a proxy to the generated client.
-    pub fn proxy_address(mut self, proxy: String) -> Self {
-        self.config.proxy_address = Some(proxy);
+    pub fn proxy_address(mut self, proxy: impl Into<String>) -> Self {
+        self.config.proxy_address = Some(proxy.into());
         self
     }
 
     /// Build and return the fully configured RPC client.
-    pub fn build(self, addr: String) -> anyhow::Result<RpcClient> {
+    pub fn build(self, addr: impl Into<String>) -> anyhow::Result<RpcClient> {
         let config = self.config;
         let http_client_builder = reqwest::ClientBuilder::new();
         let http_client = if let Some(proxy_address) = config.proxy_address {
@@ -296,7 +296,7 @@ impl RpcClientBuilder {
         Ok(RpcClient {
             inner: CallerWrapper(Arc::new(RemoteCaller {
                 http_client,
-                addr,
+                addr: addr.into(),
                 #[cfg(feature = "rpc_authentication")]
                 rpc_auth: config.rpc_auth,
             })),
@@ -344,7 +344,7 @@ impl RpcClient {
 /// use monero_rpc::RpcClientBuilder;
 ///
 /// let client = RpcClientBuilder::new()
-///     .build("http://node.monerooutreach.org:18081".to_string()).unwrap();
+///     .build("http://node.monerooutreach.org:18081").unwrap();
 /// let daemon = client.daemon();
 /// let regtest_daemon = daemon.regtest();
 /// ```
@@ -523,7 +523,7 @@ impl DaemonJsonRpcClient {
 /// use monero_rpc::RpcClientBuilder;
 ///
 /// let client = RpcClientBuilder::new()
-///     .build("http://node.monerooutreach.org:18081".to_string()).unwrap();
+///     .build("http://node.monerooutreach.org:18081").unwrap();
 /// let daemon = client.daemon_rpc();
 /// ```
 #[derive(Clone, Debug)]
@@ -639,7 +639,7 @@ impl<'de> Deserialize<'de> for TransferPriority {
 /// use monero_rpc::RpcClientBuilder;
 ///
 /// let client = RpcClientBuilder::new()
-///     .build("http://127.0.0.1:18083".to_string()).unwrap();
+///     .build("http://127.0.0.1:18083").unwrap();
 /// let daemon = client.wallet();
 /// ```
 #[derive(Clone, Debug)]
