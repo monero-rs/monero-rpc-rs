@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Rollback Monero library bump from `0.18` to `0.17`
+
 ## [0.3.0] - 2022-12-12
 
 ### Added
