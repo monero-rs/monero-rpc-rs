@@ -9,7 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- Add a Builder pattern for the RpcClient to include a proxy and authentication argument. The proxy allows the usage of e.g. a Tor socks proxy. This argument has to be a string pointing to the the address of the proxy and its protocol prefix, .e.g. "socks5://127.0.0.1:9050" for using a socks5 proxy.
+- Add a Builder pattern for the RpcClient to include a proxy and authentication argument. The proxy allows the usage of e.g. a Tor socks proxy. This argument has to be a string pointing to the the address of the proxy and its protocol prefix, .e.g. "socks5://127.0.0.1:9050" for using a socks5 proxy ([#92](https://github.com/monero-rs/monero-rpc-rs/pull/92))
+- Implement `Eq` on more structs ([#78](https://github.com/monero-ecosystem/monero-rpc-rs/pull/78))
+- Running tests against the latest Monero RPC versions ([#75](https://github.com/monero-ecosystem/monero-rpc-rs/pull/75), [#90](https://github.com/monero-ecosystem/monero-rpc-rs/pull/90))
+
+### Changed
+
+- Monero library bumped to version `0.18` ([#83](https://github.com/monero-ecosystem/monero-rpc-rs/pull/83))
+- Update fixed-hash requirement from 0.7 to 0.8 ([#85](https://github.com/monero-ecosystem/monero-rpc-rs/pull/85))
 
 ### Removed
 

@@ -62,7 +62,7 @@ pub async fn run() {
         // this **is** used inside the test functions, since this block header corresponds
         // to the genesis block;
         // note that in the `non_empty_blockchain`, this field is **not** tested.
-        timestamp: DateTime::<Utc>::from_utc(NaiveDateTime::from_timestamp(0, 0), Utc),
+        timestamp: DateTime::<Utc>::from_utc(NaiveDateTime::from_timestamp_opt(0, 0).unwrap(), Utc),
     };
 
     helpers::regtest::get_last_block_header_assert_block_header(
