@@ -12,6 +12,17 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#[cfg(feature = "rpc_authentication")]
+use monero::Hash;
+#[cfg(feature = "rpc_authentication")]
+use monero_rpc::RpcAuthentication;
+#[cfg(feature = "rpc_authentication")]
+use monero_rpc::RpcClient;
+#[cfg(feature = "rpc_authentication")]
+use monero_rpc::RpcClientBuilder;
+#[cfg(feature = "rpc_authentication")]
+use std::env;
+
 mod clients_tests;
 
 #[tokio::test]
@@ -57,4 +68,68 @@ async fn main_functional_test() {
     res.unwrap();
 
     clients_tests::all_clients_interaction::run().await;
+}
+
+// Authentication tests need to run against a monero daemon and wallet rpc with
+// the correct username and password configure ("foo" "bar").
+#[cfg(feature = "rpc_authentication")]
+fn setup_rpc_auth_client(username: &str, password: &str, port: u32) -> RpcClient {
+    let whost = env::var("MONERO_WALLET_HOST_1").unwrap_or_else(|_| "localhost".into());
+    let rpc_credentials = RpcAuthentication::Credentials {
+        username: username.into(),
+        password: password.into(),
+    };
+    let rpc_client = RpcClientBuilder::new()
+        .rpc_authentication(rpc_credentials)
+        .build(format!("http://{}:{}", whost, port))
+        .unwrap();
+    rpc_client
+}
+
+#[tokio::test]
+#[cfg(feature = "rpc_authentication")]
+async fn test_daemon_rpc_auth() {
+    let rpc_client = setup_rpc_auth_client("foo", "bar", 18085).daemon();
+    let daemon_transactions = rpc_client.get_block_count().await;
+
+    assert!(daemon_transactions.is_ok());
+}
+
+#[tokio::test]
+#[cfg(feature = "rpc_authentication")]
+async fn test_daemon_rpc_auth_fail() {
+    let rpc_client = setup_rpc_auth_client("invalid", "bar", 18085).daemon();
+    let daemon_transactions = rpc_client.get_block_count().await;
+
+    assert!(daemon_transactions.is_err());
+}
+
+#[tokio::test]
+#[cfg(feature = "rpc_authentication")]
+async fn test_daemon_rpc_rpc_auth() {
+    let rpc_client = setup_rpc_auth_client("foo", "bar", 18085).daemon_rpc();
+    let transactions = vec![Hash::from_low_u64_be(1)];
+    let daemon_transactions = rpc_client
+        .get_transactions(transactions, Some(true), Some(true))
+        .await;
+
+    assert!(daemon_transactions.is_ok());
+}
+
+#[tokio::test]
+#[cfg(feature = "rpc_authentication")]
+async fn test_rpc_auth() {
+    let rpc_client = setup_rpc_auth_client("foo", "bar", 18084).wallet();
+    assert!(rpc_client.get_version().await.is_ok());
+
+    let version = rpc_client.get_version().await.unwrap();
+    assert!(version.0 > 0);
+}
+
+#[tokio::test]
+#[cfg(feature = "rpc_authentication")]
+async fn test_rpc_auth_fail() {
+    let rpc_client = setup_rpc_auth_client("invalid", "auth", 18084).wallet();
+
+    assert!(rpc_client.get_version().await.is_err());
 }

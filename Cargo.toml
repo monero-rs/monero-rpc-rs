@@ -12,13 +12,14 @@ description = "RPC client for Monero daemon and wallet"
 
 [dependencies]
 anyhow = "1"
-chrono = { version = "0.4", default-features = false, features = ["serde"] }
+chrono = { version = "0.4", features = ["serde"] }
+diqwest = { version = "1.1", optional = true }
 fixed-hash = "0.8"
 hex = "0.4"
 http = "0.2"
 jsonrpc-core = "18"
 monero = { version = "0.18", features = ["serde"] }
-reqwest = { version = "0.11", features = ["json"] }
+reqwest = { version = "0.11", features = ["json", "socks"] }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 tracing = "0.1"
@@ -30,3 +31,10 @@ rand = "0.8.4"
 rustc-hex = "2.1"
 serde_test = "1.0"
 tokio = { version = "1.12.0", features = ["full"] }
+
+[features]
+rpc_authentication = ["diqwest"]
+
+[package.metadata.docs.rs]
+all-features = true
+rustdoc-args = ["--cfg", "docsrs"]
