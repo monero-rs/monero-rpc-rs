@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.0] - 2022-12-12
+
 ### Added
 
 - Add a Builder pattern for the RpcClient to include a proxy and authentication argument. The proxy allows the usage of e.g. a Tor socks proxy. This argument has to be a string pointing to the the address of the proxy and its protocol prefix, .e.g. "socks5://127.0.0.1:9050" for using a socks5 proxy ([#92](https://github.com/monero-rs/monero-rpc-rs/pull/92))
@@ -119,6 +121,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Daemon RPC methods:
   - `get_transactions`
 
-[Unreleased]: https://github.com/monero-rs/monero-rpc-rs/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/monero-rs/monero-rpc-rs/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/monero-rs/monero-rpc-rs/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/monero-rs/monero-rpc-rs/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/monero-rs/monero-rpc-rs/compare/363c433023318877e9d397dbe2b50bdf88cdee9d...v0.1.0
