@@ -1,6 +1,6 @@
 [package]
 name = "monero-rpc"
-version = "0.3.1"
+version = "0.3.2"
 authors = ["Artem Vorotnikov <artem@vorotnikov.me>", "Monero Rust Contributors"]
 edition = "2018"
 exclude = ["/test"]
