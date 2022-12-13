@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Removed
+
+- Disable chrono default features by @silverpill ([#87](https://github.com/monero-rs/monero-rpc-rs/pull/87))
+
 ## [0.3.1] - 2022-12-12
 
 ### Changed
@@ -25,10 +29,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Monero library bumped to version `0.18` ([#83](https://github.com/monero-rs/monero-rpc-rs/pull/83))
 - Update fixed-hash requirement from 0.7 to 0.8 ([#85](https://github.com/monero-rs/monero-rpc-rs/pull/85))
-
-### Removed
-
-- Disable chrono default features by @silverpill ([#87](https://github.com/monero-rs/monero-rpc-rs/pull/87))
 
 ## [0.2.0] - 2022-07-29
 
