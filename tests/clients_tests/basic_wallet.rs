@@ -295,5 +295,7 @@ pub async fn run() {
     )
     .await;
 
+    helpers::wallet::sign_and_verify_assert_ok(&wallet, "test message").await;
+
     helpers::wallet::close_wallet_assert_ok(&wallet).await;
 }
