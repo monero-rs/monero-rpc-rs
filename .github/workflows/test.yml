@@ -20,15 +20,9 @@ jobs:
         env:
           MONERO_VERSION: ${{ matrix.monero }}
 
-      - name: Install Rust Stable
-        uses: actions-rs/toolchain@v1
+      - uses: dtolnay/rust-toolchain@master
         with:
-          profile: minimal
           toolchain: stable
-          override: true
 
-      - name: Cargo test
-        uses: actions-rs/cargo@v1
-        with:
-          command: test
-          args: --all-features
+      - run: cargo install cargo-hack
+      - run: cargo hack test --workspace --each-feature
