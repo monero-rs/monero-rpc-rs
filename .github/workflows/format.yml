@@ -1,10 +1,11 @@
-on: [push, pull_request]
-
-name: Format
+on:
+  pull_request:
+  push:
+    branches:
+      - main
 
 jobs:
   fmt:
-    name: Rust format
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -15,7 +16,6 @@ jobs:
       - run: cargo fmt --all --check
 
   mdtomlfmt:
-    name: Generic format (md,toml)
     runs-on: ubuntu-latest
 
     steps:

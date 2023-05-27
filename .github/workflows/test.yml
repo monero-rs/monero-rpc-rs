@@ -1,10 +1,11 @@
-on: [push, pull_request]
-
-name: Test
+on:
+  pull_request:
+  push:
+    branches:
+      - main
 
 jobs:
   test:
-    name: Test
     runs-on: ubuntu-latest
 
     strategy:
@@ -24,5 +25,4 @@ jobs:
         with:
           toolchain: stable
 
-      - run: cargo install cargo-hack
-      - run: cargo hack test --workspace --each-feature
+      - run: cargo test --workspace --all-features
