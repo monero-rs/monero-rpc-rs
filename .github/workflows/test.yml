@@ -1,10 +1,11 @@
-on: [push, pull_request]
-
-name: Test
+on:
+  pull_request:
+  push:
+    branches:
+      - main
 
 jobs:
   test:
-    name: Test
     runs-on: ubuntu-latest
 
     strategy:
@@ -20,15 +21,8 @@ jobs:
         env:
           MONERO_VERSION: ${{ matrix.monero }}
 
-      - name: Install Rust Stable
-        uses: actions-rs/toolchain@v1
+      - uses: dtolnay/rust-toolchain@master
         with:
-          profile: minimal
           toolchain: stable
-          override: true
 
-      - name: Cargo test
-        uses: actions-rs/cargo@v1
-        with:
-          command: test
-          args: --all-features
+      - run: cargo test --workspace --all-features
