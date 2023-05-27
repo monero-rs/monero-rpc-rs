@@ -3,20 +3,23 @@ on: [push, pull_request]
 name: Build
 
 jobs:
+  check-msrv:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: 1.56.1
+      - run: cargo check --workspace
+
   check:
-    strategy:
-      matrix:
-        rust: [
-          1.56.1,
-          stable,
-      ]
     name: Check
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
       - uses: dtolnay/rust-toolchain@master
         with:
-          toolchain: ${{ matrix.rust }}
+          toolchain: stable
       - run: cargo install cargo-hack
       - run: cargo hack check --workspace --each-feature
 
