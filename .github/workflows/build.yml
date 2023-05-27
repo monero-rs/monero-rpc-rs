@@ -1,6 +1,8 @@
-on: [push, pull_request]
-
-name: Build
+on:
+  pull_request:
+  push:
+    branches:
+      - main
 
 jobs:
   check-msrv:
@@ -13,7 +15,6 @@ jobs:
       - run: cargo check --workspace
 
   check:
-    name: Check
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -24,7 +25,6 @@ jobs:
       - run: cargo hack check --workspace --each-feature
 
   clippy:
-    name: Clippy
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
