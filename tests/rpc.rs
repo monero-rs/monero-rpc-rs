@@ -79,11 +79,10 @@ fn setup_rpc_auth_client(username: &str, password: &str, port: u32) -> RpcClient
         username: username.into(),
         password: password.into(),
     };
-    let rpc_client = RpcClientBuilder::new()
+    RpcClientBuilder::new()
         .rpc_authentication(rpc_credentials)
         .build(format!("http://{}:{}", whost, port))
-        .unwrap();
-    rpc_client
+        .unwrap()
 }
 
 #[tokio::test]
