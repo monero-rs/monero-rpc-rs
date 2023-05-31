@@ -1271,6 +1271,44 @@ impl WalletClient {
         Ok((rsp.confirmations, rsp.in_pool, rsp.received))
     }
 
+    /// Sign a string using the public address of the wallet
+    pub async fn sign(&self, data: String) -> anyhow::Result<String> {
+        #[derive(Deserialize)]
+        struct Rsp {
+            signature: String,
+        }
+
+        let params = once(("data", data.into()));
+
+        self.inner
+            .request::<Rsp>("sign", RpcParams::map(params))
+            .await
+            .map(|rsp| rsp.signature)
+    }
+
+    /// Verify a signature on a string
+    pub async fn verify(
+        &self,
+        data: String,
+        address: Address,
+        signature: String,
+    ) -> anyhow::Result<bool> {
+        #[derive(Deserialize)]
+        struct Rsp {
+            good: bool,
+        }
+
+        let params = empty()
+            .chain(once(("data", data.into())))
+            .chain(once(("address", address.to_string().into())))
+            .chain(once(("signature", signature.into())));
+
+        self.inner
+            .request::<Rsp>("verify", RpcParams::map(params))
+            .await
+            .map(|rsp| rsp.good)
+    }
+
     /// Get RPC version Major & Minor integer-format, where Major is the first 16 bits and Minor
     /// the last 16 bits.
     pub async fn get_version(&self) -> anyhow::Result<(u16, u16)> {
