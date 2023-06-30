@@ -741,3 +741,17 @@ pub async fn sign_and_verify_assert_ok(wallet: &WalletClient, message: &str) {
         .unwrap();
     assert!(signature_ok);
 }
+
+pub async fn get_attribute_error(wallet: &WalletClient, key: String) {
+    let err = wallet.get_attribute(key).await.unwrap_err();
+    assert_eq!(err.to_string(), "Server error: Attribute not found.");
+}
+
+pub async fn get_attribute_assert_ok(wallet: &WalletClient, key: String, expected_value: String) {
+    let value_from_wallet = wallet.get_attribute(key).await.unwrap();
+    assert_eq!(value_from_wallet, expected_value);
+}
+
+pub async fn set_attribute_assert_ok(wallet: &WalletClient, key: String, value: String) {
+    wallet.set_attribute(key, value).await.unwrap()
+}

@@ -1327,6 +1327,35 @@ impl WalletClient {
 
         Ok((u16::try_from(major)?, u16::try_from(minor)?))
     }
+
+    /// Returns an attribute as a string or an error when there is no attribute for the given key
+    pub async fn get_attribute(&self, key: String) -> anyhow::Result<String> {
+        let params = empty().chain(once(("key", key.into())));
+
+        #[derive(Deserialize)]
+        struct Rsp {
+            value: String,
+        }
+
+        Ok(self
+            .inner
+            .request::<Rsp>("get_attribute", RpcParams::map(params))
+            .await?
+            .value)
+    }
+
+    /// Set an arbitrary attribute which is saved in the wallet
+    pub async fn set_attribute(&self, key: String, value: String) -> anyhow::Result<()> {
+        let params = empty()
+            .chain(once(("key", key.into())))
+            .chain(once(("value", value.into())));
+
+        self.inner
+            .request::<IgnoredAny>("set_attribute", RpcParams::map(params))
+            .await?;
+
+        Ok(())
+    }
 }
 
 #[cfg(test)]
