@@ -297,5 +297,21 @@ pub async fn run() {
 
     helpers::wallet::sign_and_verify_assert_ok(&wallet, "test message").await;
 
+    helpers::wallet::get_attribute_error(&wallet, "nonexistingattribute".to_string()).await;
+
+    helpers::wallet::set_attribute_assert_ok(
+        &wallet,
+        "attribute_key".to_string(),
+        "attribute_value".to_string(),
+    )
+    .await;
+
+    helpers::wallet::get_attribute_assert_ok(
+        &wallet,
+        "attribute_key".to_string(),
+        "attribute_value".to_string(),
+    )
+    .await;
+
     helpers::wallet::close_wallet_assert_ok(&wallet).await;
 }
