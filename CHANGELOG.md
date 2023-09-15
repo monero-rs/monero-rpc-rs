@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Add `sign` and `verify` methods by @silverpill ([#105](https://github.com/monero-rs/monero-rpc-rs/pull/105))
+
+### Changed
+
+- Bump MSRV to `1.63.0`
+- Run test suite against Monero node and wallet `0.18.1.2` and `0.18.2.2`
+
 ## [0.3.2] - 2022-12-13
 
 ### Removed

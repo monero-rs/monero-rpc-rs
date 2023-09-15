@@ -11,7 +11,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@master
         with:
-          toolchain: 1.57
+          toolchain: 1.63
       - run: cargo check --workspace
 
   check:
@@ -32,5 +32,4 @@ jobs:
         with:
           toolchain: stable
           components: clippy
-      - run: cargo install cargo-hack
-      - run: cargo hack clippy --workspace --each-feature -- -D warnings
+      - run: cargo clippy --workspace --all-features -- -D warnings
