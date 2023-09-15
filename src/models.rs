@@ -12,6 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+// TODO: remove this when clippy error goes away...
+#![allow(clippy::incorrect_clone_impl_on_copy_type)]
+
 use crate::util::*;
 use chrono::prelude::*;
 use monero::{
