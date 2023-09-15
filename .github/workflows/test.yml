@@ -11,10 +11,10 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        monero: [ 0.17.3.0, 0.17.3.2, 0.18.0.0, 0.18.1.2 ]
+        monero: [ 0.18.1.2, 0.18.2.2 ]
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Spin up containers
         run: docker-compose -f tests/docker-compose.yml up -d

@@ -8,16 +8,16 @@ jobs:
   check-msrv:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@master
         with:
-          toolchain: 1.57
+          toolchain: 1.63
       - run: cargo check --workspace
 
   check:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@master
         with:
           toolchain: stable
@@ -27,10 +27,9 @@ jobs:
   clippy:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@master
         with:
           toolchain: stable
           components: clippy
-      - run: cargo install cargo-hack
-      - run: cargo hack clippy --workspace --each-feature -- -D warnings
+      - run: cargo clippy --workspace --all-features -- -D warnings

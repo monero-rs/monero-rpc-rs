@@ -1,4 +1,4 @@
-// Copyright 2019-2022 Artem Vorotnikov and Monero Rust Contributors
+// Copyright 2019-2023 Artem Vorotnikov and Monero Rust Contributors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -11,6 +11,9 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+
+// TODO: remove this when clippy error goes away...
+#![allow(clippy::incorrect_clone_impl_on_copy_type)]
 
 use crate::util::*;
 use chrono::prelude::*;
