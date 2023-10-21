@@ -566,7 +566,6 @@ pub struct CreateWallet {
     pub account_index: u32,
     /// Generated wallet address.
     pub address: Address,
-
 }
 
 #[cfg(test)]
