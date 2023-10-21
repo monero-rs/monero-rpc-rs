@@ -756,7 +756,7 @@ pub async fn set_attribute_assert_ok(wallet: &WalletClient, key: String, value: 
     wallet.set_attribute(key, value).await.unwrap()
 }
 
-pub async fn create_account_assert_ok(wallet: &WalletClient, label: Option<String>){
+pub async fn create_account_assert_ok(wallet: &WalletClient, label: Option<String>) {
     let res = wallet.create_account(label).await;
     assert!(res.is_ok());
     assert!(res.unwrap().account_index >= 1);
