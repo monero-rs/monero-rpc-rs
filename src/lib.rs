@@ -1361,10 +1361,10 @@ impl WalletClient {
     pub async fn create_account(&self, label: Option<String>) -> anyhow::Result<CreateWallet>{
         let params = empty()
             .chain(once(("label", label.into())));
-        Ok(self
-            .inner
-            .request::<CreateWallet>("create_account", RpcParams::map(params))
-            .await?)
+        self
+        .inner
+        .request::<CreateWallet>("create_account", RpcParams::map(params))
+        .await
     }
 }
 
