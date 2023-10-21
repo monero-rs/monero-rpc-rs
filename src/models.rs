@@ -559,6 +559,16 @@ pub struct KeyImageImportResponse {
     pub unspent: Amount,
 }
 
+/// Return type of wallet `create_wallet`.
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct CreateWallet {
+    /// Index of the new account.
+    pub account_index: u32,
+    /// Generated wallet address.
+    pub address: Address,
+
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

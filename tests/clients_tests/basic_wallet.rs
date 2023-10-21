@@ -313,5 +313,6 @@ pub async fn run() {
     )
     .await;
 
+    helpers::wallet::create_account_assert_ok(&wallet, Some(String::from("test"))).await;
     helpers::wallet::close_wallet_assert_ok(&wallet).await;
 }
