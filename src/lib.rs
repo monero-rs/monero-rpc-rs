@@ -1358,20 +1358,79 @@ impl WalletClient {
     }
 
     /// Create a new account
-    pub async fn create_account(&self, label: Option<String>) -> anyhow::Result<CreateWallet>{
+    pub async fn create_account(&self, label: Option<String>) -> anyhow::Result<AccountCreation> {
+        let params = empty().chain(once(("label", label.into())));
+        self.inner
+            .request::<AccountCreation>("create_account", RpcParams::map(params))
+            .await
+    }
+
+    /// Create a transaction proof
+    pub async fn get_tx_proof(
+        &self,
+        txid: HashString<Vec<u8>>,
+        address: Address,
+        message: Option<String>,
+    ) -> anyhow::Result<String> {
         let params = empty()
-            .chain(once(("label", label.into())));
+            .chain(once(("txid", txid.to_string().into())))
+            .chain(once(("address", address.to_string().into())))
+            .chain(once(("message", message.into())));
+        #[derive(Clone, Debug, Serialize, Deserialize)]
+        struct Rsp {
+            signature: String,
+        }
+
         Ok(self
             .inner
-            .request::<CreateWallet>("create_account", RpcParams::map(params))
-            .await?)
+            .request::<Rsp>("get_tx_proof", RpcParams::map(params))
+            .await?
+            .signature)
+    }
+
+    /// Check a transaction proof
+    pub async fn check_tx_proof(
+        &self,
+        txid: HashString<Vec<u8>>,
+        address: Address,
+        message: Option<String>,
+        signature: String,
+    ) -> anyhow::Result<TxProofOutput> {
+        let params = empty()
+            .chain(once(("txid", txid.to_string().into())))
+            .chain(once(("address", address.to_string().into())))
+            .chain(once(("message", message.into())))
+            .chain(once(("signature", signature.into())));
+        self.inner
+            .request::<TxProofOutput>("check_tx_proof", RpcParams::map(params))
+            .await
     }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use monero::{KeyPair, Network, PrivateKey};
     use serde_test::{assert_de_tokens_error, assert_ser_tokens, assert_tokens, Token};
+    use std::str::FromStr;
+
+    #[test]
+    fn address_to_string() {
+        let key_pair_1 = KeyPair {
+            view: PrivateKey::from_str(
+                "8ae33e57aee12fa4ad5b42a3ab093d9f3cb7f9be68b112a85f83275bcc5a190b",
+            )
+            .unwrap(),
+            spend: PrivateKey::from_str(
+                "eae5d41a112e14dcd549780a982bb3653c2f86ab1f4e6aa2b13c41f8b893ab04",
+            )
+            .unwrap(),
+        };
+        let addr = Address::from_keypair(Network::Mainnet, &key_pair_1);
+
+        //let txid: HashString<Vec<u8>> = "19d5089f9469db3d90aca9024dfcb17ce94b948300101c8345a5e9f7257353be";
+        //println!("{:?}", addr.to_string());
+    }
 
     #[test]
     fn rpc_params_array() {
