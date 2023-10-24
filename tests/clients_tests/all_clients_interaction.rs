@@ -1,6 +1,5 @@
 use std::collections::HashMap;
 
-use crate::clients_tests::helpers::wallet::create_check_tx_proof_assert_ok;
 use chrono::{DateTime, NaiveDateTime, Utc};
 use hex::ToHex;
 use monero::{
@@ -903,7 +902,7 @@ pub async fn run() {
         let transfers = transfers.unwrap();
         let transfer = transfers[0].clone();
 
-        create_check_tx_proof_assert_ok(
+        helpers::wallet::create_check_tx_proof_assert_ok(
             &wallet,
             transfer.txid,
             transfer.address,

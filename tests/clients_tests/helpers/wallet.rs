@@ -781,4 +781,3 @@ pub async fn create_check_tx_proof_assert_ok(
     assert!(check_res.is_ok());
     assert!(check_res.unwrap().good);
 }
-
