@@ -1410,27 +1410,7 @@ impl WalletClient {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use monero::{KeyPair, Network, PrivateKey};
     use serde_test::{assert_de_tokens_error, assert_ser_tokens, assert_tokens, Token};
-    use std::str::FromStr;
-
-    #[test]
-    fn address_to_string() {
-        let key_pair_1 = KeyPair {
-            view: PrivateKey::from_str(
-                "8ae33e57aee12fa4ad5b42a3ab093d9f3cb7f9be68b112a85f83275bcc5a190b",
-            )
-            .unwrap(),
-            spend: PrivateKey::from_str(
-                "eae5d41a112e14dcd549780a982bb3653c2f86ab1f4e6aa2b13c41f8b893ab04",
-            )
-            .unwrap(),
-        };
-        let addr = Address::from_keypair(Network::Mainnet, &key_pair_1);
-
-        //let txid: HashString<Vec<u8>> = "19d5089f9469db3d90aca9024dfcb17ce94b948300101c8345a5e9f7257353be";
-        //println!("{:?}", addr.to_string());
-    }
 
     #[test]
     fn rpc_params_array() {
