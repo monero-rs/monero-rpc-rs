@@ -244,7 +244,7 @@ fn test_get_block_header_assert_block_header(
             .unwrap()
             .and_hms_opt(0, 0, 0)
             .unwrap();
-        let start_2022_date = DateTime::<Utc>::from_utc(start_2022_date, Utc);
+        let start_2022_date = DateTime::<Utc>::from_naive_utc_and_offset(start_2022_date, Utc);
         assert!(block_header.timestamp >= start_2022_date);
     }
 
