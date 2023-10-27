@@ -6,8 +6,8 @@ use monero::{
 };
 use monero_rpc::{
     AddressData, BalanceData, GenerateFromKeysArgs, GetAccountsData, GetTransfersCategory,
-    GetTransfersSelector, GotTransfer, IncomingTransfers, KeyImageImportResponse, Payment,
-    PrivateKeyType, SignedKeyImage, SignedTransferOutput, SweepAllArgs, TransferData,
+    GetTransfersSelector, GotTransfer, HashString, IncomingTransfers, KeyImageImportResponse,
+    Payment, PrivateKeyType, SignedKeyImage, SignedTransferOutput, SweepAllArgs, TransferData,
     TransferOptions, TransferPriority, TransferType, WalletClient, WalletCreation,
 };
 
@@ -760,4 +760,24 @@ pub async fn create_account_assert_ok(wallet: &WalletClient, label: Option<Strin
     let res = wallet.create_account(label).await;
     assert!(res.is_ok());
     assert!(res.unwrap().account_index >= 1);
+}
+
+pub async fn create_check_tx_proof_assert_ok(
+    wallet: &WalletClient,
+    txid: HashString<Vec<u8>>,
+    address: Address,
+    message: Option<String>,
+) {
+    let proof_res = wallet
+        .get_tx_proof(txid.clone(), address, message.clone())
+        .await;
+
+    assert!(proof_res.is_ok());
+
+    let check_res = wallet
+        .check_tx_proof(txid, address, message, proof_res.unwrap())
+        .await;
+
+    assert!(check_res.is_ok());
+    assert!(check_res.unwrap().good);
 }

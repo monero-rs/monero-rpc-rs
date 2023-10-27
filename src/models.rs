@@ -559,13 +559,27 @@ pub struct KeyImageImportResponse {
     pub unspent: Amount,
 }
 
-/// Return type of wallet `create_wallet`.
+/// Return type of `create_wallet`.
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct CreateWallet {
+pub struct AccountCreation {
     /// Index of the new account.
     pub account_index: u32,
     /// Generated wallet address.
     pub address: Address,
+}
+
+/// Return type of `check_tx_proof`.
+#[derive(Clone, Debug, Deserialize)]
+pub struct TxProofOutput {
+    /// Number of block mined after the one with the transaction.
+    pub confirmations: u32,
+    /// States if the inputs proves the transaction.
+    pub good: bool,
+    /// States if the transaction is still in pool or has been added to a block.
+    pub in_pool: bool,
+    /// Amount of the transaction.
+    #[serde(with = "amount::serde::as_pico")]
+    pub received: Amount,
 }
 
 #[cfg(test)]

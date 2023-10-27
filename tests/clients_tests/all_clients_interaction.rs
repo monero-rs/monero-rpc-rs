@@ -447,7 +447,10 @@ pub async fn run() {
         subaddr_index: Index { major: 0, minor: 0 },
         suggested_confirmations_threshold: 1,
         // this is any date, since it will not be tested against anything
-        timestamp: DateTime::<Utc>::from_utc(NaiveDateTime::from_timestamp_opt(0, 0).unwrap(), Utc),
+        timestamp: DateTime::from_naive_utc_and_offset(
+            NaiveDateTime::from_timestamp_opt(0, 0).unwrap(),
+            Utc,
+        ),
         txid: HashString(transfer_1_data.tx_hash.0.as_ref().to_vec()),
         transfer_type: GetTransfersCategory::Pending,
         unlock_time: 0,
@@ -874,4 +877,40 @@ pub async fn run() {
         },
     )
     .await;
+
+    // Create tx proof and check tx proof test
+    //---------------------------------------------------------------------------------------//
+    let selector_data: HashMap<GetTransfersCategory, bool> = HashMap::from([
+        (GetTransfersCategory::In, true),
+        (GetTransfersCategory::Out, true),
+        (GetTransfersCategory::Pending, false),
+        (GetTransfersCategory::Failed, false),
+        (GetTransfersCategory::Pool, false),
+        (GetTransfersCategory::Block, false),
+    ]);
+    let selector = GetTransfersSelector {
+        category_selector: selector_data,
+        account_index: None,
+        subaddr_indices: None,
+        block_height_filter: None,
+    };
+    let res = wallet.get_transfers(selector).await;
+    assert!(res.is_ok());
+    let res = res.unwrap();
+    let transfers = res.get(&GetTransfersCategory::Out);
+    if transfers.is_some() {
+        let transfers = transfers.unwrap();
+        let transfer = transfers[0].clone();
+
+        helpers::wallet::create_check_tx_proof_assert_ok(
+            &wallet,
+            transfer.txid,
+            transfer.address,
+            Some(String::from("Test")),
+        )
+        .await;
+    } else {
+        panic!("No Transfers to Test for");
+    }
+    //---------------------------------------------------------------------------------------//
 }

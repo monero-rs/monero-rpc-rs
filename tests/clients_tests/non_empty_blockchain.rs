@@ -76,7 +76,10 @@ pub async fn run() {
         reward: Amount::from_pico(35180379334199),
         // this is not used inside the test functions below, since its value depend on when the
         // test was run, so use any date in this field since it is insignificant for testing.
-        timestamp: DateTime::<Utc>::from_utc(NaiveDateTime::from_timestamp_opt(0, 0).unwrap(), Utc),
+        timestamp: DateTime::from_naive_utc_and_offset(
+            NaiveDateTime::from_timestamp_opt(0, 0).unwrap(),
+            Utc,
+        ),
     };
     helpers::regtest::get_last_block_header_assert_block_header(
         &regtest,
