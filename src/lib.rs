@@ -1389,6 +1389,55 @@ impl WalletClient {
 
         Ok(())
     }
+
+    /// Create a new account
+    pub async fn create_account(&self, label: Option<String>) -> anyhow::Result<AccountCreation> {
+        let params = empty().chain(once(("label", label.into())));
+        self.inner
+            .request::<AccountCreation>("create_account", RpcParams::map(params))
+            .await
+    }
+
+    /// Create a transaction proof
+    pub async fn get_tx_proof(
+        &self,
+        txid: HashString<Vec<u8>>,
+        address: Address,
+        message: Option<String>,
+    ) -> anyhow::Result<String> {
+        let params = empty()
+            .chain(once(("txid", txid.to_string().into())))
+            .chain(once(("address", address.to_string().into())))
+            .chain(once(("message", message.into())));
+        #[derive(Clone, Debug, Serialize, Deserialize)]
+        struct Rsp {
+            signature: String,
+        }
+
+        Ok(self
+            .inner
+            .request::<Rsp>("get_tx_proof", RpcParams::map(params))
+            .await?
+            .signature)
+    }
+
+    /// Check a transaction proof
+    pub async fn check_tx_proof(
+        &self,
+        txid: HashString<Vec<u8>>,
+        address: Address,
+        message: Option<String>,
+        signature: String,
+    ) -> anyhow::Result<TxProofOutput> {
+        let params = empty()
+            .chain(once(("txid", txid.to_string().into())))
+            .chain(once(("address", address.to_string().into())))
+            .chain(once(("message", message.into())))
+            .chain(once(("signature", signature.into())));
+        self.inner
+            .request::<TxProofOutput>("check_tx_proof", RpcParams::map(params))
+            .await
+    }
 }
 
 #[cfg(test)]
