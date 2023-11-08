@@ -425,10 +425,10 @@ impl DaemonJsonRpcClient {
                 Ok(block)
             }
             Err(e) => {
-                return Err(anyhow::Error::msg(format!(
+                Err(anyhow::Error::msg(format!(
                     "Can not fetch block: {}",
-                    e.to_string()
-                )));
+                    e
+                )))
             }
         }
     }
