@@ -66,7 +66,10 @@ use monero::{
     cryptonote::{hash::Hash as CryptoNoteHash, subaddress},
     util::{address::PaymentId, amount},
     Address, Amount,
+    blockdata::block::Block,
+    consensus::deserialize
 };
+
 use serde::{de::IgnoredAny, Deserialize, Deserializer, Serialize, Serializer};
 use serde_json::{json, Value};
 use std::{
@@ -398,6 +401,44 @@ impl DaemonJsonRpcClient {
             .await?
             .into_inner()
             .count)
+    }
+
+    pub async fn get_block(&self, selector: GetBlockHeaderSelector) -> anyhow::Result<Block> {
+        let (request, params) = match selector {
+            GetBlockHeaderSelector::Hash(hash) => (
+                "get_block",
+                RpcParams::map(
+                    Some(("hash", serde_json::to_value(HashString(hash)).unwrap())).into_iter(),
+                ),
+            ),
+            GetBlockHeaderSelector::Height(height) => (
+                "get_block",
+                RpcParams::map(Some(("height", height.into())).into_iter()),
+            ),
+            GetBlockHeaderSelector::Last => ("get_block", RpcParams::None)
+        };
+
+        match self
+            .inner
+            .request::<Value>(
+                request,
+                params
+            )
+            .await {
+                Ok(res) => {
+                    let block_str = res["blob"].as_str().unwrap();
+                    let block_hex = hex::decode(block_str).unwrap();
+                    let block: Block = deserialize(&block_hex).unwrap();
+
+                    Ok(block)
+                },
+                Err(e) => {
+                    return Err(anyhow::Error::msg(format!(
+                        "Can not fetch block: {}",
+                        e.to_string()
+                    )));
+                }
+            }
     }
 
     /// Look up a block's hash by its height.
