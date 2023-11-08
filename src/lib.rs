@@ -424,12 +424,7 @@ impl DaemonJsonRpcClient {
                 let block: Block = deserialize(&block_hex).unwrap();
                 Ok(block)
             }
-            Err(e) => {
-                Err(anyhow::Error::msg(format!(
-                    "Can not fetch block: {}",
-                    e
-                )))
-            }
+            Err(e) => Err(anyhow::Error::msg(format!("Can not fetch block: {}", e))),
         }
     }
 
