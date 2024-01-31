@@ -492,6 +492,7 @@ impl<'de> Deserialize<'de> for TransferHeight {
     }
 }
 
+/// Destinations for `GetTransferCategory::Out : true`
 #[derive(Clone, Debug, Eq, PartialEq, Deserialize)]
 pub struct Destination{
     pub address: Address,
