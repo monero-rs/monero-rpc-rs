@@ -445,7 +445,7 @@ pub async fn run() {
         note: "".to_string(),
         payment_id: HashString(PaymentId::zero()),
         subaddr_index: Index { major: 0, minor: 0 },
-        suggested_confirmations_threshold: 1,
+        suggested_confirmations_threshold: Some(1),
         // this is any date, since it will not be tested against anything
         timestamp: DateTime::from_naive_utc_and_offset(
             NaiveDateTime::from_timestamp_opt(0, 0).unwrap(),
