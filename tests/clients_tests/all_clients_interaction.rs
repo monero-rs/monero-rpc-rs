@@ -454,9 +454,14 @@ pub async fn run() {
         txid: HashString(transfer_1_data.tx_hash.0.as_ref().to_vec()),
         transfer_type: GetTransfersCategory::Pending,
         unlock_time: 0,
-        destinations: Some(vec![Destination{ 
-            address: Address::from_bytes("77NksNmbDDMXYDecHKQr11j5xvk47csdnDDNn5qWz5BeSaQQ9iJukKKFaCycbeM5oa77MwJTJyehweKaFFpf1Lmc3UXZ4ac".as_bytes()).unwrap(), 
-            amount: Amount::from_pico(30000000000) }]),
+        destinations: Some(
+            transfer_1_destination.clone()
+            .into_iter()
+            .fold(vec![], |mut acc, x|{
+                acc.push(Destination{ address: x.0, amount: x.1 });
+                acc
+            })
+        ),
     });
     helpers::wallet::get_transfer_assert_got_transfer(
         &wallet,
