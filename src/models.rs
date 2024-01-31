@@ -492,6 +492,13 @@ impl<'de> Deserialize<'de> for TransferHeight {
     }
 }
 
+#[derive(Clone, Debug, Eq, PartialEq, Deserialize)]
+pub struct Destination{
+    pub address: Address,
+    #[serde(with = "amount::serde::as_pico")]
+    pub amount: Amount,
+}
+
 /// Return type of wallet `get_transfer` and `get_transfers`.
 #[derive(Clone, Debug, Eq, PartialEq, Deserialize)]
 pub struct GotTransfer {
@@ -510,13 +517,15 @@ pub struct GotTransfer {
     /// Height of the first block that confirmed this transfer (0 if not mined yet).
     pub height: TransferHeight,
     /// Note about this transfer.
-    pub note: String,
+    pub note: String, 
+    /// Destinations for this transfer
+    pub destinations: Option<Vec<Destination>>,
     /// Payment ID for this transfer.
     pub payment_id: HashString<PaymentId>,
     /// JSON object containing the major & minor subaddress index.
     pub subaddr_index: subaddress::Index,
     /// Estimation of the confirmations needed for the transaction to be included in a block.
-    pub suggested_confirmations_threshold: u64,
+    pub suggested_confirmations_threshold: Option<u64>,
     /// POSIX timestamp for when this transfer was first confirmed in a block (or timestamp submission if not mined yet).
     #[serde(with = "chrono::serde::ts_seconds")]
     pub timestamp: DateTime<Utc>,

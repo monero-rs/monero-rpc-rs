@@ -8,10 +8,10 @@ use monero::{
     Address, Amount, Hash, KeyPair, Network, ViewPair,
 };
 use monero_rpc::{
-    BalanceData, BlockHeightFilter, GetTransfersCategory, GetTransfersSelector, GotTransfer,
-    HashString, IncomingTransfer, IncomingTransfers, KeyImageImportResponse, Payment,
-    PrivateKeyType, SubaddressBalanceData, SweepAllArgs, Transaction, TransactionsResponse,
-    TransferHeight, TransferOptions, TransferPriority, TransferType,
+    BalanceData, BlockHeightFilter, Destination, GetTransfersCategory, GetTransfersSelector, 
+    GotTransfer, HashString, IncomingTransfer, IncomingTransfers, KeyImageImportResponse,
+    Payment, PrivateKeyType, SubaddressBalanceData, SweepAllArgs, Transaction,
+    TransactionsResponse, TransferHeight, TransferOptions, TransferPriority, TransferType
 };
 
 use super::helpers;
@@ -445,7 +445,7 @@ pub async fn run() {
         note: "".to_string(),
         payment_id: HashString(PaymentId::zero()),
         subaddr_index: Index { major: 0, minor: 0 },
-        suggested_confirmations_threshold: 1,
+        suggested_confirmations_threshold: Some(1),
         // this is any date, since it will not be tested against anything
         timestamp: DateTime::from_naive_utc_and_offset(
             NaiveDateTime::from_timestamp_opt(0, 0).unwrap(),
@@ -454,6 +454,9 @@ pub async fn run() {
         txid: HashString(transfer_1_data.tx_hash.0.as_ref().to_vec()),
         transfer_type: GetTransfersCategory::Pending,
         unlock_time: 0,
+        destinations: Some(vec![Destination{ 
+            address: Address::from_bytes("77NksNmbDDMXYDecHKQr11j5xvk47csdnDDNn5qWz5BeSaQQ9iJukKKFaCycbeM5oa77MwJTJyehweKaFFpf1Lmc3UXZ4ac".as_bytes()).unwrap(), 
+            amount: Amount::from_pico(30000000000) }]),
     });
     helpers::wallet::get_transfer_assert_got_transfer(
         &wallet,
