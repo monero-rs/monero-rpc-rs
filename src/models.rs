@@ -516,7 +516,7 @@ pub struct GotTransfer {
     /// JSON object containing the major & minor subaddress index.
     pub subaddr_index: subaddress::Index,
     /// Estimation of the confirmations needed for the transaction to be included in a block.
-    pub suggested_confirmations_threshold: u64,
+    pub suggested_confirmations_threshold: Option<u64>,
     /// POSIX timestamp for when this transfer was first confirmed in a block (or timestamp submission if not mined yet).
     #[serde(with = "chrono::serde::ts_seconds")]
     pub timestamp: DateTime<Utc>,
