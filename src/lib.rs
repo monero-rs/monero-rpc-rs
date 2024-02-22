@@ -77,6 +77,7 @@ use std::{
     num::NonZeroU64,
     ops::{Deref, RangeInclusive},
     sync::Arc,
+    time::Duration,
 };
 use tracing::*;
 use uuid::Uuid;
@@ -248,6 +249,7 @@ struct RpcClientConfig {
     #[cfg_attr(docsrs, doc(cfg(feature = "rpc_authentication")))]
     rpc_auth: RpcAuthentication,
     proxy_address: Option<String>,
+    timeout: Option<Duration>,
 }
 
 /// Builder for generating a configured [`RpcClient`].
@@ -270,6 +272,7 @@ impl RpcClientBuilder {
                 #[cfg(feature = "rpc_authentication")]
                 rpc_auth: RpcAuthentication::None,
                 proxy_address: None,
+                timeout: None,
             },
         }
     }
@@ -288,17 +291,23 @@ impl RpcClientBuilder {
         self
     }
 
+    /// Configures default request timeout.
+    pub fn timeout(mut self, timeout: Duration) -> Self {
+        self.config.timeout = Some(timeout);
+        self
+    }
+
     /// Build and return the fully configured RPC client.
     pub fn build(self, addr: impl Into<String>) -> anyhow::Result<RpcClient> {
         let config = self.config;
-        let http_client_builder = reqwest::ClientBuilder::new();
-        let http_client = if let Some(proxy_address) = config.proxy_address {
-            http_client_builder
-                .proxy(reqwest::Proxy::all(proxy_address)?)
-                .build()?
-        } else {
-            http_client_builder.build()?
+        let mut http_client_builder = reqwest::ClientBuilder::new();
+        if let Some(proxy_address) = config.proxy_address {
+            http_client_builder = http_client_builder.proxy(reqwest::Proxy::all(proxy_address)?);
         };
+        if let Some(timeout) = config.timeout {
+            http_client_builder = http_client_builder.timeout(timeout);
+        };
+        let http_client = http_client_builder.build()?;
         Ok(RpcClient {
             inner: CallerWrapper(Arc::new(RemoteCaller {
                 http_client,
