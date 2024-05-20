@@ -814,6 +814,53 @@ impl WalletClient {
         Ok((rsp.address, rsp.address_index))
     }
 
+    /// Make an integrated address from the wallet address and a payment id.
+    pub async fn make_integrated_address(
+        &self,
+        standard_address: Option<String>,
+        payment_id: Option<String>
+    ) -> anyhow::Result<(String, String)> {
+        #[derive(Deserialize)]
+        struct Rsp {
+            integrated_address: String,
+            payment_id: String,
+        }
+
+        let params = empty()
+            .chain(standard_address.map(|v| ("standard_address", Value::String(v))))
+            .chain(payment_id.map(|v| ("payment_id", Value::String(v))));
+
+        let rsp = self
+            .inner
+            .request::<Rsp>("make_integrated_address", RpcParams::map(params))
+            .await?;
+
+        Ok((rsp.integrated_address, rsp.payment_id))
+    }
+
+    /// Retrieve the standard address and payment id corresponding to an integrated address.
+    pub async fn split_integrated_address(
+        &self,
+        integrated_address: String
+    ) -> anyhow::Result<(bool, String, String)> {
+        #[derive(Deserialize)]
+        struct Rsp {
+            is_subaddress: bool,
+            payment: String,
+            standard_address: String
+        }
+
+        let params = empty()
+            .chain(once(("integrated_address", integrated_address.into())));
+
+        let rsp = self
+            .inner
+            .request::<Rsp>("split_integrated_address", RpcParams::map(params))
+            .await?;
+
+        Ok((rsp.is_subaddress, rsp.payment, rsp.standard_address))
+    }
+
     /// Label an address.
     pub async fn label_address(
         &self,
