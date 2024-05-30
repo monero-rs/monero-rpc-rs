@@ -78,11 +78,13 @@ use std::{
     ops::{Deref, RangeInclusive},
     sync::Arc,
 };
+use std::str::FromStr;
 use tracing::*;
 use uuid::Uuid;
 
 #[cfg(feature = "rpc_authentication")]
 use diqwest::WithDigestAuth;
+use hex::FromHex;
 
 enum RpcParams {
     Array(Box<dyn Iterator<Item = Value> + Send + 'static>),
@@ -819,7 +821,7 @@ impl WalletClient {
         &self,
         standard_address: Option<Address>,
         payment_id: Option<PaymentId>
-    ) -> anyhow::Result<(String, HashString<Vec<u8>>)> {
+    ) -> anyhow::Result<(Address, HashString<Vec<u8>>)> {
         #[derive(Deserialize)]
         struct Rsp {
             integrated_address: String,
@@ -835,14 +837,14 @@ impl WalletClient {
             .request::<Rsp>("make_integrated_address", RpcParams::map(params))
             .await?;
 
-        Ok((rsp.integrated_address, rsp.payment_id))
+        Ok((Address::from_str(&rsp.integrated_address)?, rsp.payment_id))
     }
 
     /// Retrieve the standard address and payment id corresponding to an integrated address.
     pub async fn split_integrated_address(
         &self,
         integrated_address: Address
-    ) -> anyhow::Result<(bool, HashString<Vec<u8>>, String)> {
+    ) -> anyhow::Result<(bool, PaymentId, Address)> {
         #[derive(Deserialize)]
         struct Rsp {
             is_subaddress: bool,
@@ -858,7 +860,7 @@ impl WalletClient {
             .request::<Rsp>("split_integrated_address", RpcParams::map(params))
             .await?;
 
-        Ok((rsp.is_subaddress, rsp.payment, rsp.standard_address))
+        Ok((rsp.is_subaddress, PaymentId::from_hex(rsp.payment.to_string())?, Address::from_str(&rsp.standard_address)?))
     }
 
     /// Label an address.
