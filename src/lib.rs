@@ -63,6 +63,8 @@ pub use self::{models::*, util::*};
 
 use jsonrpc_core::types::{Id, *};
 use monero::{
+    blockdata::block::Block,
+    consensus::deserialize,
     cryptonote::{hash::Hash as CryptoNoteHash, subaddress},
     util::{address::PaymentId, amount},
     Address, Amount,
@@ -77,6 +79,7 @@ use std::{
     num::NonZeroU64,
     ops::{Deref, RangeInclusive},
     sync::Arc,
+    time::Duration,
 };
 use tracing::*;
 use uuid::Uuid;
@@ -248,6 +251,7 @@ struct RpcClientConfig {
     #[cfg_attr(docsrs, doc(cfg(feature = "rpc_authentication")))]
     rpc_auth: RpcAuthentication,
     proxy_address: Option<String>,
+    timeout: Option<Duration>,
 }
 
 /// Builder for generating a configured [`RpcClient`].
@@ -270,6 +274,7 @@ impl RpcClientBuilder {
                 #[cfg(feature = "rpc_authentication")]
                 rpc_auth: RpcAuthentication::None,
                 proxy_address: None,
+                timeout: None,
             },
         }
     }
@@ -288,17 +293,23 @@ impl RpcClientBuilder {
         self
     }
 
+    /// Configures default request timeout.
+    pub fn timeout(mut self, timeout: Duration) -> Self {
+        self.config.timeout = Some(timeout);
+        self
+    }
+
     /// Build and return the fully configured RPC client.
     pub fn build(self, addr: impl Into<String>) -> anyhow::Result<RpcClient> {
         let config = self.config;
-        let http_client_builder = reqwest::ClientBuilder::new();
-        let http_client = if let Some(proxy_address) = config.proxy_address {
-            http_client_builder
-                .proxy(reqwest::Proxy::all(proxy_address)?)
-                .build()?
-        } else {
-            http_client_builder.build()?
+        let mut http_client_builder = reqwest::ClientBuilder::new();
+        if let Some(proxy_address) = config.proxy_address {
+            http_client_builder = http_client_builder.proxy(reqwest::Proxy::all(proxy_address)?);
         };
+        if let Some(timeout) = config.timeout {
+            http_client_builder = http_client_builder.timeout(timeout);
+        };
+        let http_client = http_client_builder.build()?;
         Ok(RpcClient {
             inner: CallerWrapper(Arc::new(RemoteCaller {
                 http_client,
@@ -398,6 +409,32 @@ impl DaemonJsonRpcClient {
             .await?
             .into_inner()
             .count)
+    }
+
+    pub async fn get_block(&self, selector: GetBlockHeaderSelector) -> anyhow::Result<Block> {
+        let (request, params) = match selector {
+            GetBlockHeaderSelector::Hash(hash) => (
+                "get_block",
+                RpcParams::map(
+                    Some(("hash", serde_json::to_value(HashString(hash)).unwrap())).into_iter(),
+                ),
+            ),
+            GetBlockHeaderSelector::Height(height) => (
+                "get_block",
+                RpcParams::map(Some(("height", height.into())).into_iter()),
+            ),
+            GetBlockHeaderSelector::Last => ("get_block", RpcParams::None),
+        };
+
+        match self.inner.request::<Value>(request, params).await {
+            Ok(res) => {
+                let block_str = res["blob"].as_str().unwrap();
+                let block_hex = hex::decode(block_str).unwrap();
+                let block: Block = deserialize(&block_hex).unwrap();
+                Ok(block)
+            }
+            Err(e) => Err(anyhow::Error::msg(format!("Can not fetch block: {}", e))),
+        }
     }
 
     /// Look up a block's hash by its height.
