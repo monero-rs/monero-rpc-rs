@@ -821,7 +821,7 @@ impl WalletClient {
         &self,
         standard_address: Option<Address>,
         payment_id: Option<PaymentId>
-    ) -> anyhow::Result<(Address, HashString<Vec<u8>>)> {
+    ) -> anyhow::Result<(Address, PaymentId)> {
         #[derive(Deserialize)]
         struct Rsp {
             integrated_address: String,
@@ -837,7 +837,7 @@ impl WalletClient {
             .request::<Rsp>("make_integrated_address", RpcParams::map(params))
             .await?;
 
-        Ok((Address::from_str(&rsp.integrated_address)?, rsp.payment_id))
+        Ok((Address::from_str(&rsp.integrated_address)?, PaymentId::from_hex(rsp.payment_id.to_string())?))
     }
 
     /// Retrieve the standard address and payment id corresponding to an integrated address.
