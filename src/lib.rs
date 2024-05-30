@@ -817,18 +817,18 @@ impl WalletClient {
     /// Make an integrated address from the wallet address and a payment id.
     pub async fn make_integrated_address(
         &self,
-        standard_address: Option<String>,
-        payment_id: Option<String>
-    ) -> anyhow::Result<(String, String)> {
+        standard_address: Option<Address>,
+        payment_id: Option<PaymentId>
+    ) -> anyhow::Result<(String, HashString<Vec<u8>>)> {
         #[derive(Deserialize)]
         struct Rsp {
             integrated_address: String,
-            payment_id: String,
+            payment_id: HashString<Vec<u8>>,
         }
 
         let params = empty()
-            .chain(standard_address.map(|v| ("standard_address", Value::String(v))))
-            .chain(payment_id.map(|v| ("payment_id", Value::String(v))));
+            .chain(standard_address.map(|v| ("standard_address", v.to_string().into())))
+            .chain(payment_id.map(|v| ("payment_id", HashString(v).to_string().into())));
 
         let rsp = self
             .inner
@@ -841,17 +841,17 @@ impl WalletClient {
     /// Retrieve the standard address and payment id corresponding to an integrated address.
     pub async fn split_integrated_address(
         &self,
-        integrated_address: String
-    ) -> anyhow::Result<(bool, String, String)> {
+        integrated_address: Address
+    ) -> anyhow::Result<(bool, HashString<Vec<u8>>, String)> {
         #[derive(Deserialize)]
         struct Rsp {
             is_subaddress: bool,
-            payment: String,
+            payment: HashString<Vec<u8>>,
             standard_address: String
         }
 
         let params = empty()
-            .chain(once(("integrated_address", integrated_address.into())));
+            .chain(once(("integrated_address", integrated_address.to_string().into())));
 
         let rsp = self
             .inner
