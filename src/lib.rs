@@ -69,6 +69,7 @@ use monero::{
 };
 use serde::{de::IgnoredAny, Deserialize, Deserializer, Serialize, Serializer};
 use serde_json::{json, Value};
+use std::str::FromStr;
 use std::{
     collections::HashMap,
     convert::TryFrom,
@@ -78,7 +79,6 @@ use std::{
     ops::{Deref, RangeInclusive},
     sync::Arc,
 };
-use std::str::FromStr;
 use tracing::*;
 use uuid::Uuid;
 
@@ -820,7 +820,7 @@ impl WalletClient {
     pub async fn make_integrated_address(
         &self,
         standard_address: Option<Address>,
-        payment_id: Option<PaymentId>
+        payment_id: Option<PaymentId>,
     ) -> anyhow::Result<(Address, PaymentId)> {
         #[derive(Deserialize)]
         struct Rsp {
@@ -837,30 +837,39 @@ impl WalletClient {
             .request::<Rsp>("make_integrated_address", RpcParams::map(params))
             .await?;
 
-        Ok((Address::from_str(&rsp.integrated_address)?, PaymentId::from_hex(rsp.payment_id.to_string())?))
+        Ok((
+            Address::from_str(&rsp.integrated_address)?,
+            PaymentId::from_hex(rsp.payment_id.to_string())?,
+        ))
     }
 
     /// Retrieve the standard address and payment id corresponding to an integrated address.
     pub async fn split_integrated_address(
         &self,
-        integrated_address: Address
+        integrated_address: Address,
     ) -> anyhow::Result<(bool, PaymentId, Address)> {
         #[derive(Deserialize)]
         struct Rsp {
             is_subaddress: bool,
             payment: HashString<Vec<u8>>,
-            standard_address: String
+            standard_address: String,
         }
 
-        let params = empty()
-            .chain(once(("integrated_address", integrated_address.to_string().into())));
+        let params = empty().chain(once((
+            "integrated_address",
+            integrated_address.to_string().into(),
+        )));
 
         let rsp = self
             .inner
             .request::<Rsp>("split_integrated_address", RpcParams::map(params))
             .await?;
 
-        Ok((rsp.is_subaddress, PaymentId::from_hex(rsp.payment.to_string())?, Address::from_str(&rsp.standard_address)?))
+        Ok((
+            rsp.is_subaddress,
+            PaymentId::from_hex(rsp.payment.to_string())?,
+            Address::from_str(&rsp.standard_address)?,
+        ))
     }
 
     /// Label an address.
