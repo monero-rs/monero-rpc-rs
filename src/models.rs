@@ -13,7 +13,7 @@
 // limitations under the License.
 
 // TODO: remove this when clippy error goes away...
-#![allow(clippy::incorrect_clone_impl_on_copy_type)]
+#![allow(clippy::non_canonical_clone_impl)]
 
 use crate::util::*;
 use chrono::prelude::*;
