@@ -19,7 +19,7 @@ hex = "0.4"
 http = "1.1"
 jsonrpc-core = "18"
 monero = { version = "0.21", features = ["serde"] }
-reqwest = { version = "0.11", default-features = false, features = ["json", "socks"] }
+reqwest = { version = "0.12", default-features = false, features = ["json", "socks"] }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 tracing = "0.1"
