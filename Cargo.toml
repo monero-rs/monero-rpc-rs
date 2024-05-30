@@ -13,7 +13,7 @@ description = "RPC client for Monero daemon and wallet"
 [dependencies]
 anyhow = "1"
 chrono = { version = "0.4", default-features = false, features = ["serde"] }
-diqwest = { version = "1.2.1", default-features = false, optional = true }
+diqwest = { version = "3.0.0", default-features = false, optional = true }
 fixed-hash = "0.8"
 hex = "0.4"
 http = "1.1"
