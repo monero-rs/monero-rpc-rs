@@ -492,6 +492,14 @@ impl<'de> Deserialize<'de> for TransferHeight {
     }
 }
 
+/// Destinations for `GetTransferCategory::Out : true`
+#[derive(Clone, Debug, Eq, PartialEq, Deserialize)]
+pub struct Destination{
+    pub address: Address,
+    #[serde(with = "amount::serde::as_pico")]
+    pub amount: Amount,
+}
+
 /// Return type of wallet `get_transfer` and `get_transfers`.
 #[derive(Clone, Debug, Eq, PartialEq, Deserialize)]
 pub struct GotTransfer {
@@ -510,7 +518,9 @@ pub struct GotTransfer {
     /// Height of the first block that confirmed this transfer (0 if not mined yet).
     pub height: TransferHeight,
     /// Note about this transfer.
-    pub note: String,
+    pub note: String, 
+    /// Destinations for this transfer
+    pub destinations: Option<Vec<Destination>>,
     /// Payment ID for this transfer.
     pub payment_id: HashString<PaymentId>,
     /// JSON object containing the major & minor subaddress index.
@@ -607,7 +617,7 @@ mod tests {
             orphan_status: true,
             prev_hash: HashString(BlockHash::repeat_byte(12)),
             reward: Amount::from_pico(12),
-            timestamp: DateTime::<Utc>::from_utc(
+            timestamp: DateTime::from_naive_utc_and_offset(
                 NaiveDateTime::from_timestamp_opt(61, 0).unwrap(),
                 Utc,
             ),
@@ -626,7 +636,7 @@ mod tests {
             orphan_status: true,
             prev_hash: BlockHash::repeat_byte(12),
             reward: Amount::from_pico(12),
-            timestamp: DateTime::<Utc>::from_utc(
+            timestamp: DateTime::from_naive_utc_and_offset(
                 NaiveDateTime::from_timestamp_opt(61, 0).unwrap(),
                 Utc,
             ),
