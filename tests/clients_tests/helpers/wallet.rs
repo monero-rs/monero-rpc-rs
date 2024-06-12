@@ -7,8 +7,9 @@ use monero::{
 use monero_rpc::{
     AddressData, BalanceData, GenerateFromKeysArgs, GetAccountsData, GetTransfersCategory,
     GetTransfersSelector, GotTransfer, HashString, IncomingTransfers, KeyImageImportResponse,
-    Payment, PrivateKeyType, SignedKeyImage, SignedTransferOutput, SweepAllArgs, TransferData,
-    TransferOptions, TransferPriority, TransferType, WalletClient, WalletCreation,
+    Payment, PrivateKeyType, RestoreDeterministicWalletArgs, SignedKeyImage, SignedTransferOutput,
+    SweepAllArgs, TransferData, TransferOptions, TransferPriority, TransferType, WalletClient,
+    WalletCreation, WalletRestoration,
 };
 
 fn get_random_name() -> String {
@@ -139,6 +140,19 @@ pub async fn open_wallet_error_wrong_password(
         .await
         .unwrap_err();
     assert_eq!(err.to_string(), "Server error: Failed to open wallet");
+}
+
+pub async fn restore_deterministic_wallet_assert_ok(
+    wallet: &WalletClient,
+    mut args: RestoreDeterministicWalletArgs,
+) -> (String, WalletRestoration) {
+    let filename = get_random_name();
+
+    args.filename = filename.clone();
+
+    let wallet_restore = wallet.restore_deterministic_wallet(args).await.unwrap();
+
+    (filename, wallet_restore)
 }
 
 pub async fn generate_from_keys_assert_ok(
