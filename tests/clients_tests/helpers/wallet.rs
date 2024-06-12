@@ -155,6 +155,17 @@ pub async fn restore_deterministic_wallet_assert_ok(
     (filename, wallet_restore)
 }
 
+pub async fn restore_deterministic_wallet_error(
+    wallet: &WalletClient,
+    mut args: RestoreDeterministicWalletArgs,
+) {
+    let filename = get_random_name();
+
+    args.filename = filename.clone();
+
+    let _ = wallet.restore_deterministic_wallet(args).await.unwrap_err();
+}
+
 pub async fn generate_from_keys_assert_ok(
     wallet: &WalletClient,
     mut args: GenerateFromKeysArgs,
