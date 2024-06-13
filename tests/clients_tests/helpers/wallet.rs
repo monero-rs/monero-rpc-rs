@@ -150,8 +150,12 @@ pub async fn restore_deterministic_wallet_assert_ok(
 
     args.filename = filename.clone();
 
-    let wallet_restore = wallet.restore_deterministic_wallet(args).await.unwrap();
+    let wallet_restore = wallet
+        .restore_deterministic_wallet(args.clone())
+        .await
+        .unwrap();
 
+    assert_eq!(args.seed, wallet_restore.seed.clone());
     (filename, wallet_restore)
 }
 
