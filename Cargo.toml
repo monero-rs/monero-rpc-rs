@@ -25,6 +25,9 @@ serde_json = "1"
 tracing = "0.1"
 uuid = { version = "1.1", features = ["v4"] }
 
+# Transitive dependency of reqwest (MSRV 1.67)
+idna_adapter = "<1.2.0"
+
 [dev-dependencies]
 # Async
 rand = "0.8.4"
