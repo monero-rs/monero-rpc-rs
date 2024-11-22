@@ -7,7 +7,7 @@ exclude = ["/test"]
 keywords = ["asynchronous", "net", "monero", "rpc"]
 license = "Apache-2.0"
 repository = "https://github.com/monero-rs/monero-rpc-rs"
-rust-version = "1.63.0"
+rust-version = "1.66.0"
 description = "RPC client for Monero daemon and wallet"
 
 [dependencies]
