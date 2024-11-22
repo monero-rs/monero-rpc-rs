@@ -17,7 +17,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Spin up containers
-        run: docker-compose -f tests/docker-compose.yml up -d
+        run: docker compose -f tests/docker-compose.yml up -d
         env:
           MONERO_VERSION: ${{ matrix.monero }}
 
