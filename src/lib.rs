@@ -1038,6 +1038,12 @@ impl WalletClient {
                     v.into_iter().map(From::from).collect::<Vec<Value>>().into(),
                 )
             }))
+            .chain(options.subtract_fee_from_outputs.map(|v| {
+                (
+                    "subtract_fee_from_outputs",
+                    v.into_iter().map(From::from).collect::<Vec<Value>>().into(),
+                )
+            }))
             .chain(options.mixin.map(|v| ("mixin", v.into())))
             .chain(options.ring_size.map(|v| ("ring_size", v.into())))
             .chain(options.unlock_time.map(|v| ("unlock_time", v.into())))
