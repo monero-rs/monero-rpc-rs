@@ -16,7 +16,6 @@ chrono = { version = "0.4", default-features = false, features = ["serde"] }
 diqwest = { version = "3.0.0", default-features = false, optional = true }
 fixed-hash = "0.8"
 hex = "0.4"
-http = "1.1"
 jsonrpc-core = "18"
 monero = { version = "0.21", features = ["serde"] }
 reqwest = { version = "0.12", default-features = false, features = ["json", "socks"] }
