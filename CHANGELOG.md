@@ -7,12 +7,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Added `create_account` method by @mchtilianov ([#120](https://github.com/monero-rs/monero-rpc-rs/pull/120)).
+- Added `get_tx_proof` and `check_tx_proof` methods by @mchtilianov ([#122](https://github.com/monero-rs/monero-rpc-rs/pull/122)).
+- Made request timeout configurable by @silverpill ([#131](https://github.com/monero-rs/monero-rpc-rs/pull/131)).
+- Added `get_block` method by @essecara ([#123](https://github.com/monero-rs/monero-rpc-rs/pull/123)).
+- Added `rustls` support by @silverpill ([#133](https://github.com/monero-rs/monero-rpc-rs/pull/133)).
+
+### Changed
+
+- Bumped MSRV to `1.66.0`
+- Updated `reqwest` to version `0.12` by @silverpill ([#140](https://github.com/monero-rs/monero-rpc-rs/pull/140)).
+
+### Fixed
+
+- Fixed `get_transfers` with `Out=true` in `category_selector` by @bytenotbark ([#127](https://github.com/monero-rs/monero-rpc-rs/pull/127)).
+
 ## [0.4.0] - 2023-09-15
 
 ### Added
 
 - Add `sign` and `verify` methods by @silverpill ([#105](https://github.com/monero-rs/monero-rpc-rs/pull/105))
 - Add `get_attribute` and `set_attribute` methods by @refactor-ring ([#108](https://github.com/monero-rs/monero-rpc-rs/pull/108))
+- Add `restore_deterministic_wallet` method by @cilki ([#139](https://github.com/monero-rs/monero-rpc-rs/pull/139))
 
 ### Changed
 
