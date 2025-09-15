@@ -14,10 +14,10 @@ jobs:
         monero: [ 0.18.1.2, 0.18.2.2 ]
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Spin up containers
-        run: docker-compose -f tests/docker-compose.yml up -d
+        run: docker compose -f tests/docker-compose.yml up -d
         env:
           MONERO_VERSION: ${{ matrix.monero }}
 

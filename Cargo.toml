@@ -7,19 +7,18 @@ exclude = ["/test"]
 keywords = ["asynchronous", "net", "monero", "rpc"]
 license = "Apache-2.0"
 repository = "https://github.com/monero-rs/monero-rpc-rs"
-rust-version = "1.63.0"
+rust-version = "1.66.0"
 description = "RPC client for Monero daemon and wallet"
 
 [dependencies]
 anyhow = "1"
 chrono = { version = "0.4", default-features = false, features = ["serde"] }
-diqwest = { version = "1.2.1", default-features = false, optional = true }
+diqwest = { version = "3.0.0", default-features = false, optional = true }
 fixed-hash = "0.8"
 hex = "0.4"
-http = "0.2"
 jsonrpc-core = "18"
-monero = { version = "0.19", features = ["serde"] }
-reqwest = { version = "0.11", default-features = false, features = ["json", "socks"] }
+monero = { version = "0.21", features = ["serde"] }
+reqwest = { version = "0.12", default-features = false, features = ["json", "socks"] }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 tracing = "0.1"
@@ -36,8 +35,8 @@ tokio = { version = "1.12.0", features = ["full"] }
 default = ["native-tls"]
 
 rpc_authentication = ["diqwest"]
-native-tls = ["reqwest/native-tls", "diqwest/default"]
-rustls-tls = ["reqwest/rustls-tls-native-roots", "diqwest/rustls-tls"]
+native-tls = ["reqwest/native-tls"]
+rustls-tls = ["reqwest/rustls-tls-native-roots"]
 
 [package.metadata.docs.rs]
 all-features = true

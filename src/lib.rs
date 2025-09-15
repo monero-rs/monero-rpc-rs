@@ -722,6 +722,30 @@ impl WalletClient {
             .await
     }
 
+    /// Restore a wallet from an existing mnemonic phrase. Requires the rpc
+    /// wallet to run with the `--wallet-dir` argument.
+    pub async fn restore_deterministic_wallet(
+        &self,
+        args: RestoreDeterministicWalletArgs,
+    ) -> anyhow::Result<WalletRestoration> {
+        let params = empty()
+            .chain(args.restore_height.map(|v| ("restore_height", v.into())))
+            .chain(once(("filename", args.filename.into())))
+            .chain(once(("seed", args.seed.into())))
+            .chain(
+                args.seed_offset
+                    .map(|v| ("seed_offset", v.to_string().into())),
+            )
+            .chain(once(("password", args.password.into())))
+            .chain(
+                args.autosave_current
+                    .map(|v| ("autosave_current", v.into())),
+            );
+        self.inner
+            .request("restore_deterministic_wallet", RpcParams::map(params))
+            .await
+    }
+
     /// Create a new wallet. You need to have set the argument `--wallet-dir` when launching
     /// monero-wallet-rpc to make this work.
     pub async fn create_wallet(
