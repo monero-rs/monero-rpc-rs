@@ -30,6 +30,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Add `sign` and `verify` methods by @silverpill ([#105](https://github.com/monero-rs/monero-rpc-rs/pull/105))
 - Add `get_attribute` and `set_attribute` methods by @refactor-ring ([#108](https://github.com/monero-rs/monero-rpc-rs/pull/108))
+- Add `restore_deterministic_wallet` method by @cilki ([#139](https://github.com/monero-rs/monero-rpc-rs/pull/139))
 
 ### Changed
 

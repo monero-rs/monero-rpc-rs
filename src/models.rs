@@ -375,6 +375,31 @@ pub struct GenerateFromKeysArgs {
     pub autosave_current: Option<bool>,
 }
 
+/// Argument type of wallet `restore_deterministic_wallet`.
+#[derive(Clone, Debug)]
+pub struct RestoreDeterministicWalletArgs {
+    pub autosave_current: Option<bool>,
+    pub filename: String,
+    pub password: String,
+    pub restore_height: Option<u64>,
+    pub seed: String,
+    pub seed_offset: Option<String>,
+}
+
+/// Return type of wallet `restore_deterministic_wallet`.
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct WalletRestoration {
+    /// Generated wallet address.
+    pub address: Address,
+    /// Info on generated wallet.
+    pub info: String,
+    /// The mnemonic seed phrase.
+    pub seed: String,
+    /// Indicates whether the seed provided to `restore_deterministic_wallet` has
+    /// been updated from a deprecated format.
+    pub was_deprecated: bool,
+}
+
 /// Return sub-type of wallet `get_accounts`.
 #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
 pub struct GotAccount {
