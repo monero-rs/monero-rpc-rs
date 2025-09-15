@@ -354,6 +354,7 @@ pub struct SweepAllData {
 pub struct TransferOptions {
     pub account_index: Option<u32>,
     pub subaddr_indices: Option<Vec<u32>>,
+    pub subtract_fee_from_outputs: Option<Vec<u32>>,
     pub mixin: Option<u64>,
     pub ring_size: Option<u64>,
     pub unlock_time: Option<u64>,

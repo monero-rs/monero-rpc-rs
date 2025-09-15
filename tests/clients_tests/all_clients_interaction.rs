@@ -271,6 +271,7 @@ pub async fn run() {
     let mut transfer_options = TransferOptions {
         account_index: None,
         subaddr_indices: None,
+        subtract_fee_from_outputs: None,
         mixin: None,
         ring_size: None,
         unlock_time: None,
@@ -354,6 +355,7 @@ pub async fn run() {
     let transfer_options = TransferOptions {
         account_index: Some(0),
         subaddr_indices: Some(vec![1]),
+        subtract_fee_from_outputs: None,
         mixin: Some(1000),
         ring_size: Some(8),
         unlock_time: Some(20),
@@ -701,6 +703,7 @@ pub async fn run() {
         TransferOptions {
             account_index: None,
             subaddr_indices: None,
+            subtract_fee_from_outputs: None,
             mixin: None,
             ring_size: None,
             unlock_time: None,
