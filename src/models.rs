@@ -14,6 +14,7 @@
 
 // TODO: remove this when clippy error goes away...
 #![allow(clippy::non_canonical_clone_impl)]
+#![allow(unexpected_cfgs)]
 
 use crate::util::*;
 use chrono::prelude::*;
