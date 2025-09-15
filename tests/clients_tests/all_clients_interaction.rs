@@ -8,10 +8,10 @@ use monero::{
     Address, Amount, Hash, KeyPair, Network, ViewPair,
 };
 use monero_rpc::{
-    BalanceData, BlockHeightFilter, Destination, GetTransfersCategory, GetTransfersSelector, 
-    GotTransfer, HashString, IncomingTransfer, IncomingTransfers, KeyImageImportResponse,
-    Payment, PrivateKeyType, SubaddressBalanceData, SweepAllArgs, Transaction,
-    TransactionsResponse, TransferHeight, TransferOptions, TransferPriority, TransferType
+    BalanceData, BlockHeightFilter, Destination, GetTransfersCategory, GetTransfersSelector,
+    GotTransfer, HashString, IncomingTransfer, IncomingTransfers, KeyImageImportResponse, Payment,
+    PrivateKeyType, SubaddressBalanceData, SweepAllArgs, Transaction, TransactionsResponse,
+    TransferHeight, TransferOptions, TransferPriority, TransferType,
 };
 
 use super::helpers;
@@ -454,14 +454,16 @@ pub async fn run() {
         txid: HashString(transfer_1_data.tx_hash.0.as_ref().to_vec()),
         transfer_type: GetTransfersCategory::Pending,
         unlock_time: 0,
-        destinations: Some(
-            transfer_1_destination.clone()
-            .into_iter()
-            .fold(vec![], |mut acc, x|{
-                acc.push(Destination{ address: x.0, amount: x.1 });
+        destinations: Some(transfer_1_destination.clone().into_iter().fold(
+            vec![],
+            |mut acc, x| {
+                acc.push(Destination {
+                    address: x.0,
+                    amount: x.1,
+                });
                 acc
-            })
-        ),
+            },
+        )),
     });
     helpers::wallet::get_transfer_assert_got_transfer(
         &wallet,

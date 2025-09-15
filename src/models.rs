@@ -520,7 +520,7 @@ impl<'de> Deserialize<'de> for TransferHeight {
 
 /// Destinations for `GetTransferCategory::Out : true`
 #[derive(Clone, Debug, Eq, PartialEq, Deserialize)]
-pub struct Destination{
+pub struct Destination {
     pub address: Address,
     #[serde(with = "amount::serde::as_pico")]
     pub amount: Amount,
@@ -544,7 +544,7 @@ pub struct GotTransfer {
     /// Height of the first block that confirmed this transfer (0 if not mined yet).
     pub height: TransferHeight,
     /// Note about this transfer.
-    pub note: String, 
+    pub note: String,
     /// Destinations for this transfer
     pub destinations: Option<Vec<Destination>>,
     /// Payment ID for this transfer.
