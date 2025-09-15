@@ -14,6 +14,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Made request timeout configurable by @silverpill ([#131](https://github.com/monero-rs/monero-rpc-rs/pull/131)).
 - Added `get_block` method by @essecara ([#123](https://github.com/monero-rs/monero-rpc-rs/pull/123)).
 - Added `rustls` support by @silverpill ([#133](https://github.com/monero-rs/monero-rpc-rs/pull/133)).
+- Added `restore_deterministic_wallet` method by @cilki ([#139](https://github.com/monero-rs/monero-rpc-rs/pull/139)).
+- Added `subtract_fee_from_outputs` to `transfer` options by @thesn10 ([#141](https://github.com/monero-rs/monero-rpc-rs/pull/141)).
+- Added `destinations` field to `get_transfer` return value by @bytenotbark ([#128](https://github.com/monero-rs/monero-rpc-rs/pull/128)).
 
 ### Changed
 
@@ -30,7 +33,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Add `sign` and `verify` methods by @silverpill ([#105](https://github.com/monero-rs/monero-rpc-rs/pull/105))
 - Add `get_attribute` and `set_attribute` methods by @refactor-ring ([#108](https://github.com/monero-rs/monero-rpc-rs/pull/108))
-- Add `restore_deterministic_wallet` method by @cilki ([#139](https://github.com/monero-rs/monero-rpc-rs/pull/139))
 
 ### Changed
 
