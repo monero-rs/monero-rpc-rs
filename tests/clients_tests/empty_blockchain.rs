@@ -1,4 +1,4 @@
-use chrono::{DateTime, NaiveDateTime, Utc};
+use chrono::DateTime;
 use monero::{Address, Amount, Network};
 use monero_rpc::{BlockHash, BlockHeaderResponse, BlockTemplate, HashString};
 
@@ -62,10 +62,7 @@ pub async fn run() {
         // this **is** used inside the test functions, since this block header corresponds
         // to the genesis block;
         // note that in the `non_empty_blockchain`, this field is **not** tested.
-        timestamp: DateTime::from_naive_utc_and_offset(
-            NaiveDateTime::from_timestamp_opt(0, 0).unwrap(),
-            Utc,
-        ),
+        timestamp: DateTime::from_timestamp(0, 0).unwrap(),
     };
 
     helpers::regtest::get_last_block_header_assert_block_header(
