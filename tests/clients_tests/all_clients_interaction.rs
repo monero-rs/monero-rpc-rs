@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use chrono::{DateTime, NaiveDateTime, Utc};
+use chrono::DateTime;
 use hex::ToHex;
 use monero::{
     cryptonote::subaddress::{self, Index},
@@ -449,10 +449,7 @@ pub async fn run() {
         subaddr_index: Index { major: 0, minor: 0 },
         suggested_confirmations_threshold: Some(1),
         // this is any date, since it will not be tested against anything
-        timestamp: DateTime::from_naive_utc_and_offset(
-            NaiveDateTime::from_timestamp_opt(0, 0).unwrap(),
-            Utc,
-        ),
+        timestamp: DateTime::from_timestamp(0, 0).unwrap(),
         txid: HashString(transfer_1_data.tx_hash.0.as_ref().to_vec()),
         transfer_type: GetTransfersCategory::Pending,
         unlock_time: 0,
