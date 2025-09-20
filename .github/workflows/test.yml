@@ -11,7 +11,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        monero: [ 0.18.1.2, 0.18.2.2, 0.18.3.3, 0.18.3.4, 0.18.4.0, 0.18.4.1 ]
+        monero: [ 0.18.1.2, 0.18.3.3, 0.18.3.4, 0.18.4.0, 0.18.4.1, 0.18.4.2 ]
 
     steps:
       - uses: actions/checkout@v5
