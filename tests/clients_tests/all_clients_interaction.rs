@@ -358,7 +358,7 @@ pub async fn run() {
         subtract_fee_from_outputs: None,
         mixin: Some(1000),
         ring_size: Some(8),
-        unlock_time: Some(20),
+        unlock_time: Some(0),
         payment_id: Some(PaymentId::zero()),
         do_not_relay: Some(true),
     };
@@ -878,7 +878,7 @@ pub async fn run() {
             priority: TransferPriority::Default,
             mixin: 5,
             ring_size: 10,
-            unlock_time: 1,
+            unlock_time: 0,
             below_amount: Some(Amount::from_pico(100000000000000)),
             do_not_relay: Some(false),
             get_tx_keys: None,
