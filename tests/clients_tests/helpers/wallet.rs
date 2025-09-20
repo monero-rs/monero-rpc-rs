@@ -23,6 +23,8 @@ fn get_random_name() -> String {
         .collect()
 }
 
+pub const WALLET_VERSION_0_18_4_0: u16 = 28;
+
 pub async fn get_version_assert_version(
     wallet: &WalletClient,
     expected_version: (Range<u16>, Range<u16>),
@@ -123,11 +125,21 @@ pub async fn open_wallet_with_no_or_empty_password_assert_ok(
 }
 
 pub async fn open_wallet_error_filename_invalid(wallet: &WalletClient, filename: &str) {
+    let version = wallet.get_version().await.unwrap();
     let err = wallet
         .open_wallet(filename.to_string(), None)
         .await
         .unwrap_err();
-    assert_eq!(err.to_string(), "Server error: Failed to open wallet");
+    let expected_error_message = if version.1 < WALLET_VERSION_0_18_4_0 {
+        "Server error: Failed to open wallet".to_owned()
+    } else {
+        // `wallets` directory is specified in tests/docker-compose.yml
+        format!(
+            "Server error: Failed to open wallet : file not found \"wallets/{}.keys\"",
+            filename
+        )
+    };
+    assert_eq!(err.to_string(), expected_error_message);
 }
 
 pub async fn open_wallet_error_wrong_password(
@@ -135,11 +147,17 @@ pub async fn open_wallet_error_wrong_password(
     filename: &str,
     password: Option<String>,
 ) {
+    let version = wallet.get_version().await.unwrap();
     let err = wallet
         .open_wallet(filename.to_string(), password)
         .await
         .unwrap_err();
-    assert_eq!(err.to_string(), "Server error: Failed to open wallet");
+    let expected_error_message = if version.1 < WALLET_VERSION_0_18_4_0 {
+        "Server error: Failed to open wallet"
+    } else {
+        "Server error: Failed to open wallet : Invalid password."
+    };
+    assert_eq!(err.to_string(), expected_error_message);
 }
 
 pub async fn restore_deterministic_wallet_assert_ok(

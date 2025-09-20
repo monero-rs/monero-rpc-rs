@@ -29,7 +29,7 @@ pub async fn run() {
     // they are not created from known spend/view keys.
     // Versions:
     // https://github.com/monero-project/monero/blob/master/src/wallet/wallet_rpc_server_commands_defs.h
-    let expected_wallet_version = (1..2, 22..29);
+    let expected_wallet_version = (1..2, 22..helpers::wallet::WALLET_VERSION_0_18_4_0 + 1);
     helpers::wallet::get_version_assert_version(&wallet, expected_wallet_version).await;
 
     let (wallet_with_pwd, wallet_with_no_pwd, wallet_with_empty_pwd) = tokio::join!(
