@@ -306,6 +306,7 @@ pub struct IncomingTransfer {
     pub subaddr_index: subaddress::Index,
     pub tx_hash: HashString<CryptoNoteHash>,
     pub tx_size: Option<u64>,
+    pub block_height: Option<u64>,
 }
 
 /// Argument type of wallet `sweep_all`.
