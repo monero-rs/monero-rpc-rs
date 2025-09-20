@@ -662,6 +662,7 @@ pub async fn run() {
             spent: false,
             subaddr_index: Index { major: 0, minor: 0 },
             tx_hash: transfer_1_data.tx_hash.clone(),
+            block_height: None,
         }]),
     };
     helpers::wallet::open_wallet_with_no_or_empty_password_assert_ok(&wallet, &wallet_1_view_only)

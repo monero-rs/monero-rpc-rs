@@ -641,8 +641,8 @@ pub async fn incoming_transfers_assert_incoming_transfers(
         .await
         .unwrap();
 
-    // we will not test agains `IncomingTransfer.global_index` nor `IncomingTransfer.tx_size` nor
-    // `IncomingTransfer::key_image`
+    // we will not test against
+    // `global_index` nor `tx_size` nor `key_image` nor `block_height`
     if let Some(ref transfers) = incoming_transfers.transfers {
         expected_incoming_transfers
             .transfers
@@ -654,6 +654,7 @@ pub async fn incoming_transfers_assert_incoming_transfers(
                 t.global_index = transfers[i].global_index;
                 t.tx_size = transfers[i].tx_size;
                 t.key_image = transfers[i].key_image.clone();
+                t.block_height = transfers[i].block_height.clone();
             });
     }
 
