@@ -30,13 +30,14 @@ pub async fn on_get_block_hash_assert_hash(
 pub async fn on_get_block_hash_error_invalid_height(
     regtest: &RegtestDaemonJsonRpcClient,
     height: u64,
+    expected_height: u64,
 ) {
     let version = regtest.get_version().await.unwrap();
     let block_hash = regtest.on_get_block_hash(height).await.unwrap_err();
     let expected_error_message = if version.1 < DAEMON_VERSION_0_18_4_3 {
         format!("Invalid height {height} supplied.")
     } else {
-        format!("Server error: Requested block height: {height} greater than current top block height: 0")
+        format!("Server error: Requested block height: {height} greater than current top block height: {expected_height}")
     };
     assert_eq!(block_hash.to_string(), expected_error_message);
 }

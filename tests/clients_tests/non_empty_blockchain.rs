@@ -50,6 +50,7 @@ pub async fn run() {
     helpers::regtest::on_get_block_hash_error_invalid_height(
         &regtest,
         generate_blocks_res.height + 1,
+        generate_blocks_res.height,
     )
     .await;
     helpers::regtest::on_get_block_hash_assert_hash(
