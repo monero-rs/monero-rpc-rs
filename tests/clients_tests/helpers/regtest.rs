@@ -8,6 +8,8 @@ use monero_rpc::{
 };
 use serde::Deserialize;
 
+const DAEMON_VERSION_0_18_4_3: u16 = 15;
+
 pub async fn get_block_count_assert_height(
     regtest: &RegtestDaemonJsonRpcClient,
     expected_height: u64,
@@ -29,11 +31,14 @@ pub async fn on_get_block_hash_error_invalid_height(
     regtest: &RegtestDaemonJsonRpcClient,
     height: u64,
 ) {
+    let version = regtest.get_version().await.unwrap();
     let block_hash = regtest.on_get_block_hash(height).await.unwrap_err();
-    assert_eq!(
-        block_hash.to_string(),
+    let expected_error_message = if version.1 < DAEMON_VERSION_0_18_4_3 {
         format!("Invalid height {height} supplied.")
-    );
+    } else {
+        format!("Server error: Requested block height: {height} greater than current top block height: 0")
+    };
+    assert_eq!(block_hash.to_string(), expected_error_message);
 }
 
 fn get_expected_height_returned_by_generate_blocks(

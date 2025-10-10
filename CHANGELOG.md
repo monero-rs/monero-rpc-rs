@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added `subtract_fee_from_outputs` to `transfer` options by @thesn10 ([#141](https://github.com/monero-rs/monero-rpc-rs/pull/141)).
 - Added `destinations` field to `get_transfer` return value by @bytenotbark ([#128](https://github.com/monero-rs/monero-rpc-rs/pull/128)).
 - Added `block_height` field to struct returned by `incoming_transfers` by @silverpill ([#151](https://github.com/monero-rs/monero-rpc-rs/pull/151)).
+- Added `get_version` method to `DaemonJsonRpcClient` by @silverpill ([#152](https://github.com/monero-rs/monero-rpc-rs/pull/152)).
 
 ### Changed
 
