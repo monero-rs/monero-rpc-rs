@@ -19,7 +19,7 @@ pub async fn run() {
     let genesis_block_hash = helpers::get_genesis_block_hash();
 
     helpers::regtest::get_block_count_assert_height(&regtest, 1).await;
-    helpers::regtest::on_get_block_hash_error_invalid_height(&regtest, 10).await;
+    helpers::regtest::on_get_block_hash_error_invalid_height(&regtest, 10, 0).await;
     helpers::regtest::on_get_block_hash_assert_hash(&regtest, 0, genesis_block_hash).await;
 
     let key_pair_1 = helpers::get_keypair_1();

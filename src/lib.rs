@@ -552,6 +552,23 @@ impl DaemonJsonRpcClient {
         Ok((headers.into_iter().map(From::from).collect(), untrusted))
     }
 
+    pub async fn get_version(&self) -> anyhow::Result<(u16, u16)> {
+        #[derive(Deserialize)]
+        struct Rsp {
+            version: u32,
+        }
+
+        let version = self
+            .inner
+            .request::<Rsp>("get_version", RpcParams::None)
+            .await?;
+
+        let major = version.version >> 16;
+        let minor = version.version - (major << 16);
+
+        Ok((u16::try_from(major)?, u16::try_from(minor)?))
+    }
+
     /// Enable additional functions for daemons in regtest mode.
     pub fn regtest(self) -> RegtestDaemonJsonRpcClient {
         RegtestDaemonJsonRpcClient(self)
