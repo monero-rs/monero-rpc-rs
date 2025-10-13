@@ -24,6 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Bumped MSRV to `1.66.0`
 - Updated `reqwest` to version `0.12` by @silverpill ([#140](https://github.com/monero-rs/monero-rpc-rs/pull/140)).
+- Updated shared github workflows
 
 ### Fixed
 
