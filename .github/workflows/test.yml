@@ -16,7 +16,7 @@ jobs:
         monero: [ 0.18.3.4, 0.18.4.0, 0.18.4.1, 0.18.4.2, 0.18.4.3, 0.18.4.4 ]
 
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
 
       - name: Spin up containers
         run: docker compose -f tests/docker-compose.yml up -d
