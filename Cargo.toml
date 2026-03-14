@@ -14,7 +14,7 @@ description = "RPC client for Monero daemon and wallet"
 anyhow = "1"
 chrono = { version = "0.4", default-features = false, features = ["serde"] }
 diqwest = { version = "3.2.0", default-features = false, optional = true }
-fixed-hash = "0.8"
+primitive-types = { version = "0.12", features = ["serde"] }
 hex = "0.4"
 jsonrpc-core = "18"
 monero = { version = "0.21", features = ["serde"] }

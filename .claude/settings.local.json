@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(br list --status open --sort priority --json)",
+      "Bash(cargo search reqwest)",
+      "Bash(cargo search diqwest)",
+      "Bash(cargo build)",
+      "Bash(cargo metadata --format-version 1)",
+      "Bash(python3 -c \" import json, sys data = json.load\\(sys.stdin\\) for pkg in data.get\\(''packages'', []\\): if pkg[''name''] == ''reqwest'' and pkg[''version''].startswith\\(''0.13''\\): print\\(''Features:'', list\\(pkg.get\\(''features'', {}\\).keys\\(\\)\\)\\) break \")",
+      "Bash(cargo add reqwest@0.13 --dry-run)",
+      "Bash(cat ~/.cargo/registry/src/*/reqwest-0.13.*/Cargo.toml)",
+      "Bash(cargo test --lib)",
+      "Bash(br sync --flush-only)",
+      "Bash(cargo test)"
+    ]
+  }
+}

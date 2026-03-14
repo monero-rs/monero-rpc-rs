@@ -164,7 +164,7 @@ impl RemoteCaller {
 
         #[cfg(feature = "rpc_authentication")]
         let rsp = if let RpcAuthentication::Credentials { username, password } = &self.rpc_auth {
-            req.send_with_digest_auth(username, password)
+req.send_digest_auth((username.as_str(), password.as_str()))
                 .await?
                 .json::<response::Output>()
                 .await?
@@ -199,7 +199,7 @@ impl RemoteCaller {
 
         #[cfg(feature = "rpc_authentication")]
         let rsp = if let RpcAuthentication::Credentials { username, password } = &self.rpc_auth {
-            req.send_with_digest_auth(username, password)
+req.send_digest_auth((username.as_str(), password.as_str()))
                 .await?
                 .json::<T>()
                 .await?
