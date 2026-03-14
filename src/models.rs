@@ -29,7 +29,6 @@ use monero::{
 use serde::{Deserialize, Deserializer, Serialize};
 use std::{collections::HashMap, num::NonZeroU64};
 
-
 pub type BlockHash = primitive_types::H256;
 
 /// Helper type to unwrap RPC results.
