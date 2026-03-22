@@ -40,11 +40,6 @@ macro_rules! hash_type_impl {
 
 hash_type_impl!(monero::util::address::PaymentId);
 
-impl HashType for primitive_types::H256 {
-    fn from_str(v: &str) -> anyhow::Result<Self> {
-        Ok(<primitive_types::H256 as std::str::FromStr>::from_str(v)?)
-    }
-}
 hash_type_impl!(monero::cryptonote::hash::Hash);
 
 impl HashType for Vec<u8> {

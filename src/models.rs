@@ -29,7 +29,19 @@ use monero::{
 use serde::{Deserialize, Deserializer, Serialize};
 use std::{collections::HashMap, num::NonZeroU64};
 
-pub type BlockHash = primitive_types::H256;
+macro_rules! hash_type {
+    ($name:ident, $len:expr) => {
+        ::fixed_hash::construct_fixed_hash! {
+            /// Return type of daemon `on_get_block_hash`.
+            #[derive(::serde::Serialize, ::serde::Deserialize)]
+            pub struct $name($len);
+        }
+
+        hash_type_impl!($name);
+    };
+}
+
+hash_type!(BlockHash, 32);
 
 /// Helper type to unwrap RPC results.
 #[derive(Clone, Debug, Serialize, Deserialize)]
