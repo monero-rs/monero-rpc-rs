@@ -39,7 +39,6 @@ macro_rules! hash_type_impl {
 }
 
 hash_type_impl!(monero::util::address::PaymentId);
-
 hash_type_impl!(monero::cryptonote::hash::Hash);
 
 impl HashType for Vec<u8> {
