@@ -38,6 +38,9 @@ rpc_authentication = ["diqwest"]
 native-tls = ["reqwest/native-tls"]
 rustls-tls = ["reqwest/rustls"]
 
+[lints.rust]
+unexpected_cfgs = { level = "warn", check-cfg = ['cfg(feature, values("dev"))'] }
+
 [package.metadata.docs.rs]
 all-features = true
 rustdoc-args = ["--cfg", "docsrs"]
