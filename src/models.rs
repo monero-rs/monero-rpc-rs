@@ -12,10 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// TODO: remove this when clippy error goes away...
-#![allow(clippy::non_canonical_clone_impl)]
-#![allow(unexpected_cfgs)]
-
 use crate::util::*;
 use chrono::prelude::*;
 use monero::{

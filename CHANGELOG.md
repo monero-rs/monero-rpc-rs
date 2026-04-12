@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- Defined version range for `diqwest` by @silverpill ([#165](https://github.com/monero-rs/monero-rpc-rs/pull/165)).
+
 ## [0.5.0] - 2025-10-13
 
 ### Added
