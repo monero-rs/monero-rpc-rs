@@ -593,7 +593,7 @@ pub struct KeyImageImportResponse {
     pub unspent: Amount,
 }
 
-/// Return type of `create_wallet`.
+/// Return type of `create_account`.
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct AccountCreation {
     /// Index of the new account.
