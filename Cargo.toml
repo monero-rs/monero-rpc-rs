@@ -41,3 +41,8 @@ rustls-tls = ["reqwest/rustls-tls-native-roots"]
 [package.metadata.docs.rs]
 all-features = true
 rustdoc-args = ["--cfg", "docsrs"]
+
+[lints.rust]
+# The warning comes from fixed-hash
+# https://github.com/paritytech/parity-common/commit/9ff9316a53d03e14c267aa6dcc45c478bfb2b12a
+unexpected_cfgs = "allow"
