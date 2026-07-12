@@ -26,6 +26,8 @@ fn get_random_name() -> String {
 pub const WALLET_VERSION_0_18_4_0: u16 = 28;
 pub const WALLET_VERSION_0_18_4_1: u16 = 29;
 pub const WALLET_VERSION_0_18_5_0: u16 = 30;
+// https://github.com/monero-project/monero/pull/10615
+pub const WALLET_VERSION_0_18_5_1: u16 = 31;
 
 pub async fn get_version_assert_version(
     wallet: &WalletClient,

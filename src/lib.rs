@@ -146,7 +146,7 @@ impl RemoteCaller {
         params: RpcParams,
     ) -> anyhow::Result<jsonrpc_core::Result<Value>> {
         let client = self.http_client.clone();
-        let uri = format!("{}/json_rpc", &self.addr);
+        let uri = format!("{}/json_rpc", self.addr);
 
         let method_call = MethodCall {
             jsonrpc: Some(Version::V2),
@@ -182,7 +182,7 @@ impl RemoteCaller {
         T: for<'de> Deserialize<'de> + Send + 'static + Debug,
     {
         let client = self.http_client.clone();
-        let uri = format!("{}/{}", &self.addr, method);
+        let uri = format!("{}/{}", self.addr, method);
 
         let json_params: Params = params.into();
 
