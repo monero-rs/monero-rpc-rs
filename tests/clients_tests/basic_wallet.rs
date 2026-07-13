@@ -1,6 +1,6 @@
 use monero::{
-    cryptonote::subaddress::{self, Index},
     Address, Amount, Network, ViewPair,
+    cryptonote::subaddress::{self, Index},
 };
 use monero_rpc::{
     AddressData, GenerateFromKeysArgs, GetAccountsData, GotAccount, RestoreDeterministicWalletArgs,
