@@ -2,7 +2,7 @@ use std::collections::HashMap;
 use std::ops::Range;
 
 use monero::{
-    cryptonote::subaddress::Index, util::address::PaymentId, Address, Amount, Hash, PrivateKey,
+    Address, Amount, Hash, PrivateKey, cryptonote::subaddress::Index, util::address::PaymentId,
 };
 use monero_rpc::{
     AddressData, BalanceData, GenerateFromKeysArgs, GetAccountsData, GetTransfersCategory,
@@ -14,7 +14,7 @@ use monero_rpc::{
 
 fn get_random_name() -> String {
     use rand::distributions::Alphanumeric;
-    use rand::{thread_rng, Rng};
+    use rand::{Rng, thread_rng};
 
     thread_rng()
         .sample_iter(&Alphanumeric)
@@ -472,7 +472,10 @@ pub async fn transfer_error_payment_id_obsolete(
         .transfer(destinations, TransferPriority::Default, options)
         .await
         .unwrap_err();
-    assert_eq!(err.to_string(), "Server error: Standalone payment IDs are obsolete. Use subaddresses or integrated addresses instead");
+    assert_eq!(
+        err.to_string(),
+        "Server error: Standalone payment IDs are obsolete. Use subaddresses or integrated addresses instead"
+    );
 }
 
 pub async fn relay_tx_assert_tx_hash(
@@ -627,9 +630,10 @@ pub async fn import_key_images_error_invalid_signature(
         .import_key_images(signed_key_images)
         .await
         .unwrap_err();
-    assert!(err
-        .to_string()
-        .starts_with("Server error: Signature check failed 0/1"));
+    assert!(
+        err.to_string()
+            .starts_with("Server error: Signature check failed 0/1")
+    );
 }
 
 pub async fn incoming_transfers_assert_incoming_transfers(

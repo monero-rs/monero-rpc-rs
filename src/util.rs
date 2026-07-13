@@ -89,7 +89,7 @@ where
 #[cfg(test)]
 mod tests {
     use super::*;
-    use serde_test::{assert_tokens, Token};
+    use serde_test::{Token, assert_tokens};
 
     #[test]
     fn trait_hash_type_for_payment_id() {
@@ -99,15 +99,21 @@ mod tests {
 
         assert_eq!(payment_id.bytes(), &[0, 1, 2, 3, 4, 5, 6, 7]);
 
-        assert!(<PaymentId as HashType>::from_str("")
-            .unwrap_err()
-            .is::<rustc_hex::FromHexError>());
-        assert!(<PaymentId as HashType>::from_str("0x01234567")
-            .unwrap_err()
-            .is::<rustc_hex::FromHexError>());
-        assert!(<PaymentId as HashType>::from_str("0xgg")
-            .unwrap_err()
-            .is::<rustc_hex::FromHexError>());
+        assert!(
+            <PaymentId as HashType>::from_str("")
+                .unwrap_err()
+                .is::<rustc_hex::FromHexError>()
+        );
+        assert!(
+            <PaymentId as HashType>::from_str("0x01234567")
+                .unwrap_err()
+                .is::<rustc_hex::FromHexError>()
+        );
+        assert!(
+            <PaymentId as HashType>::from_str("0xgg")
+                .unwrap_err()
+                .is::<rustc_hex::FromHexError>()
+        );
 
         assert_eq!(
             <PaymentId as HashType>::from_str("0x0001020304050607").unwrap(),
@@ -127,15 +133,21 @@ mod tests {
 
         assert_eq!(hash.bytes(), [250; 32].as_slice());
 
-        assert!(<Hash as HashType>::from_str("")
-            .unwrap_err()
-            .is::<rustc_hex::FromHexError>());
-        assert!(<Hash as HashType>::from_str("0x01234567")
-            .unwrap_err()
-            .is::<rustc_hex::FromHexError>());
-        assert!(<Hash as HashType>::from_str("0xgg")
-            .unwrap_err()
-            .is::<rustc_hex::FromHexError>());
+        assert!(
+            <Hash as HashType>::from_str("")
+                .unwrap_err()
+                .is::<rustc_hex::FromHexError>()
+        );
+        assert!(
+            <Hash as HashType>::from_str("0x01234567")
+                .unwrap_err()
+                .is::<rustc_hex::FromHexError>()
+        );
+        assert!(
+            <Hash as HashType>::from_str("0xgg")
+                .unwrap_err()
+                .is::<rustc_hex::FromHexError>()
+        );
 
         let hash_str = "fa".repeat(32);
         assert_eq!(<Hash as HashType>::from_str(&hash_str).unwrap(), hash);
@@ -154,9 +166,11 @@ mod tests {
             <Vec<u8> as HashType>::from_str("").unwrap(),
             Vec::<u8>::new()
         );
-        assert!(<Vec<u8> as HashType>::from_str("0xgg")
-            .unwrap_err()
-            .is::<hex::FromHexError>());
+        assert!(
+            <Vec<u8> as HashType>::from_str("0xgg")
+                .unwrap_err()
+                .is::<hex::FromHexError>()
+        );
 
         assert_eq!(
             <Vec<u8> as HashType>::from_str("0x0001020304").unwrap(),

@@ -37,7 +37,9 @@ pub async fn on_get_block_hash_error_invalid_height(
     let expected_error_message = if version.1 < DAEMON_VERSION_0_18_4_3 {
         format!("Invalid height {height} supplied.")
     } else {
-        format!("Server error: Requested block height: {height} greater than current top block height: {expected_height}")
+        format!(
+            "Server error: Requested block height: {height} greater than current top block height: {expected_height}"
+        )
     };
     assert_eq!(block_hash.to_string(), expected_error_message);
 }
@@ -79,7 +81,9 @@ pub async fn generate_zero_blocks_assert_ok(
     wallet_address: Address,
 ) {
     if let Network::Mainnet = wallet_address.network {
-        panic!("generate_blocks_zero_blocks only accepts an address that is not in the Mainnet/Regtest format.")
+        panic!(
+            "generate_blocks_zero_blocks only accepts an address that is not in the Mainnet/Regtest format."
+        )
     }
 
     let start_block_count = regtest.get_block_count().await.unwrap().get();
@@ -107,7 +111,9 @@ pub async fn generate_blocks_error_invalid_address(
     wallet_address: Address,
 ) {
     if let Network::Mainnet = wallet_address.network {
-        panic!("generate_blocks_error_invalid_address only accepts an address that is not in the Mainnet/Regtest format.")
+        panic!(
+            "generate_blocks_error_invalid_address only accepts an address that is not in the Mainnet/Regtest format."
+        )
     }
 
     let err = regtest

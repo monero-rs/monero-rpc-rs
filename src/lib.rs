@@ -63,14 +63,14 @@ pub use self::{models::*, util::*};
 
 use jsonrpc_core::types::{Id, *};
 use monero::{
+    Address, Amount,
     blockdata::block::Block,
     consensus::deserialize,
     cryptonote::{hash::Hash as CryptoNoteHash, subaddress},
     util::{address::PaymentId, amount},
-    Address, Amount,
 };
-use serde::{de::IgnoredAny, Deserialize, Deserializer, Serialize, Serializer};
-use serde_json::{json, Value};
+use serde::{Deserialize, Deserializer, Serialize, Serializer, de::IgnoredAny};
+use serde_json::{Value, json};
 use std::{
     collections::HashMap,
     convert::TryFrom,
@@ -188,8 +188,7 @@ impl RemoteCaller {
 
         trace!(
             "Sending daemon RPC call: {:?}, with params {:?}",
-            method,
-            json_params
+            method, json_params
         );
 
         let req = client.post(uri).json(&json_params);
@@ -693,7 +692,7 @@ impl<'de> Deserialize<'de> for TransferPriority {
                 return Err(serde::de::Error::custom(format!(
                     "Invalid variant {}, expected 0-3",
                     other
-                )))
+                )));
             }
         })
     }
@@ -1494,7 +1493,7 @@ impl WalletClient {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use serde_test::{assert_de_tokens_error, assert_ser_tokens, assert_tokens, Token};
+    use serde_test::{Token, assert_de_tokens_error, assert_ser_tokens, assert_tokens};
 
     #[test]
     fn rpc_params_array() {

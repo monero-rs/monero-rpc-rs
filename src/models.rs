@@ -15,12 +15,12 @@
 use crate::util::*;
 use chrono::prelude::*;
 use monero::{
+    Address,
     cryptonote::{hash::Hash as CryptoNoteHash, subaddress},
     util::{
         address::PaymentId,
         amount::{self, Amount},
     },
-    Address,
 };
 use serde::{Deserialize, Deserializer, Serialize};
 use std::{collections::HashMap, num::NonZeroU64};
@@ -684,7 +684,7 @@ mod tests {
 
     #[test]
     fn deserialize_for_transfer_height() {
-        use serde_test::{assert_de_tokens, Token};
+        use serde_test::{Token, assert_de_tokens};
 
         let confirmed = TransferHeight::Confirmed(NonZeroU64::new(10).unwrap());
         let in_pool = TransferHeight::InPool;

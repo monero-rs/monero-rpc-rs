@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Bumped MSRV to `1.85.0` by @silverpill ([#174](https://github.com/monero-rs/monero-rpc-rs/pull/174)).
+
 ### Fixed
 
 - Defined version range for `diqwest` by @silverpill ([#165](https://github.com/monero-rs/monero-rpc-rs/pull/165)).
