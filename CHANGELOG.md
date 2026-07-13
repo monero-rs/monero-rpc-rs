@@ -9,7 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- Bumped MSRV to `1.85.0` by @silverpill ([#174](https://github.com/monero-rs/monero-rpc-rs/pull/174)).
+- Updated `monero` to version `0.22.0` by @silverpill ([#174](https://github.com/monero-rs/monero-rpc-rs/pull/174)).
+- Bumped MSRV to `1.85.0`, edition to 2024.
 
 ### Fixed
 
