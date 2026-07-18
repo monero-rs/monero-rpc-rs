@@ -206,7 +206,7 @@ pub struct BalanceData {
     pub balance: Amount,
     /// If multisig import is needed.
     pub multisig_import_needed: bool,
-    /// Balance data for each sub indicies queried.
+    /// Balance data for each sub indices queried.
     #[serde(default)]
     pub per_subaddress: Vec<SubaddressBalanceData>,
     /// Amount of unlocked balance in account queried.

@@ -73,7 +73,7 @@ pub async fn run() {
     // helpers::wallet::get_height(&wallet, 1).await;
 
     // NOTE: the order of the following two `refresh` is **probably** important in v0.17.3.2; this is because
-    // there is some weird thing goin on __sometimes__: when calling `refresh` with `Some(u64::MAX)` right after creating a wallet,
+    // there is some weird thing going on __sometimes__: when calling `refresh` with `Some(u64::MAX)` right after creating a wallet,
     // the `get_height` function below would fail. However, this only happens in the tests here,
     // and it is hard to reproduce.
     //
@@ -494,7 +494,7 @@ pub async fn run() {
         transfer_1_data.tx_key.0.clone(),
         wallet_2_address,
         // wallet_2 has just one output of value expected_balance;
-        // it uses such outout in the transaction
+        // it uses such output in the transaction
         // thus, the last value of the tuple is the change
         (
             0,
@@ -657,7 +657,7 @@ pub async fn run() {
         transfers: Some(vec![IncomingTransfer {
             global_index: 0, // this is any number, since we will not test against it
             key_image: None, // this is different from the key_image in the Inputs for transfer_1_data, so we set it to None and do not test it
-            tx_size: None,   // any value, since we will not test againt it
+            tx_size: None,   // any value, since we will not test against it
             amount: transfer_1_destination[&wallet_1_address],
             spent: false,
             subaddr_index: Index { major: 0, minor: 0 },
@@ -843,7 +843,7 @@ pub async fn run() {
     )
     .await;
 
-    // STEP 8: finally, we test transfering all the unlocked balance a wallet has to
+    // STEP 8: finally, we test transferring all the unlocked balance a wallet has to
     // another address.
 
     // sweep_all
@@ -909,8 +909,7 @@ pub async fn run() {
     assert!(res.is_ok());
     let res = res.unwrap();
     let transfers = res.get(&GetTransfersCategory::Out);
-    if transfers.is_some() {
-        let transfers = transfers.unwrap();
+    if let Some(transfers) = transfers {
         let transfer = transfers[0].clone();
 
         helpers::wallet::create_check_tx_proof_assert_ok(

@@ -908,7 +908,7 @@ impl WalletClient {
         Ok(())
     }
 
-    /// Refresh a wallet after openning.
+    /// Refresh a wallet after opening.
     pub async fn refresh(&self, start_height: Option<u64>) -> anyhow::Result<RefreshData> {
         let params = empty().chain(start_height.map(|v| ("start_height", v.into())));
 
