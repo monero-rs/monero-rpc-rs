@@ -11,7 +11,7 @@ Monero daemon and wallet RPC written in asynchronous Rust :crab:.
 
 ## Example with `tokio::test`
 
-Create the RPC client and transform it into a deamon RPC to call `/get_transactions` method and print the result.
+Create the RPC client and transform it into a daemon RPC to call `/get_transactions` method and print the result.
 
 ```rust
 use monero_rpc::{RpcClientBuilder, JsonTransaction};

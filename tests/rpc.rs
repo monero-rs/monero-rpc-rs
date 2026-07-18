@@ -30,7 +30,7 @@ async fn main_functional_test() {
     /* FAQ:
      *
      * - Q: What is the purpose of each test function?
-     *   A: See the comments in each of ther files in `tests/clients_tests.rs`.
+     *   A: See the comments in each of the files in `tests/clients_tests.rs`.
      *
      *  - Q: Why are the functions called in the order below?
      *    A: `basic_wallet` only calls functions from the `WalletClient` that do not modify
@@ -47,7 +47,7 @@ async fn main_functional_test() {
      *    modifies the blockchain by adding blocks to it.
      *
      *    Finally, `all_clients_interaction` runs at the end because it modifies the blockchain
-     *    in ways the other tests do not (for example, it creates transacions), and it also creates
+     *    in ways the other tests do not (for example, it creates transactions), and it also creates
      *    blocks, so the other tests would not work if running at the same time
      *    `all_clients_interaction` runs. Also, it makes sense `all_clients_interaction` to
      *    run last because the other tests test each client individually, but `all_clients_interaction`

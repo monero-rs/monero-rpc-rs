@@ -102,7 +102,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - SignedKeyImage
   - KeyImageImportResponse
 - Add `GenerateBlocksResponse` struct ([#65](https://github.com/monero-rs/monero-rpc-rs/pull/65/))
-- Add `all` paremeter, of type `Option<bool>` to the `export_key_images` method, and pass it to the RPC ([#65](https://github.com/monero-rs/monero-rpc-rs/pull/65/))
+- Add `all` parameter, of type `Option<bool>` to the `export_key_images` method, and pass it to the RPC ([#65](https://github.com/monero-rs/monero-rpc-rs/pull/65/))
 - Add an error for `on_get_block_hash` on invalid height, instead of returning success with an incorrect hash ([#65](https://github.com/monero-rs/monero-rpc-rs/pull/65/))
 
 ### Removed
