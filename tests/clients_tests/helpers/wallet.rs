@@ -24,7 +24,9 @@ fn get_random_name() -> String {
 }
 
 pub const WALLET_VERSION_0_18_4_0: u16 = 28;
+#[expect(dead_code)]
 pub const WALLET_VERSION_0_18_4_1: u16 = 29;
+#[expect(dead_code)]
 pub const WALLET_VERSION_0_18_5_0: u16 = 30;
 // https://github.com/monero-project/monero/pull/10615
 pub const WALLET_VERSION_0_18_5_1: u16 = 31;
@@ -661,7 +663,7 @@ pub async fn incoming_transfers_assert_incoming_transfers(
                 t.global_index = transfers[i].global_index;
                 t.tx_size = transfers[i].tx_size;
                 t.key_image = transfers[i].key_image.clone();
-                t.block_height = transfers[i].block_height.clone();
+                t.block_height = transfers[i].block_height;
             });
     }
 

@@ -909,8 +909,7 @@ pub async fn run() {
     assert!(res.is_ok());
     let res = res.unwrap();
     let transfers = res.get(&GetTransfersCategory::Out);
-    if transfers.is_some() {
-        let transfers = transfers.unwrap();
+    if let Some(transfers) = transfers {
         let transfer = transfers[0].clone();
 
         helpers::wallet::create_check_tx_proof_assert_ok(

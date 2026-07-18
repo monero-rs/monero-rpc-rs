@@ -112,6 +112,6 @@ pub async fn run() {
     // the function will call the `start` and `end` methods on the range, which will return `4` and
     // `0`, respectively. Such values will then be passed to the RPC call as `start_height` and
     // `end_height` params, and the RPC should then return an error.
-    #[allow(clippy::reversed_empty_ranges)]
+    #[expect(clippy::reversed_empty_ranges)]
     helpers::regtest::get_block_headers_range_error(&regtest, 4..=0).await;
 }

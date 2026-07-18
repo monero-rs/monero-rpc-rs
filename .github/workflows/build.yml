@@ -34,4 +34,4 @@ jobs:
         with:
           toolchain: stable
           components: clippy
-      - run: cargo clippy --workspace --all-features -- -D warnings
+      - run: cargo clippy --workspace --tests --all-features -- -D warnings
