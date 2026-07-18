@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.1] - 2026-07-18
+
 ### Changed
 
 - Updated `monero` to version `0.22.0` by @silverpill ([#174](https://github.com/monero-rs/monero-rpc-rs/pull/174)).
@@ -175,7 +177,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Daemon RPC methods:
   - `get_transactions`
 
-[unreleased]: https://github.com/monero-rs/monero-rpc-rs/compare/v0.5.0...HEAD
+[unreleased]: https://github.com/monero-rs/monero-rpc-rs/compare/v0.5.1...HEAD
+[0.5.1]: https://github.com/monero-rs/monero-rpc-rs/compare/v0.5.0...v0.5.1
 [0.5.0]: https://github.com/monero-rs/monero-rpc-rs/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/monero-rs/monero-rpc-rs/compare/v0.3.2...v0.4.0
 [0.3.2]: https://github.com/monero-rs/monero-rpc-rs/compare/v0.3.1...v0.3.2
