@@ -631,10 +631,7 @@ impl RegtestDaemonJsonRpcClient {
         wallet_address: Address,
     ) -> anyhow::Result<GenerateBlocksResponse> {
         let params = empty()
-            .chain(once((
-                "amount_of_blocks",
-                Value::from(amount_of_blocks),
-            )))
+            .chain(once(("amount_of_blocks", Value::from(amount_of_blocks))))
             .chain(once((
                 "wallet_address",
                 Value::from(wallet_address.to_string()),
