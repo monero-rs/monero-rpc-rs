@@ -1,3 +1,4 @@
+#![allow(clippy::unwrap_used)]
 // Copyright 2019-2023 Artem Vorotnikov and Monero Rust Contributors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");

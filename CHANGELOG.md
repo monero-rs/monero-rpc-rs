@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- Prevent panic in `get_block_count()`.
+
 ## [0.5.1] - 2026-07-18
 
 ### Changed
