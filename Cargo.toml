@@ -46,3 +46,6 @@ rustdoc-args = ["--cfg", "docsrs"]
 # The warning comes from fixed-hash
 # https://github.com/paritytech/parity-common/commit/9ff9316a53d03e14c267aa6dcc45c478bfb2b12a
 unexpected_cfgs = "allow"
+
+[lints.clippy]
+unwrap_used = "warn"

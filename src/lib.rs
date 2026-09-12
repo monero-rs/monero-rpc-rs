@@ -415,7 +415,7 @@ impl DaemonJsonRpcClient {
             GetBlockHeaderSelector::Hash(hash) => (
                 "get_block",
                 RpcParams::map(
-                    Some(("hash", serde_json::to_value(HashString(hash)).unwrap())).into_iter(),
+                    Some(("hash", Value::from(HashString(hash).to_string()))).into_iter(),
                 ),
             ),
             GetBlockHeaderSelector::Height(height) => (
@@ -427,9 +427,11 @@ impl DaemonJsonRpcClient {
 
         match self.inner.request::<Value>(request, params).await {
             Ok(res) => {
-                let block_str = res["blob"].as_str().unwrap();
-                let block_hex = hex::decode(block_str).unwrap();
-                let block: Block = deserialize(&block_hex).unwrap();
+                let block: Block = res["blob"]
+                    .as_str()
+                    .and_then(|block_str| hex::decode(block_str).ok())
+                    .and_then(|block_bytes| deserialize(&block_bytes).ok())
+                    .ok_or(anyhow::Error::msg("Invalid block data"))?;
                 Ok(block)
             }
             Err(e) => Err(anyhow::Error::msg(format!("Can not fetch block: {}", e))),
@@ -472,7 +474,7 @@ impl DaemonJsonRpcClient {
                     empty()
                         .chain(once((
                             "wallet_address",
-                            serde_json::to_value(wallet_address).unwrap(),
+                            Value::from(wallet_address.to_string()),
                         )))
                         .chain(once(("reserve_size", reserve_size.into()))),
                 ),
@@ -508,7 +510,7 @@ impl DaemonJsonRpcClient {
             GetBlockHeaderSelector::Hash(hash) => (
                 "get_block_header_by_hash",
                 RpcParams::map(
-                    Some(("hash", serde_json::to_value(HashString(hash)).unwrap())).into_iter(),
+                    Some(("hash", Value::from(HashString(hash).to_string()))).into_iter(),
                 ),
             ),
             GetBlockHeaderSelector::Height(height) => (
@@ -629,13 +631,10 @@ impl RegtestDaemonJsonRpcClient {
         wallet_address: Address,
     ) -> anyhow::Result<GenerateBlocksResponse> {
         let params = empty()
-            .chain(once((
-                "amount_of_blocks",
-                serde_json::to_value(amount_of_blocks).unwrap(),
-            )))
+            .chain(once(("amount_of_blocks", Value::from(amount_of_blocks))))
             .chain(once((
                 "wallet_address",
-                serde_json::to_value(wallet_address).unwrap(),
+                Value::from(wallet_address.to_string()),
             )));
 
         Ok(self
@@ -1090,7 +1089,7 @@ impl WalletClient {
             .chain(
                 options
                     .payment_id
-                    .map(|v| ("payment_id", serde_json::to_value(HashString(v)).unwrap())),
+                    .map(|v| ("payment_id", Value::from(HashString(v).to_string()))),
             )
             .chain(options.do_not_relay.map(|v| ("do_not_relay", v.into())))
             .chain(once(("get_tx_key", true.into())))
@@ -1125,7 +1124,7 @@ impl WalletClient {
         let params = empty()
             .chain(once((
                 "unsigned_txset",
-                serde_json::to_value(HashString(unsigned_txset)).unwrap(),
+                Value::from(HashString(unsigned_txset).to_string()),
             )))
             .chain(once(("export_raw", true.into())));
 
