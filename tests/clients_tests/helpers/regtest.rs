@@ -80,7 +80,7 @@ pub async fn generate_zero_blocks_assert_ok(
     regtest: &RegtestDaemonJsonRpcClient,
     wallet_address: Address,
 ) {
-    if let Network::Mainnet = wallet_address.network {
+    if let Network::Mainnet = wallet_address.network() {
         panic!(
             "generate_blocks_zero_blocks only accepts an address that is not in the Mainnet/Regtest format."
         )
@@ -110,7 +110,7 @@ pub async fn generate_blocks_error_invalid_address(
     regtest: &RegtestDaemonJsonRpcClient,
     wallet_address: Address,
 ) {
-    if let Network::Mainnet = wallet_address.network {
+    if let Network::Mainnet = wallet_address.network() {
         panic!(
             "generate_blocks_error_invalid_address only accepts an address that is not in the Mainnet/Regtest format."
         )

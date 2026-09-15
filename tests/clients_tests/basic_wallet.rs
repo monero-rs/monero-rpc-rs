@@ -232,7 +232,8 @@ pub async fn run() {
             &ViewPair::from(&key_pair_2),
             SubaddressIndex { major: 0, minor: 1 },
             Some(Network::Mainnet),
-        ),
+        )
+        .unwrap(),
         1,
     );
     let first_new_address_for_wallet_from_key_pair_2 =
@@ -249,7 +250,8 @@ pub async fn run() {
             &ViewPair::from(&key_pair_2),
             SubaddressIndex { major: 0, minor: 2 },
             Some(Network::Mainnet),
-        ),
+        )
+        .unwrap(),
         2,
     );
     let second_new_address_for_wallet_from_key_pair_2 =
