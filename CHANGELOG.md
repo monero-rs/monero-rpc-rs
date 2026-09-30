@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.2] - 2026-09-30
+
 ### Fixed
 
 - Prevent panic in `get_block()` by @silverpill ([#177](https://github.com/monero-rs/monero-rpc-rs/pull/177)).
@@ -181,7 +183,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Daemon RPC methods:
   - `get_transactions`
 
-[unreleased]: https://github.com/monero-rs/monero-rpc-rs/compare/v0.5.1...HEAD
+[unreleased]: https://github.com/monero-rs/monero-rpc-rs/compare/v0.5.2...HEAD
+[0.5.2]: https://github.com/monero-rs/monero-rpc-rs/compare/v0.5.1...v0.5.2
 [0.5.1]: https://github.com/monero-rs/monero-rpc-rs/compare/v0.5.0...v0.5.1
 [0.5.0]: https://github.com/monero-rs/monero-rpc-rs/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/monero-rs/monero-rpc-rs/compare/v0.3.2...v0.4.0
