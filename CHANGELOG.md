@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-- Prevent panic in `get_block_count()` by @silverpill ([#177](https://github.com/monero-rs/monero-rpc-rs/pull/177)).
+- Prevent panic in `get_block()` by @silverpill ([#177](https://github.com/monero-rs/monero-rpc-rs/pull/177)).
 
 ## [0.5.1] - 2026-07-18
 
