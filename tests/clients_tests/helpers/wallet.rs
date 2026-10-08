@@ -24,12 +24,11 @@ fn get_random_name() -> String {
 }
 
 pub const WALLET_VERSION_0_18_4_0: u16 = 28;
-#[expect(dead_code)]
-pub const WALLET_VERSION_0_18_4_1: u16 = 29;
-#[expect(dead_code)]
-pub const WALLET_VERSION_0_18_5_0: u16 = 30;
+#[allow(dead_code)]
 // https://github.com/monero-project/monero/pull/10615
 pub const WALLET_VERSION_0_18_5_1: u16 = 31;
+// https://github.com/monero-project/monero/pull/11365
+pub const WALLET_VERSION_0_18_5_3: u16 = 35;
 
 pub async fn get_version_assert_version(
     wallet: &WalletClient,
