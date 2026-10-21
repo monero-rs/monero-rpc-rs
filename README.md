@@ -3,7 +3,7 @@
 [![Crates.io](https://img.shields.io/crates/v/monero-rpc.svg)](https://crates.io/crates/monero-rpc)
 [![Documentation](https://docs.rs/monero-rpc/badge.svg)](https://docs.rs/monero-rpc)
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
-[![MSRV](https://img.shields.io/badge/MSRV-1.85.0-blue)](https://blog.rust-lang.org/2025/02/20/Rust-1.85.0/)
+[![MSRV](https://img.shields.io/badge/MSRV-1.88.0-blue)](https://blog.rust-lang.org/2025/06/26/Rust-1.88.0/)
 
 # Monero Daemon & Wallet RPC
 
