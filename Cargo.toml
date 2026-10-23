@@ -36,7 +36,8 @@ default = ["native-tls"]
 
 rpc_authentication = ["diqwest"]
 native-tls = ["reqwest/native-tls"]
-rustls-tls = ["reqwest/rustls-native-certs"]
+rustls-tls = ["reqwest/rustls"]
+rustls-tls-no-provider = ["reqwest/rustls-no-provider"]
 
 [package.metadata.docs.rs]
 all-features = true
