@@ -3,8 +3,8 @@ use std::collections::HashMap;
 use chrono::DateTime;
 use hex::ToHex;
 use monero::{
-    Address, Amount, Hash, KeyPair, Network, ViewPair,
-    cryptonote::subaddress::{self, Index},
+    Address, Amount, Hash as CryptoNoteHash, KeyPair, Network, ViewPair,
+    cryptonote::subaddress::{Index as SubaddressIndex, get_subaddress},
     util::address::PaymentId,
 };
 use monero_rpc::{
@@ -123,9 +123,9 @@ pub async fn run() {
 
     // create a subaddress for `wallet_2 and mine a block on the main address and on the
     // subaddress; check the balance at the end
-    let wallet_2_subaddress_1 = subaddress::get_subaddress(
+    let wallet_2_subaddress_1 = get_subaddress(
         &ViewPair::from(&wallet_2_key_pair),
-        Index { major: 0, minor: 1 },
+        SubaddressIndex { major: 0, minor: 1 },
         Some(Network::Mainnet),
     );
     let wallet_2_subaddress_1_label = "faaaarcaster".to_string();
@@ -193,9 +193,9 @@ pub async fn run() {
     .await;
 
     // no error for weird account and address index
-    let wallet_2_subaddress_12345678 = subaddress::get_subaddress(
+    let wallet_2_subaddress_12345678 = get_subaddress(
         &ViewPair::from(&wallet_2_key_pair),
-        Index {
+        SubaddressIndex {
             major: 0,
             minor: 12345678,
         },
@@ -446,7 +446,7 @@ pub async fn run() {
         height: TransferHeight::InPool,
         note: "".to_string(),
         payment_id: HashString(PaymentId::zero()),
-        subaddr_index: Index { major: 0, minor: 0 },
+        subaddr_index: SubaddressIndex { major: 0, minor: 0 },
         suggested_confirmations_threshold: Some(1),
         // this is any date, since it will not be tested against anything
         timestamp: DateTime::from_timestamp(0, 0).unwrap(),
@@ -471,7 +471,7 @@ pub async fn run() {
         expected_got_transfer,
     )
     .await;
-    helpers::wallet::get_transfer_error_invalid_txid(&wallet, Hash::zero()).await;
+    helpers::wallet::get_transfer_error_invalid_txid(&wallet, CryptoNoteHash::zero()).await;
     helpers::wallet::get_transfer_error_invalid_account_index(
         &wallet,
         transfer_1_data.tx_hash.0,
@@ -505,7 +505,7 @@ pub async fn run() {
     .await;
     helpers::wallet::check_tx_key_error_invalid_txid(
         &wallet,
-        Hash::zero(),
+        CryptoNoteHash::zero(),
         transfer_1_data.tx_key.0.clone(),
         wallet_2_address,
     )
@@ -660,7 +660,7 @@ pub async fn run() {
             tx_size: None,   // any value, since we will not test against it
             amount: transfer_1_destination[&wallet_1_address],
             spent: false,
-            subaddr_index: Index { major: 0, minor: 0 },
+            subaddr_index: SubaddressIndex { major: 0, minor: 0 },
             tx_hash: transfer_1_data.tx_hash.clone(),
             block_height: None,
         }]),
@@ -752,7 +752,7 @@ pub async fn run() {
         tx_hash: transfer_1_data.tx_hash,
         amount: transfer_1_destination[&wallet_1_address],
         unlock_time: 0,
-        subaddr_index: Index { major: 0, minor: 0 },
+        subaddr_index: SubaddressIndex { major: 0, minor: 0 },
         block_height: height_before_settling_transfer_1,
     }];
     helpers::wallet::get_payments_assert_payment_ids(

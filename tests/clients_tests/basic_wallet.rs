@@ -1,6 +1,6 @@
 use monero::{
     Address, Amount, Network, ViewPair,
-    cryptonote::subaddress::{self, Index},
+    cryptonote::subaddress::{Index as SubaddressIndex, get_subaddress},
 };
 use monero_rpc::{
     AddressData, GenerateFromKeysArgs, GetAccountsData, GotAccount, RestoreDeterministicWalletArgs,
@@ -203,7 +203,7 @@ pub async fn run() {
     helpers::wallet::get_address_index_assert_index(
         &wallet,
         wallet_creation_from_key_pair_1.1.address,
-        Index { major: 0, minor: 0 },
+        SubaddressIndex { major: 0, minor: 0 },
     )
     .await;
 
@@ -228,9 +228,9 @@ pub async fn run() {
     .await;
 
     let expected_first_new_address = (
-        subaddress::get_subaddress(
+        get_subaddress(
             &ViewPair::from(&key_pair_2),
-            subaddress::Index { major: 0, minor: 1 },
+            SubaddressIndex { major: 0, minor: 1 },
             Some(Network::Mainnet),
         ),
         1,
@@ -245,9 +245,9 @@ pub async fn run() {
         .await;
 
     let expected_second_new_address = (
-        subaddress::get_subaddress(
+        get_subaddress(
             &ViewPair::from(&key_pair_2),
-            subaddress::Index { major: 0, minor: 2 },
+            SubaddressIndex { major: 0, minor: 2 },
             Some(Network::Mainnet),
         ),
         2,
@@ -264,7 +264,7 @@ pub async fn run() {
 
     helpers::wallet::label_address_assert_ok(
         &wallet,
-        Index {
+        SubaddressIndex {
             major: 0,
             minor: first_new_address_for_wallet_from_key_pair_2.1,
         },
@@ -273,7 +273,7 @@ pub async fn run() {
     .await;
     helpers::wallet::label_address_assert_ok(
         &wallet,
-        Index {
+        SubaddressIndex {
             major: 0,
             minor: second_new_address_for_wallet_from_key_pair_2.1,
         },
@@ -283,7 +283,7 @@ pub async fn run() {
 
     helpers::wallet::label_address_error_invalid_account_index(
         &wallet,
-        Index {
+        SubaddressIndex {
             major: 10,
             minor: 0,
         },
@@ -291,7 +291,7 @@ pub async fn run() {
     .await;
     helpers::wallet::label_address_error_invalid_address_index(
         &wallet,
-        Index {
+        SubaddressIndex {
             major: 0,
             minor: 10,
         },

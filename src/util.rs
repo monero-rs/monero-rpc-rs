@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+use monero::{cryptonote::hash::Hash as CryptoNoteHash, util::address::PaymentId};
 use serde::{Deserialize, Deserializer, Serialize};
 use std::fmt::{self, Display};
 
@@ -38,8 +39,8 @@ macro_rules! hash_type_impl {
     };
 }
 
-hash_type_impl!(monero::util::address::PaymentId);
-hash_type_impl!(monero::cryptonote::hash::Hash);
+hash_type_impl!(PaymentId);
+hash_type_impl!(CryptoNoteHash);
 
 impl HashType for Vec<u8> {
     fn from_str(v: &str) -> anyhow::Result<Self> {
@@ -93,8 +94,6 @@ mod tests {
 
     #[test]
     fn trait_hash_type_for_payment_id() {
-        use monero::util::address::PaymentId;
-
         let payment_id = PaymentId([0, 1, 2, 3, 4, 5, 6, 7]);
 
         assert_eq!(payment_id.bytes(), &[0, 1, 2, 3, 4, 5, 6, 7]);
@@ -127,33 +126,37 @@ mod tests {
 
     #[test]
     fn trait_hash_type_for_cryptonote_hash() {
-        use monero::cryptonote::hash::Hash;
-
-        let hash = Hash([250; 32]);
+        let hash = CryptoNoteHash([250; 32]);
 
         assert_eq!(hash.bytes(), [250; 32].as_slice());
 
         assert!(
-            <Hash as HashType>::from_str("")
+            <CryptoNoteHash as HashType>::from_str("")
                 .unwrap_err()
                 .is::<rustc_hex::FromHexError>()
         );
         assert!(
-            <Hash as HashType>::from_str("0x01234567")
+            <CryptoNoteHash as HashType>::from_str("0x01234567")
                 .unwrap_err()
                 .is::<rustc_hex::FromHexError>()
         );
         assert!(
-            <Hash as HashType>::from_str("0xgg")
+            <CryptoNoteHash as HashType>::from_str("0xgg")
                 .unwrap_err()
                 .is::<rustc_hex::FromHexError>()
         );
 
         let hash_str = "fa".repeat(32);
-        assert_eq!(<Hash as HashType>::from_str(&hash_str).unwrap(), hash);
+        assert_eq!(
+            <CryptoNoteHash as HashType>::from_str(&hash_str).unwrap(),
+            hash
+        );
 
         let hash_str = format!("0x{}", hash_str);
-        assert_eq!(<Hash as HashType>::from_str(&hash_str).unwrap(), hash);
+        assert_eq!(
+            <CryptoNoteHash as HashType>::from_str(&hash_str).unwrap(),
+            hash
+        );
     }
 
     #[test]

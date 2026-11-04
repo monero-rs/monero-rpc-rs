@@ -2,7 +2,8 @@ use std::collections::HashMap;
 use std::ops::Range;
 
 use monero::{
-    Address, Amount, Hash, PrivateKey, cryptonote::subaddress::Index, util::address::PaymentId,
+    Address, Amount, Hash, PrivateKey, cryptonote::subaddress::Index as SubaddressIndex,
+    util::address::PaymentId,
 };
 use monero_rpc::{
     AddressData, BalanceData, GenerateFromKeysArgs, GetAccountsData, GetTransfersCategory,
@@ -281,7 +282,7 @@ pub async fn get_address_error_invalid_address_index(
 pub async fn get_address_index_assert_index(
     wallet: &WalletClient,
     address: Address,
-    expected_index: Index,
+    expected_index: SubaddressIndex,
 ) {
     let index = wallet.get_address_index(address).await.unwrap();
     assert_eq!(index, expected_index);
@@ -325,11 +326,14 @@ pub async fn create_address_error_invalid_account_index(wallet: &WalletClient, a
     );
 }
 
-pub async fn label_address_assert_ok(wallet: &WalletClient, index: Index, label: String) {
+pub async fn label_address_assert_ok(wallet: &WalletClient, index: SubaddressIndex, label: String) {
     wallet.label_address(index, label).await.unwrap()
 }
 
-pub async fn label_address_error_invalid_account_index(wallet: &WalletClient, index: Index) {
+pub async fn label_address_error_invalid_account_index(
+    wallet: &WalletClient,
+    index: SubaddressIndex,
+) {
     let label_err = wallet
         .label_address(index, "".to_string())
         .await
@@ -340,7 +344,10 @@ pub async fn label_address_error_invalid_account_index(wallet: &WalletClient, in
     );
 }
 
-pub async fn label_address_error_invalid_address_index(wallet: &WalletClient, index: Index) {
+pub async fn label_address_error_invalid_address_index(
+    wallet: &WalletClient,
+    index: SubaddressIndex,
+) {
     let label_err = wallet
         .label_address(index, "".to_string())
         .await
