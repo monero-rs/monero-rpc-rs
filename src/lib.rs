@@ -321,14 +321,6 @@ impl RpcClientBuilder {
 }
 
 impl RpcClient {
-    /// Create a new generic RPC client that can be transformed into specialized client.
-    ///
-    /// **You should prefer using the [`RpcClientBuilder`] instead.**
-    #[deprecated(note = "Use should prefer using the builder interface instead!")]
-    pub fn new(addr: String) -> anyhow::Result<Self> {
-        RpcClientBuilder::new().build(addr)
-    }
-
     /// Transform the client into the specialized `DaemonJsonRpcClient` that interacts with JSON RPC
     /// methods on daemon.
     pub fn daemon(self) -> DaemonJsonRpcClient {
