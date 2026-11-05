@@ -12,11 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use crate::util::*;
-use chrono::prelude::*;
+use crate::util::{HashString, HashType};
+use chrono::prelude::{DateTime, Utc};
 use monero::{
-    Address,
-    cryptonote::{hash::Hash as CryptoNoteHash, subaddress},
+    Address, PrivateKey,
+    cryptonote::{hash::Hash as CryptoNoteHash, subaddress::Index as SubaddressIndex},
     util::{
         address::PaymentId,
         amount::{self, Amount},
@@ -255,7 +255,7 @@ pub struct Payment {
     pub amount: Amount,
     pub block_height: u64,
     pub unlock_time: u64,
-    pub subaddr_index: subaddress::Index,
+    pub subaddr_index: SubaddressIndex,
     pub address: Address,
 }
 
@@ -299,7 +299,7 @@ pub struct IncomingTransfer {
     pub global_index: u64,
     pub key_image: Option<String>,
     pub spent: bool,
-    pub subaddr_index: subaddress::Index,
+    pub subaddr_index: SubaddressIndex,
     pub tx_hash: HashString<CryptoNoteHash>,
     pub tx_size: Option<u64>,
     pub block_height: Option<u64>,
@@ -365,8 +365,8 @@ pub struct GenerateFromKeysArgs {
     pub restore_height: Option<u64>,
     pub filename: String,
     pub address: Address,
-    pub spendkey: Option<monero::PrivateKey>,
-    pub viewkey: monero::PrivateKey,
+    pub spendkey: Option<PrivateKey>,
+    pub viewkey: PrivateKey,
     // TODO it seems this argument is really optional, although the doc at
     // `https://www.getmonero.org/resources/developer-guides/wallet-rpc.html#generate_from_keys` does not mention it
     pub password: String,
@@ -404,7 +404,7 @@ pub struct GotAccount {
     pub account_index: u32,
     #[serde(with = "amount::serde::as_pico")]
     pub balance: Amount,
-    pub base_address: monero::Address,
+    pub base_address: Address,
     pub label: Option<String>,
     pub tag: Option<String>,
     #[serde(with = "amount::serde::as_pico")]
@@ -548,7 +548,7 @@ pub struct GotTransfer {
     /// Payment ID for this transfer.
     pub payment_id: HashString<PaymentId>,
     /// JSON object containing the major & minor subaddress index.
-    pub subaddr_index: subaddress::Index,
+    pub subaddr_index: SubaddressIndex,
     /// Estimation of the confirmations needed for the transaction to be included in a block.
     pub suggested_confirmations_threshold: Option<u64>,
     /// POSIX timestamp for when this transfer was first confirmed in a block (or timestamp submission if not mined yet).

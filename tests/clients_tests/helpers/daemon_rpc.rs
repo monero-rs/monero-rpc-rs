@@ -1,9 +1,9 @@
-use monero::cryptonote::hash::Hash;
+use monero::cryptonote::hash::Hash as CryptoNoteHash;
 use monero_rpc::{DaemonRpcClient, TransactionsResponse};
 
 pub async fn get_transactions_assert_response(
     daemon_rpc: &DaemonRpcClient,
-    txs_hashes: Vec<Hash>,
+    txs_hashes: Vec<CryptoNoteHash>,
     expected_transactions_response: TransactionsResponse,
 ) {
     let transactions_response = daemon_rpc
@@ -15,7 +15,7 @@ pub async fn get_transactions_assert_response(
 
 pub async fn get_transactions_as_hex_not_pruned_assert_response(
     daemon_rpc: &DaemonRpcClient,
-    txs_hashes: Vec<Hash>,
+    txs_hashes: Vec<CryptoNoteHash>,
     expected_transactions_response: TransactionsResponse,
 ) {
     let transactions_response_with_none = daemon_rpc
@@ -40,7 +40,7 @@ pub async fn get_transactions_as_hex_not_pruned_assert_response(
 
 pub async fn get_transactions_as_hex_pruned_assert_response(
     daemon_rpc: &DaemonRpcClient,
-    txs_hashes: Vec<Hash>,
+    txs_hashes: Vec<CryptoNoteHash>,
     expected_transactions_response: TransactionsResponse,
 ) {
     let transactions_response = daemon_rpc
@@ -63,7 +63,7 @@ fn test_tx_json_not_empty(transactions_response: TransactionsResponse) {
 
 pub async fn get_transactions_as_json_not_pruned_assert_response_not_empty(
     daemon_rpc: &DaemonRpcClient,
-    txs_hashes: Vec<Hash>,
+    txs_hashes: Vec<CryptoNoteHash>,
 ) {
     let transactions_response_with_none = daemon_rpc
         .get_transactions(txs_hashes.clone(), Some(true), None)
@@ -85,7 +85,7 @@ pub async fn get_transactions_as_json_not_pruned_assert_response_not_empty(
 
 pub async fn get_transactions_as_json_pruned_assert_response_not_empty(
     daemon_rpc: &DaemonRpcClient,
-    txs_hashes: Vec<Hash>,
+    txs_hashes: Vec<CryptoNoteHash>,
 ) {
     let transactions_response = daemon_rpc
         .get_transactions(txs_hashes, Some(true), Some(true))

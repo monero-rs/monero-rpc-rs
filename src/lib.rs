@@ -61,12 +61,12 @@ mod models;
 
 pub use self::{models::*, util::*};
 
-use jsonrpc_core::types::{Id, *};
+use jsonrpc_core::types::{Id, MethodCall, Params, Version, response};
 use monero::{
-    Address, Amount,
+    Address, Amount, PrivateKey,
     blockdata::block::Block,
     consensus::deserialize,
-    cryptonote::{hash::Hash as CryptoNoteHash, subaddress},
+    cryptonote::{hash::Hash as CryptoNoteHash, subaddress::Index as SubaddressIndex},
     util::{address::PaymentId, amount},
 };
 use serde::{Deserialize, Deserializer, Serialize, Serializer, de::IgnoredAny};
@@ -81,7 +81,7 @@ use std::{
     sync::Arc,
     time::Duration,
 };
-use tracing::*;
+use tracing::trace;
 use uuid::Uuid;
 
 #[cfg(feature = "rpc_authentication")]
@@ -839,10 +839,10 @@ impl WalletClient {
     }
 
     /// Get account and address indexes from a specific (sub)address.
-    pub async fn get_address_index(&self, address: Address) -> anyhow::Result<subaddress::Index> {
+    pub async fn get_address_index(&self, address: Address) -> anyhow::Result<SubaddressIndex> {
         #[derive(Deserialize)]
         struct Rsp {
-            index: subaddress::Index,
+            index: SubaddressIndex,
         }
 
         let params = once(("address", address.to_string().into()));
@@ -852,7 +852,7 @@ impl WalletClient {
             .request::<Rsp>("get_address_index", RpcParams::map(params))
             .await?;
 
-        Ok(subaddress::Index {
+        Ok(SubaddressIndex {
             major: rsp.index.major,
             minor: rsp.index.minor,
         })
@@ -883,11 +883,7 @@ impl WalletClient {
     }
 
     /// Label an address.
-    pub async fn label_address(
-        &self,
-        index: subaddress::Index,
-        label: String,
-    ) -> anyhow::Result<()> {
+    pub async fn label_address(&self, index: SubaddressIndex, label: String) -> anyhow::Result<()> {
         let params = empty()
             .chain(once(("index", json!(index))))
             .chain(once(("label", label.into())));
@@ -968,10 +964,7 @@ impl WalletClient {
     }
 
     /// Return the spend or view private key.
-    pub async fn query_key(
-        &self,
-        key_selector: PrivateKeyType,
-    ) -> anyhow::Result<monero::PrivateKey> {
+    pub async fn query_key(&self, key_selector: PrivateKeyType) -> anyhow::Result<PrivateKey> {
         #[derive(Deserialize)]
         struct Rsp {
             key: HashString<Vec<u8>>,
@@ -988,7 +981,7 @@ impl WalletClient {
             .request::<Rsp>("query_key", RpcParams::map(params))
             .await?;
 
-        Ok(monero::PrivateKey::from_slice(&rsp.key.0)?)
+        Ok(PrivateKey::from_slice(&rsp.key.0)?)
     }
 
     /// Returns the wallet's current block height.
@@ -1046,7 +1039,7 @@ impl WalletClient {
     /// Send monero to a number of recipients.
     pub async fn transfer(
         &self,
-        destinations: HashMap<Address, monero::Amount>,
+        destinations: HashMap<Address, Amount>,
         priority: TransferPriority,
         options: TransferOptions,
     ) -> anyhow::Result<TransferData> {

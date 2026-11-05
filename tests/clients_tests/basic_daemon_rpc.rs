@@ -1,7 +1,7 @@
 use std::str::FromStr;
 
 use super::helpers;
-use monero::cryptonote::hash::Hash;
+use monero::cryptonote::hash::Hash as CryptoNoteHash;
 use monero_rpc::{HashString, TransactionsResponse};
 
 /*
@@ -40,8 +40,10 @@ pub async fn run() {
     .await;
 
     // valid hash, but non existent transaction in `txs_hashes`
-    let tx_hash =
-        Hash::from_str("d6e48158472848e6687173a91ae6eebfa3e1d778e65252ee99d7515d63090408").unwrap();
+    let tx_hash = CryptoNoteHash::from_str(
+        "d6e48158472848e6687173a91ae6eebfa3e1d778e65252ee99d7515d63090408",
+    )
+    .unwrap();
     let expected_transactions_response = TransactionsResponse {
         credits: 0,
         status: "OK".to_string(),

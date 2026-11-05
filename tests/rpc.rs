@@ -14,7 +14,7 @@
 // limitations under the License.
 
 #[cfg(feature = "rpc_authentication")]
-use monero::Hash;
+use monero::Hash as CryptoNoteHash;
 #[cfg(feature = "rpc_authentication")]
 use monero_rpc::RpcAuthentication;
 #[cfg(feature = "rpc_authentication")]
@@ -108,7 +108,7 @@ async fn test_daemon_rpc_auth_fail() {
 #[cfg(feature = "rpc_authentication")]
 async fn test_daemon_rpc_rpc_auth() {
     let rpc_client = setup_rpc_auth_client("foo", "bar", 18085).daemon_rpc();
-    let transactions = vec![Hash::from_low_u64_be(1)];
+    let transactions = vec![CryptoNoteHash::from_low_u64_be(1)];
     let daemon_transactions = rpc_client
         .get_transactions(transactions, Some(true), Some(true))
         .await;
