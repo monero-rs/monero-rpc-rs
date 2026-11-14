@@ -17,11 +17,7 @@ diqwest = { version = "3.2.0", default-features = false, optional = true }
 fixed-hash = "0.8"
 hex = "0.4"
 jsonrpc-core = "18"
-monero = {
-    git = "https://github.com/silverpill/monero-oxide-compat",
-    rev = "6cdc8cd85fe91b86280f2e07476b5c966011ea08",
-    package = "monero-oxide-compat"
-}
+monero = { git = "https://github.com/silverpill/monero-oxide-compat", rev = "6cdc8cd85fe91b86280f2e07476b5c966011ea08", package = "monero-oxide-compat" }
 reqwest = { version = "0.13", default-features = false, features = ["json", "socks"] }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
