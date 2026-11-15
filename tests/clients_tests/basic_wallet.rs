@@ -10,14 +10,14 @@ use monero_rpc::{
 use super::helpers;
 
 /*
-* The purpose of this test is to test function from the `WalletClient`
-* (i.e. from https://www.getmonero.org/resources/developer-guides/wallet-rpc.html)
-* that modify the wallet, but that do **not** modify the blockchain and that do not depend
-* on the state of the blockchain. For example, functions that create wallets are tested,
-* but functions that create transfers or that call `get_height` are not tested.
-*
-* The steps of the test are described below.
-*/
+ * The purpose of this test is to test function from the `WalletClient`
+ * (i.e. from https://www.getmonero.org/resources/developer-guides/wallet-rpc.html)
+ * that modify the wallet, but that do **not** modify the blockchain and that do not depend
+ * on the state of the blockchain. For example, functions that create wallets are tested,
+ * but functions that create transfers or that call `get_height` are not tested.
+ *
+ * The steps of the test are described below.
+ */
 
 pub async fn run() {
     let (_, _, wallet) = helpers::setup_monero();
