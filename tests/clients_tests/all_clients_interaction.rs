@@ -17,14 +17,14 @@ use monero_rpc::{
 use super::helpers;
 
 /*
-* The purpose of this test is to simulate a real blockchain and wallets: transactions
-* being created and modifying the blockchain, blocks being mined and users getting funds, etc.
-*
-* Functions from `WalletClient`, `DaemonRpcClient`, and `DaemonJsonRpcClient` are called and
-* tested.
-*
-* The steps of this test are explained below.
-*/
+ * The purpose of this test is to simulate a real blockchain and wallets: transactions
+ * being created and modifying the blockchain, blocks being mined and users getting funds, etc.
+ *
+ * Functions from `WalletClient`, `DaemonRpcClient`, and `DaemonJsonRpcClient` are called and
+ * tested.
+ *
+ * The steps of this test are explained below.
+ */
 
 pub async fn run() {
     let (regtest, daemon_rpc, wallet) = helpers::setup_monero();
