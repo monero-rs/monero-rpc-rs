@@ -5,13 +5,13 @@ use monero_rpc::{BlockHash, BlockHeaderResponse, BlockTemplate, HashString};
 use super::helpers;
 
 /*
-* The purpose of this test is to test functions from the `DaemonJsonRpcClient`
-* (i.e, functions from https://www.getmonero.org/resources/developer-guides/daemon-rpc.html#json-rpc-methods)
-* ON A FRESH BLOCKCHAIN (i.e. with only the genesis block), and such functions
-* tested must NOT modify the state of the blockchain.
-*
-* The steps in the test are pretty straightforward.
-*/
+ * The purpose of this test is to test functions from the `DaemonJsonRpcClient`
+ * (i.e, functions from https://www.getmonero.org/resources/developer-guides/daemon-rpc.html#json-rpc-methods)
+ * ON A FRESH BLOCKCHAIN (i.e. with only the genesis block), and such functions
+ * tested must NOT modify the state of the blockchain.
+ *
+ * The steps in the test are pretty straightforward.
+ */
 
 pub async fn run() {
     let (regtest, _, _) = helpers::setup_monero();
