@@ -51,7 +51,7 @@ pub async fn run() {
             filename: "".to_string(), // empty, so random name is assigned
             address: wallet_1_address,
             spendkey: None,
-            viewkey: wallet_1_key_pair.view,
+            viewkey: wallet_1_key_pair.view.clone(),
             password: "".to_string(),
             autosave_current: None,
         },
