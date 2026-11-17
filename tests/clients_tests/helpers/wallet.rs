@@ -2,9 +2,10 @@ use std::collections::HashMap;
 use std::ops::Range;
 
 use monero::{
-    Address, Amount, Hash, PrivateKey, cryptonote::subaddress::Index as SubaddressIndex,
-    util::address::PaymentId,
+    Address, Amount, Hash as CryptoNoteHash, PrivateKey,
+    cryptonote::subaddress::Index as SubaddressIndex, util::address::PaymentId,
 };
+
 use monero_rpc::{
     AddressData, BalanceData, GenerateFromKeysArgs, GetAccountsData, GetTransfersCategory,
     GetTransfersSelector, GotTransfer, HashString, IncomingTransfers, KeyImageImportResponse,
@@ -510,7 +511,7 @@ pub async fn relay_tx_error_invalid_tx_metadata(wallet: &WalletClient, tx_metada
 
 pub async fn get_transfer_assert_got_transfer(
     wallet: &WalletClient,
-    txid: Hash,
+    txid: CryptoNoteHash,
     account_index: Option<u32>,
     mut expected_got_transfer: Option<GotTransfer>,
 ) {
@@ -523,14 +524,14 @@ pub async fn get_transfer_assert_got_transfer(
     assert_eq!(transfer, expected_got_transfer);
 }
 
-pub async fn get_transfer_error_invalid_txid(wallet: &WalletClient, txid: Hash) {
+pub async fn get_transfer_error_invalid_txid(wallet: &WalletClient, txid: CryptoNoteHash) {
     let transfer_err = wallet.get_transfer(txid, None).await.unwrap();
     assert_eq!(transfer_err, None);
 }
 
 pub async fn get_transfer_error_invalid_account_index(
     wallet: &WalletClient,
-    txid: Hash,
+    txid: CryptoNoteHash,
     account_index: Option<u32>,
 ) {
     let transfer_err = wallet.get_transfer(txid, account_index).await.unwrap_err();
@@ -542,7 +543,7 @@ pub async fn get_transfer_error_invalid_account_index(
 
 pub async fn check_tx_key_assert_confirmations_in_pool_status_received_amount(
     wallet: &WalletClient,
-    txid: Hash,
+    txid: CryptoNoteHash,
     tx_key: Vec<u8>,
     address: Address,
     expected_confirmations_and_in_pool_status_and_received_amount: (u64, bool, Amount),
@@ -556,7 +557,7 @@ pub async fn check_tx_key_assert_confirmations_in_pool_status_received_amount(
 
 pub async fn check_tx_key_error_invalid_txid(
     wallet: &WalletClient,
-    txid: Hash,
+    txid: CryptoNoteHash,
     tx_key: Vec<u8>,
     address: Address,
 ) {
@@ -572,7 +573,7 @@ pub async fn check_tx_key_error_invalid_txid(
 
 pub async fn check_tx_key_error_invalid_tx_key(
     wallet: &WalletClient,
-    txid: Hash,
+    txid: CryptoNoteHash,
     tx_key: Vec<u8>,
     address: Address,
 ) {
@@ -585,7 +586,7 @@ pub async fn check_tx_key_error_invalid_tx_key(
 
 pub async fn check_tx_key_error_invalid_address(
     wallet: &WalletClient,
-    txid: Hash,
+    txid: CryptoNoteHash,
     tx_key: Vec<u8>,
     address: Address,
 ) {

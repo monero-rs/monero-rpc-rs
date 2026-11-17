@@ -7,7 +7,7 @@ exclude = ["/test"]
 keywords = ["asynchronous", "net", "monero", "rpc"]
 license = "Apache-2.0"
 repository = "https://github.com/monero-rs/monero-rpc-rs"
-rust-version = "1.88.0"
+rust-version = "1.89.0"
 description = "RPC client for Monero daemon and wallet"
 
 [dependencies]
@@ -17,7 +17,7 @@ diqwest = { version = "3.2.0", default-features = false, optional = true }
 fixed-hash = "0.8"
 hex = "0.4"
 jsonrpc-core = "18"
-monero = { version = "0.22", features = ["serde"] }
+monero = { git = "https://github.com/silverpill/monero-oxide-compat", rev = "94aca2c6cda84c28d7eb9e9fd77822b1235d7475", package = "monero-oxide-compat" }
 reqwest = { version = "0.13", default-features = false, features = ["json", "socks"] }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"

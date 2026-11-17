@@ -51,7 +51,7 @@ pub async fn run() {
             filename: "".to_string(), // empty, so random name is assigned
             address: wallet_1_address,
             spendkey: None,
-            viewkey: wallet_1_key_pair.view,
+            viewkey: wallet_1_key_pair.view.clone(),
             password: "".to_string(),
             autosave_current: None,
         },
@@ -127,7 +127,8 @@ pub async fn run() {
         &ViewPair::from(&wallet_2_key_pair),
         SubaddressIndex { major: 0, minor: 1 },
         Some(Network::Mainnet),
-    );
+    )
+    .unwrap();
     let wallet_2_subaddress_1_label = "faaaarcaster".to_string();
     helpers::wallet::create_address_assert_address_and_address_index(
         &wallet,
@@ -200,7 +201,8 @@ pub async fn run() {
             minor: 12345678,
         },
         Some(Network::Mainnet),
-    );
+    )
+    .unwrap();
     let expected_balance_data_for_wallet_2_subaddress_12345678 = BalanceData {
         balance: expected_balance,
         unlocked_balance: Amount::from_pico(0),
